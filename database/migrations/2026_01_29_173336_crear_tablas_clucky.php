@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // 1. Tabla ROL
+        // 1.  Tabla ROL
         Schema::create('rol', function (Blueprint $table) {
             $table->id('id_rol'); // Tu PK
             $table->string('nombre_rol', 50);
         });
 
-        // 2. Tabla TIPO DOCUMENTO
+        // 2.  Tabla TIPO DOCUMENTO
         Schema::create('tipo_documento', function (Blueprint $table) {
             $table->id('id_tipo_documento');
             $table->string('nombre_tipo_documento', 50);
