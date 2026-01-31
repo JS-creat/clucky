@@ -7,9 +7,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Ruta para usuarios normales
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'role:2'])->name('dashboard');
+
+// Ruta para administradores
+Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard');
+})->middleware(['auth', 'verified', 'role:1'])->name('admin.dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
