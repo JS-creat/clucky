@@ -2,21 +2,47 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Iluminate\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class User extends Authenticatable {
-    protected $table = 'usuario';       // Nombre de tu tabla
-    protected $primaryKey = 'id_usuario'; // Tu llave primaria
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasFactory, Notifiable;
+
+    protected $table = 'usuario';
+    protected $primaryKey = 'id_usuario';
 
     public $timestamps = false;
+
     protected $fillable = [
-        'nombres', 'apellidos', 'correo', 'contrasena', 'id_rol'
+        'nombres',
+        'apellidos',
+        'correo',
+        'contrasena',
+        'id_rol'
     ];
 
-    // Esto es para que Laravel sepa que "contrasena" es el password
-    public function getAuthPassword() {
+    public function getAuthPassword()
+    {
         return $this->contrasena;
     }
+
+    public function getAuthIdentifierName()
+    {
+        return 'correo';
+    }
+
+    // Laravel usará tu columna correo para verificación
+    public function getEmailForVerification()
+    {
+        return $this->correo;
+    }
+
+    public function routeNotificationForMail($notification)
+    {
+        return $this->correo;
+    }
+
 }
