@@ -7,15 +7,17 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/**/*.js'
     ],
 
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
+            colors: {
+                'clucky-dark': '000000',
+                'clucky-gray': 'E5E/EB',
+            }
         },
     },
 
-    plugins: [forms],
+    plugins: [],
 };
