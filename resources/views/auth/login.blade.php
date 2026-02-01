@@ -5,7 +5,7 @@
     <title>Login - C Lucky</title>
     @vite('resources/css/app.css')
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="bg-gray-50">
 
 <!--Navbar-->
 <header class="border-b bg-white py-4">
@@ -19,12 +19,12 @@
 </header>
 
 <!-- CONTENT -->
-<main class="flex-1 flex justify-center items-center bg-gray-50">
+<main class="py-20 flex justify-center">
 
-    <div class="grid md:grid-cols-2 gap-12 max-w-4xl w-full px-6">
+    <div class="flex flex-col md:flex-row gap-8 max-w-5xl w-full px-4">
 
         <!-- LOGIN -->
-        <div class="bg-white p-8 rounded shadow">
+        <div class="bg-white p-10 md:p-12 rounded shadow">
 
             <h2 class="text-lg font-semibold mb-4">Iniciar sesión</h2>
 
@@ -55,7 +55,7 @@
         </div>
 
         <!-- REGISTER -->
-        <div class="bg-white p-8 rounded shadow text-center">
+        <div class="bg-white p-10 md:p-12 rounded shadow text-center">
             <h2 class="text-lg font-semibold mb-4">¿Eres nuevo en C’Lucky?</h2>
             <p class="text-gray-600 mb-6">
                 Crea una cuenta para comprar más rápido y acceder a ofertas especiales
