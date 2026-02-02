@@ -13,7 +13,7 @@
         <img
             src="{{ asset('images/logo.jpg') }}"
             alt="Logo C Lucky"
-            class="h-12 object-contain"
+            class="h-12 md:h-14"
         >
     </div>
 </header>
