@@ -17,6 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
 
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->validateCsrfTokens(except: [
+            'register',
+            'login', // Esto permite que Postman entre sin token
+        ]);
+    })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
