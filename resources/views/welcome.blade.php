@@ -22,10 +22,10 @@
                 </div>
 
                 <div class="hidden md:flex space-x-8 font-medium uppercase text-sm tracking-widest">
+                    <a href="#" class="hover:text-grey-500 transition">Todo</a>
                     <a href="#" class="hover:text-pink-500 transition">Mujer</a>
-                    <a href="#" class="hover:text-pink-500 transition">Hombre</a>
-                    <a href="#" class="hover:text-pink-500 transition">Novedades</a>
-                    <a href="#" class="text-red-600 hover:text-red-700 font-bold italic">Sale</a>
+                    <a href="#" class="hover:text-blue-500 transition">Hombre</a>
+                    <a href="#" class="text-red-600 hover:text-red-700 font-bold italic">Promociones</a>
                 </div>
 
                 <div class="flex items-center space-x-5">
@@ -78,6 +78,64 @@
             </div>
         </div>
     </section>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            @foreach($productos as $item)
+    <a href="{{ url('/producto/' . $item->id_producto) }}" class="group cursor-pointer block">
+        <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4">
+            @if($item->precio_oferta)
+                <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 z-10 uppercase">Oferta</span>
+            @endif
+            <img src="{{ asset('productos/' . $item->imagen) }}" alt="{{ $item->nombre_producto }}"
+                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+        </div>
+        <div class="space-y-1">
+            <p class="text-[10px] text-gray-400 uppercase font-bold">{{ $item->marca }}</p>
+            <h3 class="text-sm font-medium text-gray-800">{{ $item->nombre_producto }}</h3>
+            <div class="flex items-center space-x-2">
+                <span class="text-sm font-bold text-black">S/ {{ number_format($item->precio_oferta ?? $item->precio, 2) }}</span>
+            </div>
+        </div>
+    </a>
+@endforeach
+        </div>
+
+    </div>
+
+    <footer class="bg-black text-white py-12 mt-auto">
+        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 text-sm">
+
+            <div>
+                <h3 class="font-semibold mb-3">Servicio al cliente</h3>
+                <p>Preguntas frecuentes</p>
+                <p>Formas de pago</p>
+                <p>Métodos de envío</p>
+                <p>Devoluciones</p>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-3">Contáctanos</h3>
+                <p>contacto@clucky.com</p>
+                <p>+51 999 999 999</p>
+                <p>Lunes a viernes</p>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-3">Acerca de</h3>
+                <p>Quiénes somos</p>
+                <p>Términos y condiciones</p>
+                <p>Privacidad</p>
+            </div>
+
+        </div>
+
+        <p class="text-center text-xs text-gray-400 mt-8">
+            © 2026 C’Lucky. Todos los derechos reservados.
+        </p>
+    </footer>
+
 
 </body>
 

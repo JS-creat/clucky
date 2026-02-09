@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Models\Producto;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -15,6 +16,12 @@ Route::get('/dashboard', function () {
 Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->middleware(['auth', 'verified', 'role:1'])->name('admin.dashboard');
+
+//Ruta de detalles de producto
+Route::get('/producto/{id}', function ($id) {
+    $producto = Producto::findOrFail($id);
+    return view('producto-detalle', compact('producto'));
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
