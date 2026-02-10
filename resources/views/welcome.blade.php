@@ -83,23 +83,38 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             @foreach($productos as $item)
-    <a href="{{ url('/producto/' . $item->id_producto) }}" class="group cursor-pointer block">
-        <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4">
-            @if($item->precio_oferta)
-                <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 z-10 uppercase">Oferta</span>
-            @endif
-            <img src="{{ asset('productos/' . $item->imagen) }}" alt="{{ $item->nombre_producto }}"
-                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-        </div>
-        <div class="space-y-1">
-            <p class="text-[10px] text-gray-400 uppercase font-bold">{{ $item->marca }}</p>
-            <h3 class="text-sm font-medium text-gray-800">{{ $item->nombre_producto }}</h3>
-            <div class="flex items-center space-x-2">
-                <span class="text-sm font-bold text-black">S/ {{ number_format($item->precio_oferta ?? $item->precio, 2) }}</span>
-            </div>
-        </div>
-    </a>
-@endforeach
+                <a href="{{ url('/producto/' . $item->id_producto) }}" class="group cursor-pointer block">
+                    <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4">
+                        @if($item->precio_oferta)
+                            <span
+                                class="absolute top-0 left-0 bg-red-600 text-white text-[10px] font-bold px-2 py-1 z-10 uppercase">
+                                Oferta
+                            </span>
+                        @endif
+                        <img src="{{ asset('productos/' . $item->imagen) }}" alt="{{ $item->nombre_producto }}"
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">{{ $item->marca }}</p>
+                        <h3 class="text-sm font-medium text-gray-800">{{ $item->nombre_producto }}</h3>
+
+                        <div class="flex flex-col">
+                            @if($item->precio_oferta)
+                                <span class="text-sm font-black text-[#f50057]">
+                                    S/ {{ number_format($item->precio_oferta, 2) }}
+                                </span>
+                                <span class="text-[11px] text-gray-400 line-through">
+                                    S/ {{ number_format($item->precio, 2) }}
+                                </span>
+                            @else
+                                <span class="text-sm font-bold text-black">
+                                    S/ {{ number_format($item->precio, 2) }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </a>
+            @endforeach
         </div>
 
     </div>

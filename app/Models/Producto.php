@@ -22,4 +22,7 @@ class Producto extends Model
     {
         return $this->belongsTo(Promocion::class, 'id_promocion');
     }
+    protected $casts = [
+    'galeria' => 'array',
+];
 }

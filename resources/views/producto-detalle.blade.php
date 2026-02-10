@@ -18,13 +18,25 @@
 
             <div class="w-full lg:w-[55%] space-y-4">
                 <div class="aspect-[4/5] bg-gray-50 overflow-hidden rounded-md border border-gray-100">
-                    <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-contain p-4"
+                    <img id="view-principal" src="{{ asset('productos/' . $producto->imagen) }}"
+                        class="w-full h-full object-contain p-4 transition-opacity duration-300"
                         alt="{{ $producto->nombre_producto }}">
                 </div>
+
                 <div class="flex gap-2">
-                    <div class="w-20 h-24 border border-black p-1">
+                    <div class="w-20 h-24 border border-black p-1 cursor-pointer thumbnail-btn"
+                        onclick="cambiarImagen(this, '{{ asset('productos/' . $producto->imagen) }}')">
                         <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-cover">
                     </div>
+
+                    @if($producto->galeria)
+                        @foreach($producto->galeria as $foto)
+                            <div class="w-20 h-24 border border-gray-200 p-1 cursor-pointer thumbnail-btn hover:border-gray-400 transition"
+                                onclick="cambiarImagen(this, '{{ asset('productos/' . $foto) }}')">
+                                <img src="{{ asset('productos/' . $foto) }}" class="w-full h-full object-cover">
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
             </div>
 
@@ -98,14 +110,23 @@
     </main>
 
     <script>
-        function selectTalla(btn) {
-            // Deseleccionar otros
-            document.querySelectorAll('.talla-btn').forEach(b => {
-                b.classList.remove('bg-black', 'text-white', 'border-black');
-                b.classList.add('border-gray-200');
+        function cambiarImagen(elemento, url) {
+            // 1. Cambiar la imagen principal con un efecto suave
+            const principal = document.getElementById('view-principal');
+            principal.style.opacity = '0';
+
+            setTimeout(() => {
+                principal.src = url;
+                principal.style.opacity = '1';
+            }, 150);
+
+            // 2. Resaltar la miniatura seleccionada (borde negro)
+            document.querySelectorAll('.thumbnail-btn').forEach(btn => {
+                btn.classList.remove('border-black');
+                btn.classList.add('border-gray-200');
             });
-            // Seleccionar actual
-            btn.classList.add('bg-black', 'text-white', 'border-black');
+            elemento.classList.add('border-black');
+            elemento.classList.remove('border-gray-200');
         }
     </script>
 </body>
