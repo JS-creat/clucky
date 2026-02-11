@@ -22,6 +22,13 @@ class Producto extends Model
     {
         return $this->belongsTo(Promocion::class, 'id_promocion');
     }
+
+    public function genero()
+    {
+        return $this->belongsTo(\App\Models\Genero::class, 'id_genero');
+    }
+
+
     protected $casts = [
     'galeria' => 'array',
 ];

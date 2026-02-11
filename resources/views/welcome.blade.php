@@ -22,10 +22,26 @@
                 </div>
 
                 <div class="hidden md:flex space-x-8 font-medium uppercase text-sm tracking-widest">
-                    <a href="#" class="hover:text-grey-500 transition">Todo</a>
-                    <a href="#" class="hover:text-pink-500 transition">Mujer</a>
-                    <a href="#" class="hover:text-blue-500 transition">Hombre</a>
-                    <a href="#" class="text-red-600 hover:text-red-700 font-bold italic">Promociones</a>
+                    <a href="{{ route('home') }}"
+                        class="{{ !request()->has('categoria') && !request()->has('promocion') ? 'text-pink-600 font-bold' : '' }}">
+                        Todo
+                    </a>
+
+                    <a href="{{ route('home', ['categoria' => 'Mujer']) }}"
+                        class="{{ request('categoria') == 'Mujer' ? 'text-pink-600 font-bold' : '' }}">
+                        Mujer
+                    </a>
+
+                    <a href="{{ route('home', ['categoria' => 'Hombre']) }}"
+                        class="{{ request('categoria') == 'Hombre' ? 'text-pink-600 font-bold' : '' }}">
+                        Hombre
+                    </a>
+
+                    <a href="{{ route('home', ['promocion' => 1]) }}"
+                        class="{{ request()->has('promocion') ? 'text-red-600 font-bold italic' : '' }}">
+                        Promociones
+                    </a>
+
                 </div>
 
                 <div class="flex items-center space-x-5">
@@ -40,15 +56,17 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg></a>
-                    <button class="hover:scale-110 transition relative">
+                    <a href="{{ route('carrito.index') }}" class="hover:scale-110 transition relative">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 11V7a4 4 0 11-8 0m-4 8h16l-1.244 6.323A2 2 0 0114.805 23H9.195a2 2 0 01-1.951-1.677L6 11z" />
                         </svg>
                         <span
-                            class="absolute -top-1 -right-1 bg-black text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">0</span>
-                    </button>
+                            class="absolute -top-1 -right-1 bg-[#f50057] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                            {{ session('carrito') ? count(session('carrito')) : 0 }}
+                        </span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -83,8 +101,10 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             @foreach($productos as $item)
-                <a href="{{ url('/producto/' . $item->id_producto) }}" class="group cursor-pointer block">
-                    <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4">
+                <a href="{{ url('/producto/' . $item->id_producto) }}"
+                    class="group cursor-pointer block bg-white border border-gray-200 rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+
+                    <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden mb-4 rounded-lg">
                         @if($item->precio_oferta)
                             <span
                                 class="absolute top-0 left-0 bg-red-600 text-white text-[10px] font-bold px-2 py-1 z-10 uppercase">
@@ -97,6 +117,7 @@
                     <div class="space-y-1">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">{{ $item->marca }}</p>
                         <h3 class="text-sm font-medium text-gray-800">{{ $item->nombre_producto }}</h3>
+                        <div class="h-[1px] bg-gray-100 my-2"></div>
 
                         <div class="flex flex-col">
                             @if($item->precio_oferta)

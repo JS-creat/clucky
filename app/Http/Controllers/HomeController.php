@@ -7,10 +7,28 @@ use App\Models\Producto; // <--- TE FALTABA ESTA LÍNEA
 
 class HomeController extends Controller
 {
-    public function index() {
-        // Asegúrate de tener el modelo Producto creado antes de recargar
-        $productos = Producto::with('promocion')->where('estado_producto', 1)->take(8)->get();
+    public function index(Request $request)
+    {
+        $query = Producto::query();
+
+        // Filtro por género
+        if ($request->has('categoria') && $request->categoria != 'Todo') {
+                $query->whereHas('genero', function ($q) use ($request) {
+                $q->where('nombre_genero', $request->categoria);
+            });
+        }
+
+
+        // Filtro por promociones
+        if ($request->has('promocion')) {
+            $query->whereNotNull('precio_oferta')
+            ->where('precio_oferta', '>', 0);
+        }
+
+
+        $productos = $query->get();
 
         return view('welcome', compact('productos'));
     }
+
 }
