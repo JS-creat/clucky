@@ -49,6 +49,62 @@
                     <p class="text-[10px] text-gray-400 mt-2">SKU: {{ $producto->codigo }}</p>
                 </div>
 
+                @php
+    // Lo ideal sería que esto viniera de una tabla 'colores' en la BD, 
+    // pero para tu estructura actual, esto es lo más eficiente:
+    $colorPalette = [
+        'negro'  => '#000000',
+        'blanco' => '#FFFFFF',
+        'rojo'   => '#DC2626',
+        'azul'   => '#2563EB',
+        'verde'  => '#16A34A',
+        'gris'   => '#4B5563',
+        'beige'  => '#F5F5DC',
+        'rosa'   => '#DB2777',
+    ];
+
+                // Limpiamos y convertimos el string de la BD en array
+                $coloresDisponibles = $producto->color ? explode(',', $producto->color) : [];
+                @endphp
+
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-[11px] font-bold uppercase tracking-[0.1em] text-gray-900">
+                            Color: <span id="color-seleccionado" class="text-gray-400 font-normal ml-2">Selecciona una opción</span>
+                        </h3>
+                    </div>
+    
+                    <div class="flex flex-wrap gap-4">
+                        @foreach($coloresDisponibles as $col)
+                            @php 
+                                $nombreLimpio = trim(strtolower($col));
+                                $hex = $colorPalette[$nombreLimpio] ?? null; 
+                            @endphp
+            
+                            <button 
+                                type="button"
+                                onclick="seleccionarColor(this, '{{ trim($col) }}')"
+                                class="group relative flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 transition-all duration-300 hover:scale-110 color-option-btn"
+                                title="{{ trim($col) }}">
+                
+                                {{-- Círculo de color --}}
+                                <span 
+                                    class="w-6 h-6 rounded-full shadow-sm {{ $nombreLimpio === 'blanco' ? 'border border-gray-200' : '' }}"
+                                    style="background-color: {{ $hex ?? '#cbd5e1' }};">
+                                </span>
+
+                                {{-- Tooltip o Indicador de falta de color --}}
+                                @if(!$hex)
+                                    <span class="absolute -top-1 -right-1 flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-gray-500"></span>
+                                    </span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div class="py-6 bg-gray-50/50 px-4 mt-4">
                     @if($producto->precio_oferta)
                         <div class="flex items-baseline gap-3">
@@ -110,25 +166,36 @@
     </main>
 
     <script>
-        function cambiarImagen(elemento, url) {
-            // 1. Cambiar la imagen principal con un efecto suave
-            const principal = document.getElementById('view-principal');
-            principal.style.opacity = '0';
+    function seleccionarColor(elemento, nombre) {
+        // 1. Actualizar el texto visual
+        const label = document.getElementById('color-seleccionado');
+        label.innerText = nombre;
+        label.classList.remove('text-gray-400');
+        label.classList.add('text-black', 'font-bold');
 
-            setTimeout(() => {
-                principal.src = url;
-                principal.style.opacity = '1';
-            }, 150);
+        // 2. Gestionar clases visuales de los botones
+        document.querySelectorAll('.color-option-btn').forEach(btn => {
+            // Quitamos el anillo de selección
+            btn.classList.remove('ring-2', 'ring-black', 'ring-offset-2', 'border-transparent');
+            btn.classList.add('border-gray-200');
+        });
 
-            // 2. Resaltar la miniatura seleccionada (borde negro)
-            document.querySelectorAll('.thumbnail-btn').forEach(btn => {
-                btn.classList.remove('border-black');
-                btn.classList.add('border-gray-200');
-            });
-            elemento.classList.add('border-black');
-            elemento.classList.remove('border-gray-200');
-        }
-    </script>
+        // 3. Aplicar estilo al seleccionado
+        elemento.classList.add('ring-2', 'ring-black', 'ring-offset-2', 'border-transparent');
+        elemento.classList.remove('border-gray-200');
+    }
+
+    // Aprovechamos para mejorar tu función de tallas con la misma lógica
+    function selectTalla(elemento) {
+        document.querySelectorAll('.talla-btn').forEach(btn => {
+            btn.classList.remove('bg-black', 'text-white', 'border-black');
+            btn.classList.add('border-gray-200', 'text-gray-900');
+        });
+        
+        elemento.classList.add('bg-black', 'text-white', 'border-black');
+        elemento.classList.remove('border-gray-200');
+    }
+</script>
 </body>
 
 </html>
