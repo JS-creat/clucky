@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Producto; // <--- TE FALTABA ESTA LÍNEA
+use App\Models\Producto;
 
 class HomeController extends Controller
 {
