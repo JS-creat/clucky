@@ -28,7 +28,7 @@ class HomeController extends Controller
 
         $productos = $query->get();
 
-        return view('welcome', compact('productos'));
+        return view('home.index', compact('productos'));
     }
 
 }

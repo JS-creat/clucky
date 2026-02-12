@@ -9,19 +9,29 @@ use App\Http\Controllers\CarritoController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Ruta para usuarios normales
-Route::get('/dashboard', function () {
+/*Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified', 'role:2'])->name('dashboard');
+})->middleware(['auth', 'verified', 'role:2'])->name('dashboard');*/
 
 // Ruta para administradores
 Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->middleware(['auth', 'verified', 'role:1'])->name('admin.dashboard');
 
+//perfil o login de usuario
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/perfil', function () {
+        return view('perfil.index');
+    })->name('perfil');
+
+});
+
+
 //Ruta de detalles de producto
 Route::get('/producto/{id}', function ($id) {
     $producto = Producto::findOrFail($id);
-    return view('producto-detalle', compact('producto'));
+    return view('producto.detalle', compact('producto'));
 })->name('producto.show');
 
 

@@ -116,7 +116,8 @@ class CarritoController extends Controller
             }
         }
 
-        return view('carrito.checkout');
+        return view('carrito.checkout', compact('carrito'));
+
         }
 
     }
