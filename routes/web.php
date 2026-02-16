@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Models\Producto;
 use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\UbicacionController;
+
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -40,15 +43,21 @@ Route::get('/carrito', [CarritoController::class, 'index'])->name('carrito.index
 
 Route::post('/carrito/add/{id}', [CarritoController::class, 'add'])->name('carrito.add');
 
-// Solo los logueados pueden ir al Checkout (pagar)
+// Solo los logueados pueden ir al Checkout
 Route::middleware(['auth'])->group(function () {
-    Route::get('/finalizar-compra', [CarritoController::class, 'checkout'])->name('carrito.checkout');
+    Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
+        ->name('carrito.checkout');
 });
 
 //eliminar productos del carrito
 Route::get('/carrito/aumentar/{id}', [CarritoController::class, 'aumentar'])->name('carrito.aumentar');
 Route::get('/carrito/disminuir/{id}', [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
 Route::get('/carrito/eliminar/{id}', [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
+
+//rutas para la ubicacion
+Route::get('/ubicacion/provincias/{id}', [UbicacionController::class, 'provincias']);
+Route::get('/ubicacion/distritos/{id}', [UbicacionController::class, 'distritos']);
+
 
 
 Route::middleware('auth')->group(function () {

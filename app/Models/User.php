@@ -29,10 +29,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->contrasena;
     }
 
-    public function getAuthIdentifierName()
-    {
-        return 'correo';
-    }
 
     // Laravel usará tu columna correo para verificación
     public function getEmailForVerification()
