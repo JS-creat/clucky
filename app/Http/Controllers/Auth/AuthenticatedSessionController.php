@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         //si no es admin va a ussuario
-        return redirect()->route('dashboard');
+        return redirect()->route('home');
     }
 
     /**
