@@ -6,6 +6,9 @@ use App\Models\Carrito;
 use App\Models\Departamento;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TipoEntrega;
+use App\Models\TipoDocumento;
+use App\Models\Agencia;
+
 
 
 class CheckoutController extends Controller
@@ -45,8 +48,14 @@ class CheckoutController extends Controller
         //Tipo de entrega
         $tiposEntrega = TipoEntrega::where('estado', 1)->get();
 
+        //tipos de documentos
+        $tiposDocumento = TipoDocumento::all();
 
-        return view('carrito.checkout', compact('carrito', 'departamentos', 'tiposEntrega'));
+        $agencias = Agencia::where('estado',1)->get();
+
+
+
+        return view('carrito.checkout', compact('carrito', 'departamentos', 'tiposEntrega', 'tiposDocumento', 'agencias'));
 
     }
 
