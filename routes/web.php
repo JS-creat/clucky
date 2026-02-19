@@ -1,82 +1,94 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
-use App\Models\Producto;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\UbicacionController;
 use App\Http\Controllers\UsuarioController;
-use App\Models\Agencia;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\Admin\ProductoController;
+use App\Models\Producto;
+use App\Models\Agencia;
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PÚBLICAS (TIENDA)
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Ruta para usuarios normales
-/*Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'role:2'])->name('dashboard');*/
-
-// Ruta para administradores
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
-})->middleware(['auth', 'verified', 'role:1'])->name('admin.dashboard');
-
-//perfil o login de usuario
-Route::middleware(['auth'])->group(function () {
-
-    Route::get('/perfil', function () {
-        return view('perfil.index');
-    })->name('perfil');
-
-});
-
-
-//Ruta de detalles de producto
 Route::get('/producto/{id}', function ($id) {
-    $producto = Producto::findOrFail($id);
+    $producto = Producto::with('variantes')->findOrFail($id);
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
 
+//CARRITO
 
-// Cualquiera puede ver el carrito
 Route::get('/carrito', [CarritoController::class, 'index'])->name('carrito.index');
-
 Route::post('/carrito/add/{id}', [CarritoController::class, 'add'])->name('carrito.add');
-
-// Solo los logueados pueden ir al Checkout
-Route::middleware(['auth'])->group(function () {
-    Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
-        ->name('carrito.checkout');
-});
-
-//Ruta para poder editar los datos del usuario
-Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])
-->name('usuario.actualizar');
-
-//Ruta para editar el eprfil del usuario
-Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
-Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
-Route::put('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
-
-//eliminar productos del carrito
 Route::get('/carrito/aumentar/{id}', [CarritoController::class, 'aumentar'])->name('carrito.aumentar');
 Route::get('/carrito/disminuir/{id}', [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
 Route::get('/carrito/eliminar/{id}', [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
 
-//rutas para la ubicacion
+
+// USUARIOS AUTENTICADOS
+
+
+Route::middleware(['auth', 'verified', 'role:2'])->group(function () {
+
+    Route::get('/dashboard', function () {
+        $productos = Producto::all();
+        return view('home.index', compact('productos'));
+    })->name('dashboard');
+
+    Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
+        ->name('carrito.checkout');
+
+    Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])
+        ->name('usuario.actualizar');
+
+    Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
+    Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
+    Route::put('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
+});
+
+
+//UBICACIÓN / AGENCIAS (AJAX)
+
+
 Route::get('/ubicacion/provincias/{id}', [UbicacionController::class, 'provincias']);
 Route::get('/ubicacion/distritos/{id}', [UbicacionController::class, 'distritos']);
 
-//Ruta para agencias
 Route::get('/agencias/{idDistrito}', function ($idDistrito) {
-
     return Agencia::where('id_distrito', $idDistrito)
         ->where('estado', 1)
         ->get();
-
 });
+
+
+//ADMINISTRADOR
+
+
+Route::middleware(['auth', 'verified', 'role:1'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        // Dashboard admin
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+        // Productos (CRUD)
+        Route::resource('productos', ProductoController::class)
+            ->except(['show']);
+    });
+
+
+// PERFIL (BREEZE)
 
 
 

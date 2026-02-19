@@ -15,16 +15,16 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, $role): Response
     {
-        //Verificamos si el ususario esta logeado
         if (!Auth::check()) {
             return redirect('login');
         }
-        //comparamos el id_rol con el rol que pide la rura
-        //convertimos en entero para estar seguros
+
         if ((int) Auth::user()->id_rol !== (int) $role) {
-            //Si el rol no es correcto lo manadamso al dashboard de usuarios
-            return redirect('/dashboard')->with('error','No tienes permisos de administador');
+
+            abort(403, 'No tienes permisos');
+
         }
+
         return $next($request);
     }
 }
