@@ -22,10 +22,10 @@
     <div class="max-w-5xl mx-auto px-4 py-12">
         <h1 class="text-3xl font-black uppercase italic mb-8">Tu Bolsa de Compras</h1>
 
-        @if(count($carrito) > 0)
+        @if(count($items) > 0)
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-4">
-                    @foreach($carrito as $id => $detalles)
+                    @foreach($items as $id => $detalles)
                         <div class="flex bg-white p-4 shadow-sm rounded-sm border items-center gap-4">
                             <img src="{{ asset('productos/' . $detalles['imagen']) }}" class="w-20 h-24 object-cover">
                             <div class="flex-1">
@@ -79,48 +79,6 @@
             </div>
         @endif
     </div>
-
-    <script>
-        public function aumentar($id) {
-            $carrito = session() -> get('carrito', []);
-
-            if (isset($carrito[$id])) {
-                $carrito[$id]['cantidad']++;
-                session() -> put('carrito', $carrito);
-            }
-
-            return redirect() -> route('carrito.index');
-        }
-
-        public function disminuir($id) {
-            $carrito = session() -> get('carrito', []);
-
-            if (isset($carrito[$id])) {
-
-                if ($carrito[$id]['cantidad'] > 1) {
-                    $carrito[$id]['cantidad']--;
-                } else {
-                    unset($carrito[$id]); // si queda en 0 lo eliminamos
-                }
-
-                session() -> put('carrito', $carrito);
-            }
-
-            return redirect() -> route('carrito.index');
-        }
-
-        public function eliminar($id) {
-            $carrito = session() -> get('carrito', []);
-
-            if (isset($carrito[$id])) {
-                unset($carrito[$id]);
-                session() -> put('carrito', $carrito);
-            }
-
-            return redirect() -> route('carrito.index');
-        }
-
-    </script>
 </body>
 
 </html>

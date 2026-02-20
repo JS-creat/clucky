@@ -88,7 +88,7 @@ class ProductoController extends Controller
                 $imagenesGaleria[] = $nombre;
             }
 
-            $producto->galeria = json_encode($imagenesGaleria);
+            $producto->galeria = $imagenesGaleria;
             $producto->save();
         }
         return redirect()
@@ -98,7 +98,7 @@ class ProductoController extends Controller
 
     public function edit($id)
     {
-        $producto = Producto::findOrFail($id);
+        $producto = Producto::with('variantes')->findOrFail($id);
         $generos = Genero::all();
         $categorias = Categoria::all();
         $promociones = Promocion::where('estado_promocion', 1)->get();
@@ -119,8 +119,14 @@ class ProductoController extends Controller
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
             'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp',
+            'variantes' => 'required|array|min:1',
+            'variantes.*.talla' => 'required|string|max:50',
+            'variantes.*.stock' => 'required|integer|min:0',
+            'galeria' => 'nullable|array',
+            'galeria.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
+        // actualizar producto
         $producto->update($request->only([
             'nombre_producto',
             'descripcion',
@@ -133,9 +139,8 @@ class ProductoController extends Controller
             'id_promocion'
         ]));
 
+        // imagen
         if ($request->hasFile('imagen')) {
-
-            // borrar imagen anterior
             if ($producto->imagen && file_exists(public_path('productos/' . $producto->imagen))) {
                 unlink(public_path('productos/' . $producto->imagen));
             }
@@ -148,8 +153,77 @@ class ProductoController extends Controller
             $producto->save();
         }
 
+        // ===== VARIANTES =====
+        $idsEnviados = [];
+
+        foreach ($request->variantes as $v) {
+
+            if (!empty($v['id_variante'])) {
+                // actualizar existente
+                $variante = ProductoVariante::find($v['id_variante']);
+                $variante->update([
+                    'talla' => $v['talla'],
+                    'color' => $v['color'] ?? null,
+                    'stock' => $v['stock'],
+                    'sku' => $v['sku'] ?? $variante->sku,
+                ]);
+
+                $idsEnviados[] = $variante->id_variante;
+            } else {
+                // crear nueva
+                $nueva = $producto->variantes()->create([
+                    'talla' => $v['talla'],
+                    'color' => $v['color'] ?? null,
+                    'stock' => $v['stock'],
+                    'sku' => $v['sku'] ?? 'SKU-' . uniqid(),
+                ]);
+
+                $idsEnviados[] = $nueva->id_variante;
+            }
+        }
+
+        // ===== ELIMINAR IMAGENES DE GALERIA =====
+        if ($request->has('galeria_eliminar')) {
+
+            $galeria = $producto->galeria ?? [];
+
+            foreach ($request->galeria_eliminar as $img) {
+                if (in_array($img, $galeria)) {
+
+                    if (file_exists(public_path('productos/' . $img))) {
+                        unlink(public_path('productos/' . $img));
+                    }
+
+                    $galeria = array_values(array_diff($galeria, [$img]));
+                }
+            }
+
+            $producto->galeria = $galeria;
+            $producto->save();
+        }
+
+        // ===== AGREGAR NUEVAS IMAGENES A GALERIA =====
+        if ($request->hasFile('galeria')) {
+
+            $galeriaActual = $producto->galeria ?? [];
+
+            foreach ($request->file('galeria') as $img) {
+                $nombre = uniqid() . '_' . $img->getClientOriginalName();
+                $img->move(public_path('productos'), $nombre);
+                $galeriaActual[] = $nombre;
+            }
+
+            $producto->galeria = $galeriaActual;
+            $producto->save();
+        }
+
+        // eliminar variantes removidas del formulario
+        $producto->variantes()
+            ->whereNotIn('id_variante', $idsEnviados)
+            ->delete();
+
         return redirect()
             ->route('admin.productos.index')
-            ->with('success', 'Producto actualizado');
+            ->with('success', 'Producto actualizado correctamente');
     }
 }

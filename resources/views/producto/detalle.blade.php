@@ -95,7 +95,7 @@
                     <h1 class="text-3xl font-black text-gray-900 uppercase italic leading-none">
                         {{ $producto->nombre_producto }}
                     </h1>
-                    <p class="text-[10px] text-gray-400 mt-4 tracking-widest">SKU: {{ $producto->codigo }}</p>
+                    <p id="sku-text" class="text-[10px] text-gray-400 mt-4 tracking-widest"> SKU: Selecciona color y talla </p>
                 </div>
 
                 <div class="py-8">
@@ -116,48 +116,62 @@
                 </div>
 
                 @php
-                    $colorPalette = ['negro' => '#000000', 'blanco' => '#FFFFFF', 'rojo' => '#DC2626', 'azul' => '#2563EB', 'verde' => '#16A34A', 'gris' => '#4B5563', 'beige' => '#F5F5DC', 'rosa' => '#DB2777'];
-                    $coloresDisponibles = $producto->color ? explode(',', $producto->color) : [];
+// Agrupar variantes por color
+$variantesPorColor = $producto->variantes->groupBy('color');
+
+// Colores únicos
+$colores = $variantesPorColor->keys()->filter();
+
+// Tallas únicas
+$tallas = $producto->variantes->pluck('talla')->unique();
                 @endphp
 
                 <div class="mb-8">
-                    <h3 class="text-xs font-bold uppercase tracking-widest mb-4">Color: <span id="color-seleccionado"
-                            class="text-gray-400 font-normal ml-2">Selecciona uno</span></h3>
-                    <div class="flex flex-wrap gap-4">
-                        @foreach($coloresDisponibles as $col)
-                            @php $nombreLimpio = trim(strtolower($col));
-                            $hex = $colorPalette[$nombreLimpio] ?? '#cbd5e1'; @endphp
-                            <button type="button" onclick="seleccionarColor(this, '{{ trim($col) }}')"
-                                class="group relative w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center transition-all hover:scale-110 color-option-btn"
-                                title="{{ trim($col) }}">
-                                <span class="w-7 h-7 rounded-full shadow-inner"
-                                    style="background-color: {{ $hex }};"></span>
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest mb-4">
+                        Color:
+                        <span id="color-seleccionado" class="text-gray-400 font-normal ml-2">
+                            Selecciona uno
+                        </span>
+                    </h3>
 
-                <div class="mt-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xs font-bold uppercase tracking-widest">Talla:</h3>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2">
-                        @foreach(explode(',', $producto->talla) as $talla)
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($colores as $color)
                             <button
-                                class="talla-btn border border-gray-200 py-4 text-[11px] font-black hover:border-black transition-all uppercase"
-                                onclick="selectTalla(this)">
-                                {{ trim($talla) }}
+                                type="button"
+                                onclick="seleccionarColor(this, '{{ $color }}')"
+                                class="color-btn px-4 py-2 border rounded text-sm font-semibold hover:border-black transition"
+                                data-color="{{ $color }}"
+                                >
+                                {{ $color }}
                             </button>
                         @endforeach
                     </div>
                 </div>
 
-                {{-- Sección del Botón Corregida --}}
+                <div class="mb-8">
+                    <h3 class="text-xs font-bold uppercase tracking-widest mb-4">Talla:</h3>
+
+                    <div class="grid grid-cols-4 gap-2">
+                        @foreach($tallas as $talla)
+                            <button
+                                type="button"
+                                onclick="selectTalla(this)"
+                                class="talla-btn border border-gray-300 py-3 text-xs font-bold uppercase hover:border-black transition"
+                                data-talla="{{ $talla }}"
+                                >
+                                {{ $talla }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Sección del Botón--}}
                 <div class="mt-10">
                     <form id="form-carrito" action="{{ route('carrito.add', $producto->id_producto) }}" method="POST">
 
                         <input type="hidden" name="color" id="input-color">
                         <input type="hidden" name="talla" id="input-talla">
+                        <input type="hidden" name="id_variante" id="input-variante">
 
                         @if($errors->any())
                             <div class="bg-red-100 text-red-700 p-2 mb-3 rounded">
@@ -209,6 +223,13 @@
     </main>
 
     <script>
+
+        const variantes = @json($producto->variantes);
+
+        let colorSeleccionado = "";
+        let tallaSeleccionada = "";
+        console.log(variantes);
+        console.log(colorSeleccionado, tallaSeleccionada);
         function cambiarImagen(elemento, ruta) {
             const mainImg = document.getElementById('view-principal');
             mainImg.style.opacity = '0';
@@ -223,20 +244,120 @@
         }
 
         function seleccionarColor(elemento, nombre) {
-            const label = document.getElementById('color-seleccionado');
-            label.innerText = nombre;
-            document.getElementById('input-color').value = nombre;
-            label.className = "text-black font-black ml-2";
 
-            document.querySelectorAll('.color-option-btn').forEach(btn => btn.classList.remove('ring-2', 'ring-black', 'ring-offset-2'));
-            elemento.classList.add('ring-2', 'ring-black', 'ring-offset-2');
+            // guardar valor
+            colorSeleccionado = nombre;
+
+            document.getElementById('color-seleccionado').innerText = nombre;
+            document.getElementById('input-color').value = nombre;
+
+            // quitar selección anterior
+            document.querySelectorAll('.color-btn').forEach(btn => {
+
+                btn.classList.remove('border-black', 'ring-2', 'ring-black');
+
+                btn.classList.add('border-gray-300');
+
+            });
+
+            // marcar seleccionado
+            elemento.classList.remove('border-gray-300');
+
+            elemento.classList.add('border-black', 'ring-2', 'ring-black');
+
+            actualizarVarianteID();
+
         }
 
         function selectTalla(elemento) {
-            document.querySelectorAll('.talla-btn').forEach(btn => btn.className = "talla-btn border border-gray-200 py-4 text-[11px] font-black hover:border-black transition-all uppercase");
-            elemento.className = "talla-btn border-2 border-black bg-black text-white py-4 text-[11px] font-black uppercase";
-            document.getElementById('input-talla').value = elemento.innerText.trim();
+
+            tallaSeleccionada = elemento.innerText.trim();
+
+            document.getElementById('input-talla').value = tallaSeleccionada;
+
+            // resetear todas
+            document.querySelectorAll('.talla-btn').forEach(btn => {
+
+                btn.classList.remove(
+                    'border-black',
+                    'bg-black',
+                    'text-white'
+                );
+
+                btn.classList.add(
+                    'border-gray-300',
+                    'bg-white',
+                    'text-gray-900'
+                );
+
+            });
+
+            // aplicar selección
+            elemento.classList.remove(
+                'border-gray-300',
+                'bg-white',
+                'text-gray-900'
+            );
+
+            elemento.classList.add(
+                'border-black',
+                'bg-black',
+                'text-white'
+            );
+
+            actualizarVarianteID();
+
         }
+        function actualizarSKU() {
+
+            if (colorSeleccionado && tallaSeleccionada) {
+
+                const variante = variantes.find(function (v) {
+
+                    return v.color == colorSeleccionado && v.talla == tallaSeleccionada;
+
+                });
+
+                if (variante) {
+
+                    document.getElementById('sku-text').innerText =
+                        "SKU: " + variante.sku;
+
+                }
+
+            }
+
+        }
+
+        function actualizarVarianteID() {
+
+            console.log("Color:", colorSeleccionado);
+            console.log("Talla:", tallaSeleccionada);
+            console.log("Variantes:", variantes);
+
+            if (colorSeleccionado && tallaSeleccionada) {
+
+                const variante = variantes.find(v =>
+                    v.color.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase()
+                    &&
+                    v.talla.trim().toLowerCase() === tallaSeleccionada.trim().toLowerCase()
+                );
+
+                console.log("Variante encontrada:", variante);
+
+                if (variante) {
+
+                    document.getElementById('input-variante').value = variante.id_variante;
+
+                    document.getElementById('sku-text').innerText =
+                        "SKU: " + variante.sku;
+
+                }
+
+            }
+
+        }
+
 
         document.getElementById('form-carrito').addEventListener('submit', function (e) {
             const color = document.getElementById('input-color').value;
@@ -258,6 +379,6 @@
             }
         });
     </script>
-</body>
+    </body>
 
-</html>
+    </html>

@@ -5,7 +5,7 @@
 
 {{-- ERRORES --}}
 @if ($errors->any())
-    <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
+    <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
         <ul class="list-disc pl-5">
             @foreach ($errors->all() as $error)
                 <li>{{ $error }}</li>
@@ -18,115 +18,169 @@
     action="{{ route('admin.productos.update', $producto->id_producto) }}"
     method="POST"
     enctype="multipart/form-data"
-    x-data="editProductoForm({{ json_encode($producto->variantes ?? []) }})"
-    class="space-y-6 bg-white p-6 rounded shadow"
+    x-data="editProductoForm({{ json_encode($producto->variantes) }})"
+    class="space-y-8 bg-white p-6 rounded shadow"
 >
     @csrf
     @method('PUT')
 
     {{-- DATOS DEL PRODUCTO --}}
-    <div class="grid grid-cols-2 gap-4">
-        <input
-            name="nombre_producto"
-            value="{{ old('nombre_producto', $producto->nombre_producto) }}"
-            placeholder="Nombre del producto"
-            class="border p-2 rounded"
-            required
-        >
+    <section>
+        <h2 class="text-lg font-semibold mb-4">Datos del producto</h2>
 
-        <input
-            name="marca"
-            value="{{ old('marca', $producto->marca) }}"
-            placeholder="Marca"
-            class="border p-2 rounded"
-        >
+        <div class="grid grid-cols-2 gap-4">
+            <input
+                name="nombre_producto"
+                value="{{ old('nombre_producto', $producto->nombre_producto) }}"
+                placeholder="Nombre del producto"
+                class="border p-2 rounded"
+                required
+            >
 
-        <input
-            name="precio"
-            type="number"
-            step="0.01"
-            value="{{ old('precio', $producto->precio) }}"
-            placeholder="Precio"
-            class="border p-2 rounded"
-            required
-        >
+            <input
+                name="marca"
+                value="{{ old('marca', $producto->marca) }}"
+                placeholder="Marca"
+                class="border p-2 rounded"
+            >
 
-        <input
-            name="precio_oferta"
-            type="number"
-            step="0.01"
-            value="{{ old('precio_oferta', $producto->precio_oferta) }}"
-            placeholder="Precio oferta"
-            class="border p-2 rounded"
-        >
+            <input
+                name="precio"
+                type="number"
+                step="0.01"
+                value="{{ old('precio', $producto->precio) }}"
+                placeholder="Precio"
+                class="border p-2 rounded"
+                required
+            >
 
-        <select name="id_genero" class="border p-2 rounded">
-            @foreach($generos as $g)
-                <option
-                    value="{{ $g->id_genero }}"
-                    {{ $producto->id_genero == $g->id_genero ? 'selected' : '' }}
-                >
-                    {{ $g->nombre_genero }}
-                </option>
-            @endforeach
-        </select>
+            <input
+                name="precio_oferta"
+                type="number"
+                step="0.01"
+                value="{{ old('precio_oferta', $producto->precio_oferta) }}"
+                placeholder="Precio oferta"
+                class="border p-2 rounded"
+            >
 
-        <select name="id_categoria" class="border p-2 rounded">
-            @foreach($categorias as $c)
-                <option
-                    value="{{ $c->id_categoria }}"
-                    {{ $producto->id_categoria == $c->id_categoria ? 'selected' : '' }}
-                >
-                    {{ $c->nombre_categoria }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+            <select name="id_genero" class="border p-2 rounded">
+                @foreach($generos as $g)
+                    <option value="{{ $g->id_genero }}" {{ $producto->id_genero == $g->id_genero ? 'selected' : '' }}>
+                        {{ $g->nombre_genero }}
+                    </option>
+                @endforeach
+            </select>
 
-    <textarea
-        name="descripcion"
-        class="border p-2 rounded w-full"
-        placeholder="Descripción"
-    >{{ old('descripcion', $producto->descripcion) }}</textarea>
+            <select name="id_categoria" class="border p-2 rounded">
+                @foreach($categorias as $c)
+                    <option value="{{ $c->id_categoria }}" {{ $producto->id_categoria == $c->id_categoria ? 'selected' : '' }}>
+                        {{ $c->nombre_categoria }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <textarea
+            name="descripcion"
+            class="border p-2 rounded w-full mt-4"
+            placeholder="Descripción del producto"
+        >{{ old('descripcion', $producto->descripcion) }}</textarea>
+    </section>
 
     {{-- IMAGEN --}}
-    <div>
-        <label class="block font-semibold mb-2">Imagen actual</label>
+    <section>
+        <h2 class="text-lg font-semibold mb-4">Imagen</h2>
 
-        <img
-            src="{{ asset('productos/'.$producto->imagen) }}"
-            class="w-32 h-32 object-cover rounded border mb-3"
-        >
+        <div class="flex items-center gap-6">
+            <img
+                src="{{ asset('productos/'.$producto->imagen) }}"
+                class="w-32 h-32 object-cover rounded border"
+            >
 
-        <label class="block font-semibold mb-2">Cambiar imagen (opcional)</label>
+            <div class="flex-1">
+                <label class="block font-medium mb-2">Cambiar imagen</label>
+                <input
+                    type="file"
+                    name="imagen"
+                    accept="image/*"
+                    @change="previewImage"
+                    class="border p-2 rounded w-full"
+                >
 
-        <input
-            type="file"
-            name="imagen"
-            accept="image/*"
-            @change="previewImage"
-            class="border p-2 rounded w-full"
-        >
+                <img
+                    x-show="imagePreview"
+                    :src="imagePreview"
+                    class="w-32 h-32 mt-4 object-cover rounded border"
+                >
+            </div>
+        </div>
+    </section>
+    {{-- GALERÍA DE IMÁGENES --}}
+    <section>
+        <h2 class="text-lg font-semibold mb-4">Galería de imágenes</h2>
 
-        <img
-            x-show="imagePreview"
-            :src="imagePreview"
-            class="w-32 h-32 mt-3 object-cover rounded border"
-        >
-    </div>
+        {{-- IMÁGENES ACTUALES --}}
+        @if(!empty($producto->galeria))
+            <div class="grid grid-cols-5 gap-4 mb-4">
+                @foreach($producto->galeria as $index => $img)
+                    <div class="relative border rounded overflow-hidden">
+                        <img
+                            src="{{ asset('productos/'.$img) }}"
+                            class="w-full h-28 object-cover"
+                        >
+
+                        {{-- marcar para eliminar --}}
+                        <input
+                            type="checkbox"
+                            name="eliminar_galeria[]"
+                            value="{{ $img }}"
+                            class="absolute top-2 left-2"
+                            title="Eliminar imagen"
+                        >
+                    </div>
+                @endforeach
+            </div>
+
+            <p class="text-sm text-gray-600 mb-3">
+                Marca las imágenes que deseas eliminar
+            </p>
+        @else
+            <p class="text-gray-500 mb-4">Este producto no tiene imágenes en la galería</p>
+        @endif
+
+        {{-- AGREGAR NUEVAS --}}
+        <div>
+            <label class="block font-medium mb-2">Agregar nuevas imágenes</label>
+            <input
+                type="file"
+                name="galeria[]"
+                multiple
+                accept="image/*"
+                class="border p-2 rounded w-full"
+            >
+        </div>
+    </section>
 
     {{-- VARIANTES --}}
-    <div class="border-t pt-4">
-        <h2 class="text-xl font-semibold mb-4">Variantes</h2>
+    <section class="border-t pt-6">
+        <h2 class="text-lg font-semibold mb-4">Variantes</h2>
 
-        <template x-for="(variante, index) in variantes" :key="index">
-            <div class="grid grid-cols-5 gap-2 mb-3 items-center">
+        <template x-for="(variante, index) in variantes" :key="variante.id_variante ?? index">
+            <div class="grid grid-cols-6 gap-3 mb-3 items-end bg-gray-50 p-3 rounded">
+
+                {{-- ID OCULTO --}}
+                <input
+                    type="hidden"
+                    :name="`variantes[${index}][id_variante]`"
+                    x-model="variante.id_variante"
+                >
+
                 <input
                     type="text"
                     :name="`variantes[${index}][talla]`"
                     x-model="variante.talla"
-                    class="border p-2 rounded"
                     placeholder="Talla"
+                    class="border p-2 rounded"
                     required
                 >
 
@@ -134,17 +188,17 @@
                     type="text"
                     :name="`variantes[${index}][color]`"
                     x-model="variante.color"
-                    class="border p-2 rounded"
                     placeholder="Color"
+                    class="border p-2 rounded"
                 >
 
                 <input
                     type="number"
                     :name="`variantes[${index}][stock]`"
                     x-model="variante.stock"
-                    class="border p-2 rounded"
                     placeholder="Stock"
                     min="0"
+                    class="border p-2 rounded"
                     required
                 >
 
@@ -152,14 +206,15 @@
                     type="text"
                     :name="`variantes[${index}][sku]`"
                     x-model="variante.sku"
+                    placeholder="SKU (único por variante)"
                     class="border p-2 rounded"
-                    placeholder="SKU"
                 >
 
                 <button
                     type="button"
                     @click="removeVariante(index)"
-                    class="text-red-600 font-bold"
+                    class="text-red-600 font-semibold hover:text-red-800"
+                    title="Eliminar variante"
                 >
                     ✕
                 </button>
@@ -169,30 +224,47 @@
         <button
             type="button"
             @click="addVariante"
-            class="bg-gray-200 px-3 py-1 rounded"
+            class="mt-3 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
         >
             + Agregar variante
         </button>
-    </div>
+    </section>
 
-    <button
-        type="submit"
-        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-    >
-        Actualizar producto
-    </button>
+    {{-- ACCIONES --}}
+    <div class="flex justify-end gap-4 pt-4 border-t">
+        <a
+            href="{{ route('admin.productos.index') }}"
+            class="px-6 py-2 rounded border"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        >
+            Guardar cambios
+        </button>
+    </div>
 </form>
 
 <script>
 function editProductoForm(initialVariantes) {
     return {
-        variantes: initialVariantes.length ? initialVariantes : [
-            { talla:'', color:'', stock:'', sku:'' }
-        ],
+        variantes: initialVariantes.length
+            ? initialVariantes
+            : [{ id_variante:null, talla:'', color:'', stock:'', sku:'' }],
+
         imagePreview: null,
 
         addVariante() {
-            this.variantes.push({ talla:'', color:'', stock:'', sku:'' })
+            this.variantes.push({
+                id_variante: null,
+                talla: '',
+                color: '',
+                stock: '',
+                sku: ''
+            })
         },
 
         removeVariante(index) {

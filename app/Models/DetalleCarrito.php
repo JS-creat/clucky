@@ -6,18 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class DetalleCarrito extends Model
 {
+
     protected $table = 'detalle_carrito';
+
     protected $primaryKey = 'id_detalle_carrito';
-    public $timestamps = false;
 
     protected $fillable = [
-        'cantidad',
         'id_carrito',
-        'id_producto'
+        'id_variante',
+        'cantidad'
     ];
 
-    public function producto()
+
+    public function variante()
     {
-        return $this->belongsTo(Producto::class, 'id_producto');
+        return $this->belongsTo(ProductoVariante::class, 'id_variante');
     }
+
 }
