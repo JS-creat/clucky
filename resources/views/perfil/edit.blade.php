@@ -5,8 +5,8 @@
 
         <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
 
-            <!-- Header (MISMO QUE PERFIL) -->
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-8 text-white">
+            <!-- Header - AHORA EN NEGRO -->
+            <div class="bg-black px-8 py-8 text-white">
                 <h1 class="text-3xl font-bold">
                     Editar perfil
                 </h1>
@@ -25,12 +25,18 @@
                         <p class="text-gray-500 text-sm">Nombres</p>
                         <input type="text" name="nombres" value="{{ auth()->user()->nombres }}"
                             class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        @error('nombres')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <p class="text-gray-500 text-sm">Apellidos</p>
                         <input type="text" name="apellidos" value="{{ auth()->user()->apellidos }}"
                             class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        @error('apellidos')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -38,6 +44,9 @@
                     <p class="text-gray-500 text-sm">Teléfono</p>
                     <input type="text" name="telefono" value="{{ auth()->user()->telefono }}"
                         class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    @error('telefono')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Acciones -->
@@ -47,7 +56,7 @@
                     </a>
 
                     <button type="submit"
-                        class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition">
+                        class="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 transition">
                         Guardar cambios
                     </button>
                 </div>
