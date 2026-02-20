@@ -11,12 +11,6 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        if (Auth::check() && Auth::user()->id_rol == 1) {
-
-
-            return redirect()->route('admin.dashboard');
-
-        }
 
         $query = Producto::query();
 

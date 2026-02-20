@@ -11,12 +11,10 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Admin\ProductoController;
 use App\Models\Producto;
 use App\Models\Agencia;
+use App\Models\Provincia;
+use App\Models\Distrito;
 
-/*
-|--------------------------------------------------------------------------
-| RUTAS PÚBLICAS (TIENDA)
-|--------------------------------------------------------------------------
-*/
+//rutas publicas
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -37,12 +35,7 @@ Route::get('/carrito/eliminar/{id}', [CarritoController::class, 'eliminar'])->na
 // USUARIOS AUTENTICADOS
 
 
-Route::middleware(['auth', 'verified', 'role:2'])->group(function () {
-
-    Route::get('/dashboard', function () {
-        $productos = Producto::all();
-        return view('home.index', compact('productos'));
-    })->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
         ->name('carrito.checkout');
@@ -56,7 +49,7 @@ Route::middleware(['auth', 'verified', 'role:2'])->group(function () {
 });
 
 
-//UBICACIÓN / AGENCIAS (AJAX)
+//UBICACIÓN / AGENCIAS
 
 
 Route::get('/ubicacion/provincias/{id}', [UbicacionController::class, 'provincias']);
@@ -66,6 +59,15 @@ Route::get('/agencias/{idDistrito}', function ($idDistrito) {
     return Agencia::where('id_distrito', $idDistrito)
         ->where('estado', 1)
         ->get();
+});
+
+//ubicacion
+Route::get('/provincias/{id}', function($id){
+    return Provincia::where('id_departamento', $id)->get();
+});
+
+Route::get('/distritos/{id}', function($id){
+    return Distrito::where('id_provincia', $id)->get();
 });
 
 

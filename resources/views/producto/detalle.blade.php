@@ -245,28 +245,22 @@ $tallas = $producto->variantes->pluck('talla')->unique();
 
         function seleccionarColor(elemento, nombre) {
 
-            // guardar valor
             colorSeleccionado = nombre;
 
             document.getElementById('color-seleccionado').innerText = nombre;
             document.getElementById('input-color').value = nombre;
 
-            // quitar selección anterior
             document.querySelectorAll('.color-btn').forEach(btn => {
-
                 btn.classList.remove('border-black', 'ring-2', 'ring-black');
-
                 btn.classList.add('border-gray-300');
-
             });
 
-            // marcar seleccionado
             elemento.classList.remove('border-gray-300');
-
             elemento.classList.add('border-black', 'ring-2', 'ring-black');
 
-            actualizarVarianteID();
+            bloquearTallasPorColor();
 
+            actualizarVarianteID();
         }
 
         function selectTalla(elemento) {
@@ -356,6 +350,36 @@ $tallas = $producto->variantes->pluck('talla')->unique();
 
             }
 
+        }
+        function bloquearTallasPorColor() {
+
+            document.querySelectorAll('.talla-btn').forEach(btn => {
+
+                const talla = btn.dataset.talla;
+
+                const varianteDisponible = variantes.find(v =>
+                    v.color?.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase()
+                    &&
+                    v.talla?.trim().toLowerCase() === talla.trim().toLowerCase()
+                    &&
+                    v.stock > 0
+                );
+
+                if (!varianteDisponible) {
+
+                    //  Deshabilitar
+                    btn.disabled = true;
+                    btn.classList.add('opacity-40', 'cursor-not-allowed');
+                    btn.classList.remove('hover:border-black');
+
+                } else {
+
+                    //  Habilitar
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
+
+            });
         }
 
 

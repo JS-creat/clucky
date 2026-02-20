@@ -26,30 +26,56 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-4">
                     @foreach($items as $id => $detalles)
-                        <div class="flex bg-white p-4 shadow-sm rounded-sm border items-center gap-4">
-                            <img src="{{ asset('productos/' . $detalles['imagen']) }}" class="w-20 h-24 object-cover">
-                            <div class="flex-1">
-                                <h3 class="font-bold uppercase text-sm">{{ $detalles['nombre'] }}</h3>
-                                <div class="flex items-center gap-3 mt-2">
+                        <div class="flex bg-white p-5 shadow-sm rounded-sm border gap-5">
 
-                                    <a href="{{ route('carrito.disminuir', $id) }}"
-                                        class="px-2 py-1 border text-sm font-bold hover:bg-gray-100">−</a>
+                            <img src="{{ asset('productos/' . $detalles['imagen']) }}" class="w-24 h-28 object-cover rounded">
 
-                                    <span class="text-sm font-bold">
-                                        {{ $detalles['cantidad'] }}
-                                    </span>
+                            <div class="flex-1 flex flex-col justify-between">
 
-                                    <a href="{{ route('carrito.aumentar', $id) }}"
-                                        class="px-2 py-1 border text-sm font-bold hover:bg-gray-100">+</a>
+                                <div>
+                                    <h3 class="font-bold uppercase text-sm tracking-wide">
+                                        {{ $detalles['nombre'] }}
+                                    </h3>
 
-                                    <a href="{{ route('carrito.eliminar', $id) }}"
-                                        class="ml-4 text-red-500 text-xs uppercase font-bold hover:underline">
-                                        Eliminar
-                                    </a>
-
+                                    <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                        <p><span class="font-semibold text-gray-700">Color:</span>
+                                            {{ $detalles['color'] ?? '-' }}</p>
+                                        <p><span class="font-semibold text-gray-700">Talla:</span>
+                                            {{ $detalles['talla'] ?? '-' }}</p>
+                                    </div>
                                 </div>
 
-                                <p class="font-black mt-2 text-[#f50057]">S/ {{ number_format($detalles['precio'], 2) }}</p>
+                                <div class="flex items-center justify-between mt-4">
+
+                                    <div class="flex items-center gap-3">
+
+                                        <a href="{{ route('carrito.disminuir', $id) }}"
+                                            class="px-3 py-1 border text-sm font-bold hover:bg-gray-100">−</a>
+
+                                        <span class="text-sm font-bold">
+                                            {{ $detalles['cantidad'] }}
+                                        </span>
+
+                                        <a href="{{ route('carrito.aumentar', $id) }}"
+                                            class="px-3 py-1 border text-sm font-bold hover:bg-gray-100">+</a>
+
+                                        <a href="{{ route('carrito.eliminar', $id) }}"
+                                            class="ml-4 text-red-500 text-xs uppercase font-bold hover:underline">
+                                            Eliminar
+                                        </a>
+
+                                    </div>
+
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-400">
+                                            S/ {{ number_format($detalles['precio'], 2) }} c/u
+                                        </p>
+                                        <p class="font-black text-[#f50057]">
+                                            S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
+                                        </p>
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
                     @endforeach
