@@ -17,10 +17,12 @@ class DetalleCarrito extends Model
         'cantidad'
     ];
 
-
+    public function producto()
+    {
+        return $this->belongsTo(\App\Models\Producto::class, 'id_producto', 'id_producto');
+    }
     public function variante()
     {
         return $this->belongsTo(ProductoVariante::class, 'id_variante');
     }
-
 }

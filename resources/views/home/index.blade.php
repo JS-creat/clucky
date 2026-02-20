@@ -82,6 +82,15 @@
                         </span>
                     </a>
                 </div>
+
+                @auth
+                    @if(auth()->user()->id_rol == 1)
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="text-sm font-bold text-gray-900 hover:underline">
+                            Panel Admin
+                        </a>
+                    @endif
+                @endauth
             </div>
         </div>
     </nav>

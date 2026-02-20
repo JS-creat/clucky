@@ -132,7 +132,7 @@
                         {{-- marcar para eliminar --}}
                         <input
                             type="checkbox"
-                            name="eliminar_galeria[]"
+                            name="galeria_eliminar[]"
                             value="{{ $img }}"
                             class="absolute top-2 left-2"
                             title="Eliminar imagen"

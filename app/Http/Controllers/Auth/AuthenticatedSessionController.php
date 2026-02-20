@@ -28,17 +28,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        //Logica de redireccion segun rol
-        $user = auth::user();
-
-        if ($user->id_rol == 1) {
-             return redirect()->route('admin.dashboard');
-        }
-
-        //si no es admin va a ussuario
-        return redirect()->route('home');
+        return redirect('/');
     }
-
     /**
      * Destroy an authenticated session.
      */

@@ -69,11 +69,11 @@
                           class="inline">
                         @csrf
                         @method('DELETE')
-                        <button
+                        {{--<button
                             onclick="return confirm('¿Eliminar producto?')"
                             class="text-red-600 hover:underline">
                             Eliminar
-                        </button>
+                        </button>--}}
                     </form>
                 </td>
             </tr>
