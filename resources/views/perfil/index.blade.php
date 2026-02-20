@@ -88,7 +88,7 @@
 
             <!-- BOTONES -->
             <div class="flex justify-between items-center">
-                <a href="{{ url()->previous() }}"
+                <a href="{{ route('home') }}"
                     class="text-sm text-gray-600 hover:underline">
                     ← Volver
                 </a>
