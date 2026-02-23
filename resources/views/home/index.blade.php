@@ -2,9 +2,9 @@
 
 @section('title', 'C\'Lucky - Tienda Online')
 
-@section('content')
+@section('categorias')
     {{-- BARRA DE CATEGORÍAS STICKY --}}
-    <div class="sticky top-20 bg-white border-b z-40 shadow-sm">
+    <div class="bg-white border-b shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-8">
             <div class="flex justify-center space-x-8 py-3 font-medium uppercase text-sm tracking-widest">
                 <a href="{{ route('home') }}"
@@ -29,7 +29,9 @@
             </div>
         </div>
     </div>
+@endsection
 
+@section('content')
     <!-- Carrusel -->
     <section class="relative w-full h-[500px] bg-gray-100 overflow-hidden">
         <div class="absolute inset-0">

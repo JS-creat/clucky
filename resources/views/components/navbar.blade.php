@@ -1,11 +1,11 @@
 {{-- resources/views/components/navbar.blade.php --}}
 <nav class="border-b sticky top-0 bg-white z-50">
     <div class="max-w-full mx-auto px-4 sm:px-8">
-        <div class="flex justify-between h-20 items-center">
+        <div class="flex justify-between h-16 items-center">
             <div class="flex-shrink-0 flex items-center">
                 <a href="{{ url('/') }}">
                     <img src="{{ asset('images/logo.jpg') }}" alt="Logo C'Lucky"
-                        class="h-14 w-auto transition-transform hover:scale-105">
+                        class="h-14 w-auto">
                 </a>
             </div>
 
