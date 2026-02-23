@@ -92,7 +92,7 @@
                 'Content-Type': 'application/json',
             }
         }).then(() => {
-            // Después de logout exitoso, redirigimos al registro
+            // Después de logout exitoso, redirigimos al registro.
             window.location.href = '{{ route('register') }}';
         }).catch(() => {
             // Si hay error igual intentamos redirigir
