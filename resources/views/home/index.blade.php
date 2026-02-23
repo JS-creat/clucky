@@ -4,26 +4,26 @@
 
 @section('categorias')
     {{-- BARRA DE CATEGORÍAS STICKY --}}
-    <div class="bg-white border-b shadow-sm">
+    <div class="sticky top-16 bg-white border-b z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-8">
             <div class="flex justify-center space-x-8 py-3 font-medium uppercase text-sm tracking-widest">
                 <a href="{{ route('home') }}"
-                    class="{{ !request()->has('categoria') && !request()->has('promocion') ? 'text-pink-600 font-bold' : 'text-gray-700 hover:text-pink-600' }} transition-colors">
+                    class="{{ !request()->has('categoria') && !request()->has('promocion') ? 'text-black font-bold' : 'text-gray-900' }} transition-colors">
                     Todo
                 </a>
 
                 <a href="{{ route('home', ['categoria' => 'Mujer']) }}"
-                    class="{{ request('categoria') == 'Mujer' ? 'text-pink-600 font-bold' : 'text-gray-700 hover:text-pink-600' }} transition-colors">
+                    class="{{ request('categoria') == 'Mujer' ? 'text-black font-bold' : 'text-gray-900' }} transition-colors">
                     Mujer
                 </a>
 
                 <a href="{{ route('home', ['categoria' => 'Hombre']) }}"
-                    class="{{ request('categoria') == 'Hombre' ? 'text-pink-600 font-bold' : 'text-gray-700 hover:text-pink-600' }} transition-colors">
+                    class="{{ request('categoria') == 'Hombre' ? 'text-black font-bold' : 'text-gray-900' }} transition-colors">
                     Hombre
                 </a>
 
                 <a href="{{ route('home', ['promocion' => 1]) }}"
-                    class="{{ request()->has('promocion') ? 'text-red-600 font-bold italic' : 'text-gray-700 hover:text-red-600' }} transition-colors">
+                    class="{{ request()->has('promocion') ? 'text-black font-bold' : 'text-red-600 font-bold' }} transition-colors">
                     Promociones
                 </a>
             </div>

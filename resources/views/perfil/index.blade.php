@@ -2,24 +2,24 @@
 
 @section('title', 'Mi Perfil - C\'Lucky')
 
-@section('categorias')
-    <div class="bg-white border-b shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8">
+@section('content')
+    <div class="sticky top-16 bg-white border-b z-40 shadow-sm">
+    {{-- Este contenedor copia exactamente la estructura del contenedor principal --}}
+        <div class="max-w-5xl mx-auto px-4 w-full">
             <div class="flex justify-between items-center py-3">
-                <span class="font-medium uppercase text-sm tracking-widest text-gray-900 ml-4 md:ml-8">
+                {{-- "Mi perfil" alineado con el contenido del cuadro --}}
+                <span class="font-medium uppercase text-sm tracking-widest text-gray-900">
                     Mi perfil
                 </span>
                 
-                {{-- Nombre del usuario a la derecha --}}
+                {{-- Nombre alineado con el contenido del cuadro --}}
                 <span class="text-sm text-gray-600">
                     Hola, {{ auth()->user()->nombres }}
                 </span>
             </div>
         </div>
     </div>
-@endsection
-
-@section('content')
+    <!-- PERFIL -->
     <div class="min-h-screen bg-gray-100 flex justify-center items-start py-12 px-4">
 
         <!-- CONTENEDOR PRINCIPAL -->
