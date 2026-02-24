@@ -416,7 +416,7 @@ return new class extends Migration {
 
         /*
         =====================================
-        FAVORITOS (NUEVA TABLA)
+        FAVORITOS
         =====================================
         */
 
@@ -440,48 +440,48 @@ return new class extends Migration {
 
 
 
+        /*
+        =====================================
+        SANCTUM: PERSONAL ACCESS TOKENS
+        =====================================
+        */
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('tokenable');
+            $table->string('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+
     }
 
 
 
     public function down(): void {
 
+        // Eliminar en orden inverso al de creación
+        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('favoritos');
-
         Schema::dropIfExists('detalle_carrito');
-
         Schema::dropIfExists('carrito');
-
         Schema::dropIfExists('detalle_pedido');
-
         Schema::dropIfExists('pedido');
-
         Schema::dropIfExists('tipo_entrega');
-
         Schema::dropIfExists('cupones');
-
         Schema::dropIfExists('producto_variante');
-
         Schema::dropIfExists('producto');
-
         Schema::dropIfExists('promociones');
-
         Schema::dropIfExists('categoria');
-
         Schema::dropIfExists('genero');
-
         Schema::dropIfExists('agencia');
-
         Schema::dropIfExists('distrito');
-
         Schema::dropIfExists('provincia');
-
         Schema::dropIfExists('departamento');
-
         Schema::dropIfExists('usuario');
-
         Schema::dropIfExists('tipo_documento');
-
         Schema::dropIfExists('rol');
 
     }
