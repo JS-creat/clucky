@@ -9,7 +9,6 @@ class Producto extends Model
     protected $table = 'producto';
     protected $primaryKey = 'id_producto';
     
-    // ✅ IMPORTANTE: Habilitar timestamps ya que la tabla tiene created_at y updated_at
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';

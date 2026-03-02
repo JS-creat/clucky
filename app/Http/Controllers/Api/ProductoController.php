@@ -126,16 +126,34 @@ class ProductoController extends Controller
     }
 
     /**
-     * Obtener productos recomendados - VERSIÓN CORREGIDA
+     * Obtener productos recomendados - AHORA CON FILTROS
      */
     public function recomendados(Request $request)
     {
         try {
-            // Usamos activos() en lugar de disponibles() para incluir productos sin variantes
-            $productos = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->inRandomOrder()
-                ->get();
+            $query = Producto::activos()
+                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            
+            // NUEVO: Filtrar por género (hombre/mujer)
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            // NUEVO: Filtrar por oferta/promociones
+            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
+                $query->enOferta();
+            }
+            
+            // NUEVO: Filtrar por categoría si es necesario
+            if ($request->has('categoria_id')) {
+                $query->where('id_categoria', $request->categoria_id);
+            }
+            
+            // Límite de resultados
+            $limit = $request->get('limit', 10);
+            
+            // Orden aleatorio para "recomendados"
+            $productos = $query->inRandomOrder()->limit($limit)->get();
             
             return response()->json([
                 'success' => true,
@@ -153,16 +171,34 @@ class ProductoController extends Controller
     }
 
     /**
-     * Obtener productos populares - VERSIÓN CORREGIDA
+     * Obtener productos populares - AHORA CON FILTROS
      */
     public function populares(Request $request)
     {
         try {
-            // Usamos activos() en lugar de disponibles() para incluir productos sin variantes
-            $productos = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->inRandomOrder()
-                ->get();
+            $query = Producto::activos()
+                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            
+            // NUEVO: Filtrar por género (hombre/mujer)
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            // NUEVO: Filtrar por oferta/promociones
+            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
+                $query->enOferta();
+            }
+            
+            // NUEVO: Filtrar por categoría si es necesario
+            if ($request->has('categoria_id')) {
+                $query->where('id_categoria', $request->categoria_id);
+            }
+            
+            // Límite de resultados
+            $limit = $request->get('limit', 10);
+            
+            // Orden aleatorio para "populares" (podrías cambiar por más vendidos después)
+            $productos = $query->inRandomOrder()->limit($limit)->get();
             
             return response()->json([
                 'success' => true,
@@ -186,11 +222,17 @@ class ProductoController extends Controller
     public function ofertas(Request $request)
     {
         try {
-            $productos = Producto::activos()
+            $query = Producto::activos()
                 ->enOferta()
                 ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock()
-                ->paginate($request->get('limit', 10));
+                ->conStock();
+            
+            // NUEVO: Filtrar por género en ofertas también
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            $productos = $query->paginate($request->get('limit', 10));
             
             return response()->json([
                 'success' => true,
@@ -219,11 +261,17 @@ class ProductoController extends Controller
                 'q' => 'required|string|min:2'
             ]);
             
-            $productos = Producto::activos()
+            $query = Producto::activos()
                 ->buscar($request->q)
                 ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock()
-                ->paginate($request->get('limit', 10));
+                ->conStock();
+            
+            // NUEVO: Filtrar por género en búsqueda
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            $productos = $query->paginate($request->get('limit', 10));
             
             return response()->json([
                 'success' => true,
@@ -248,13 +296,19 @@ class ProductoController extends Controller
     public function porTalla(Request $request, $talla)
     {
         try {
-            $productos = Producto::activos()
+            $query = Producto::activos()
                 ->whereHas('variantes', function($q) use ($talla) {
                     $q->where('talla', $talla)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->paginate($request->get('limit', 10));
+                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            
+            // NUEVO: Filtrar por género
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            $productos = $query->paginate($request->get('limit', 10));
             
             return response()->json([
                 'success' => true,
@@ -279,13 +333,19 @@ class ProductoController extends Controller
     public function porColor(Request $request, $color)
     {
         try {
-            $productos = Producto::activos()
+            $query = Producto::activos()
                 ->whereHas('variantes', function($q) use ($color) {
                     $q->where('color', $color)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->paginate($request->get('limit', 10));
+                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            
+            // NUEVO: Filtrar por género
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            $productos = $query->paginate($request->get('limit', 10));
             
             return response()->json([
                 'success' => true,
@@ -315,11 +375,17 @@ class ProductoController extends Controller
                 'max' => 'required|numeric|min:0|gt:min',
             ]);
             
-            $productos = Producto::activos()
+            $query = Producto::activos()
                 ->whereBetween('precio', [$request->min, $request->max])
                 ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock()
-                ->paginate($request->get('limit', 10));
+                ->conStock();
+            
+            // NUEVO: Filtrar por género
+            if ($request->has('genero_id')) {
+                $query->where('id_genero', $request->genero_id);
+            }
+            
+            $productos = $query->paginate($request->get('limit', 10));
             
             return response()->json([
                 'success' => true,
