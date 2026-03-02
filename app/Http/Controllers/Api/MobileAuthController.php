@@ -28,7 +28,13 @@ class MobileAuthController extends Controller
 
         return response()->json([
             'message' => 'Login exitoso',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id_usuario,
+                'nombres' => $user->nombres,
+                'apellidos' => $user->apellidos,
+                'correo' => $user->correo,
+                'id_rol' => $user->id_rol
+            ],
             'token' => $token
         ]);
     }
@@ -50,9 +56,41 @@ class MobileAuthController extends Controller
             'id_rol' => 2
         ]);
 
+        // Generar token para login automático después del registro
+        $token = $user->createToken('mobile_token')->plainTextToken;
+
         return response()->json([
             'message' => 'Usuario registrado correctamente',
-            'user' => $user
+            'user' => [
+                'id' => $user->id_usuario,
+                'nombres' => $user->nombres,
+                'apellidos' => $user->apellidos,
+                'correo' => $user->correo,
+                'id_rol' => $user->id_rol
+            ],
+            'token' => $token
         ], 201);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        
+        return response()->json([
+            'message' => 'Sesión cerrada correctamente'
+        ]);
+    }
+
+    public function perfil(Request $request)
+    {
+        $user = $request->user();
+        
+        return response()->json([
+            'id' => $user->id_usuario,
+            'nombres' => $user->nombres,
+            'apellidos' => $user->apellidos,
+            'correo' => $user->correo,
+            'id_rol' => $user->id_rol
+        ]);
     }
 }

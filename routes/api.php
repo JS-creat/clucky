@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\CarritoController; // ← AGREGAR
 use Illuminate\Http\Request;
 
 // protegida perfil
@@ -17,6 +18,20 @@ Route::post('/login', [MobileAuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('/perfil', function (Request $request) {
     return response()->json($request->user());
 });
+
+// ==================== RUTAS DE CARRITO ====================
+Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
+    Route::get('/', [CarritoController::class, 'obtener']); // Obtener carrito
+    Route::post('/crear', [CarritoController::class, 'crear']); // Crear carrito
+    Route::post('/agregar', [CarritoController::class, 'agregar']); // Agregar producto
+    Route::put('/actualizar', [CarritoController::class, 'actualizar']); // Actualizar cantidad
+    Route::delete('/eliminar', [CarritoController::class, 'eliminar']); // Eliminar producto
+    Route::delete('/limpiar', [CarritoController::class, 'limpiar']); // Limpiar carrito
+    Route::get('/{idCarrito}/total', [CarritoController::class, 'total']); // Obtener total
+});
+
+// Ruta pública para verificar stock
+Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
 
 // Rutas públicas de productos
 Route::prefix('productos')->group(function () {
