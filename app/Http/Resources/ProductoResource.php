@@ -8,25 +8,29 @@ class ProductoResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Generar URL completa para la imagen principal
+        // Imagen principal
         $imagenPrincipal = null;
         if ($this->imagen) {
-            if (filter_var($this->imagen, FILTER_VALIDATE_URL)) {
-                $imagenPrincipal = $this->imagen;
-            } else {
-                $imagenPrincipal = url('storage/' . $this->imagen);
-            }
+            $imagenPrincipal = filter_var($this->imagen, FILTER_VALIDATE_URL)
+                ? $this->imagen
+                : asset('productos/' . $this->imagen); // ← CAMBIADO
         }
 
         // Procesar la galería de imágenes si existe
         $galeria = [];
         if ($this->galeria) {
-            $imagenesGaleria = json_decode($this->galeria, true) ?? [];
+            // Decodificar JSON si es string
+            $imagenesGaleria = [];
+            if (is_array($this->galeria)) {
+                $imagenesGaleria = $this->galeria;
+            } elseif (is_string($this->galeria)) {
+                $imagenesGaleria = json_decode($this->galeria, true) ?? [];
+            }
+
             $galeria = collect($imagenesGaleria)->map(function($img) {
-                if (filter_var($img, FILTER_VALIDATE_URL)) {
-                    return $img;
-                }
-                return url('storage/' . $img);
+                return filter_var($img, FILTER_VALIDATE_URL)
+                    ? $img
+                    : asset('productos/' . $img); // ← CAMBIADO
             })->toArray();
         }
 
@@ -44,7 +48,7 @@ class ProductoResource extends JsonResource
         // Obtener colores únicos
         $colores = $variantes->pluck('color')->unique()->filter()->values()->toArray();
 
-        // Calcular SKU principal (usar el de la primera variante o el del producto si tuviera)
+        // Calcular SKU principal
         $skuPrincipal = $variantes->isNotEmpty() ? $variantes->first()->sku : null;
 
         // Calcular precio final considerando oferta y promoción
@@ -69,9 +73,9 @@ class ProductoResource extends JsonResource
             'descuento' => $descuento > 0 ? $descuento : null,
             'imagenes' => $galeria,
             'imagen_principal' => $imagenPrincipal,
-            'categoria' => $this->categoria ? $this->categoria->nombre_categoria : null,
+            'categoria' => $this->categoria?->nombre_categoria,
             'categoria_id' => $this->id_categoria,
-            'genero' => $this->genero ? $this->genero->nombre_genero : null,
+            'genero' => $this->genero?->nombre_genero,
             'tallas' => $tallas,
             'colores' => $colores,
             'marca' => $this->marca,
@@ -80,16 +84,16 @@ class ProductoResource extends JsonResource
             'disponible' => $stockTotal > 0 && $this->estado_producto == 1,
             'en_oferta' => $this->precio_oferta !== null || $this->id_promocion !== null,
             'variantes' => VarianteResource::collection($variantes),
-            'promocion' => $this->when($this->id_promocion, function() {
+            'promocion' => $this->when($this->id_promocion && $this->promocion, function() {
                 return [
                     'id' => $this->promocion->id_promocion,
                     'nombre' => $this->promocion->nombre_promocion,
-                    'descuento' => $this->promocion->descuento,
+                    'descuento' => (float) $this->promocion->descuento,
                     'fecha_fin' => $this->promocion->fecha_fin,
                 ];
             }),
-            'fecha_creacion' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
-            'fecha_actualizacion' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
+            'fecha_creacion' => $this->created_at?->format('Y-m-d H:i:s'),
+            'fecha_actualizacion' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 }
