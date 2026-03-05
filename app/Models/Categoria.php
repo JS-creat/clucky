@@ -8,29 +8,22 @@ class Categoria extends Model
 {
     protected $table = 'categoria';
     protected $primaryKey = 'id_categoria';
-    
-    // La tabla categoría NO tiene timestamps en tu BD
-    public $timestamps = false;
 
     protected $fillable = [
-        'nombre_categoria'
+        'nombre_categoria',
+        'estado_categoria'
     ];
-
-    /**
-     * Relación con productos
-     * Una categoría tiene muchos productos
-     */
     public function productos()
     {
         return $this->hasMany(Producto::class, 'id_categoria', 'id_categoria');
     }
 
     /**
-     * Scope para categorías con productos activos
+     * Devulve la catergoria de productos activos
      */
     public function scopeConProductosActivos($query)
     {
-        return $query->whereHas('productos', function($q) {
+        return $query->whereHas('productos', function ($q) {
             $q->activos();
         });
     }
@@ -44,7 +37,7 @@ class Categoria extends Model
     }
 
     /**
-     * Obtener productos disponibles (con stock) de esta categoría
+     * Obtener productos disponibles con stock de esta categoría
      */
     public function productosDisponibles()
     {

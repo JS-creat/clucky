@@ -1,282 +1,306 @@
 @extends('admin.layout')
 
 @section('content')
-<h1 class="text-2xl font-bold mb-6">Editar Producto</h1>
+    <div x-data="editProductoForm(@js(old('variantes') ?? $producto->variantes ?? []))">
 
-{{-- ERRORES --}}
-@if ($errors->any())
-    <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
-        <ul class="list-disc pl-5">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-<form
-    action="{{ route('admin.productos.update', $producto->id_producto) }}"
-    method="POST"
-    enctype="multipart/form-data"
-    x-data="editProductoForm({{ json_encode($producto->variantes) }})"
-    class="space-y-8 bg-white p-6 rounded shadow"
->
-    @csrf
-    @method('PUT')
-
-    {{-- DATOS DEL PRODUCTO --}}
-    <section>
-        <h2 class="text-lg font-semibold mb-4">Datos del producto</h2>
-
-        <div class="grid grid-cols-2 gap-4">
-            <input
-                name="nombre_producto"
-                value="{{ old('nombre_producto', $producto->nombre_producto) }}"
-                placeholder="Nombre del producto"
-                class="border p-2 rounded"
-                required
-            >
-
-            <input
-                name="marca"
-                value="{{ old('marca', $producto->marca) }}"
-                placeholder="Marca"
-                class="border p-2 rounded"
-            >
-
-            <input
-                name="precio"
-                type="number"
-                step="0.01"
-                value="{{ old('precio', $producto->precio) }}"
-                placeholder="Precio"
-                class="border p-2 rounded"
-                required
-            >
-
-            <input
-                name="precio_oferta"
-                type="number"
-                step="0.01"
-                value="{{ old('precio_oferta', $producto->precio_oferta) }}"
-                placeholder="Precio oferta"
-                class="border p-2 rounded"
-            >
-
-            <select name="id_genero" class="border p-2 rounded">
-                @foreach($generos as $g)
-                    <option value="{{ $g->id_genero }}" {{ $producto->id_genero == $g->id_genero ? 'selected' : '' }}>
-                        {{ $g->nombre_genero }}
-                    </option>
-                @endforeach
-            </select>
-
-            <select name="id_categoria" class="border p-2 rounded">
-                @foreach($categorias as $c)
-                    <option value="{{ $c->id_categoria }}" {{ $producto->id_categoria == $c->id_categoria ? 'selected' : '' }}>
-                        {{ $c->nombre_categoria }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
-        <textarea
-            name="descripcion"
-            class="border p-2 rounded w-full mt-4"
-            placeholder="Descripción del producto"
-        >{{ old('descripcion', $producto->descripcion) }}</textarea>
-    </section>
-
-    {{-- IMAGEN --}}
-    <section>
-        <h2 class="text-lg font-semibold mb-4">Imagen</h2>
-
-        <div class="flex items-center gap-6">
-            <img
-                src="{{ asset('productos/'.$producto->imagen) }}"
-                class="w-32 h-32 object-cover rounded border"
-            >
-
-            <div class="flex-1">
-                <label class="block font-medium mb-2">Cambiar imagen</label>
-                <input
-                    type="file"
-                    name="imagen"
-                    accept="image/*"
-                    @change="previewImage"
-                    class="border p-2 rounded w-full"
-                >
-
-                <img
-                    x-show="imagePreview"
-                    :src="imagePreview"
-                    class="w-32 h-32 mt-4 object-cover rounded border"
-                >
+        {{-- Header --}}
+        <div class="flex items-center gap-4 mb-12">
+            <a href="{{ route('admin.productos.index') }}"
+                class="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 transition-all shadow-sm">
+                <x-heroicon-o-arrow-left class="w-6 h-6" />
+            </a>
+            <div>
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Editar Producto</h1>
             </div>
         </div>
-    </section>
-    {{-- GALERÍA DE IMÁGENES --}}
-    <section>
-        <h2 class="text-lg font-semibold mb-4">Galería de imágenes</h2>
 
-        {{-- IMÁGENES ACTUALES --}}
-        @if(!empty($producto->galeria))
-            <div class="grid grid-cols-5 gap-4 mb-4">
-                @foreach($producto->galeria as $index => $img)
-                    <div class="relative border rounded overflow-hidden">
-                        <img
-                            src="{{ asset('productos/'.$img) }}"
-                            class="w-full h-28 object-cover"
-                        >
-
-                        {{-- marcar para eliminar --}}
-                        <input
-                            type="checkbox"
-                            name="galeria_eliminar[]"
-                            value="{{ $img }}"
-                            class="absolute top-2 left-2"
-                            title="Eliminar imagen"
-                        >
-                    </div>
-                @endforeach
+        {{-- Errores de Validación --}}
+        @if ($errors->any())
+            <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start animate-pulse">
+                <x-heroicon-s-x-circle class="w-6 h-6 text-rose-500 flex-shrink-0" />
+                <div>
+                    <h3 class="font-bold text-rose-800 text-sm">Hay errores que debes corregir:</h3>
+                    <ul class="text-rose-600 text-xs mt-1 list-disc pl-4 font-medium">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
-
-            <p class="text-sm text-gray-600 mb-3">
-                Marca las imágenes que deseas eliminar
-            </p>
-        @else
-            <p class="text-gray-500 mb-4">Este producto no tiene imágenes en la galería</p>
         @endif
 
-        {{-- AGREGAR NUEVAS --}}
-        <div>
-            <label class="block font-medium mb-2">Agregar nuevas imágenes</label>
-            <input
-                type="file"
-                name="galeria[]"
-                multiple
-                accept="image/*"
-                class="border p-2 rounded w-full"
-            >
-        </div>
-    </section>
+        <form action="{{ route('admin.productos.update', $producto->id_producto) }}" method="POST"
+            enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            @csrf
+            @method('PUT')
 
-    {{-- VARIANTES --}}
-    <section class="border-t pt-6">
-        <h2 class="text-lg font-semibold mb-4">Variantes</h2>
+            {{-- COLUMNA IZQUIERDA --}}
+            <div class="lg:col-span-2 space-y-8">
 
-        <template x-for="(variante, index) in variantes" :key="variante.id_variante ?? index">
-            <div class="grid grid-cols-6 gap-3 mb-3 items-end bg-gray-50 p-3 rounded">
+                {{-- Card de Información General --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                            <x-heroicon-o-pencil-square class="w-5 h-5" />
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Información del Producto</h2>
+                    </div>
 
-                {{-- ID OCULTO --}}
-                <input
-                    type="hidden"
-                    :name="`variantes[${index}][id_variante]`"
-                    x-model="variante.id_variante"
-                >
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nombre</label>
+                            <input name="nombre_producto" value="{{ old('nombre_producto', $producto->nombre_producto) }}"
+                                required
+                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Marca</label>
+                            <input name="marca" value="{{ old('marca', $producto->marca) }}"
+                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio (S/)</label>
+                            <input name="precio" type="number" step="0.01" value="{{ old('precio', $producto->precio) }}"
+                                required
+                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio Oferta</label>
+                            <input name="precio_oferta" type="number" step="0.01"
+                                value="{{ old('precio_oferta', $producto->precio_oferta) }}"
+                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-rose-500 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+                </div>
 
-                <input
-                    type="text"
-                    :name="`variantes[${index}][talla]`"
-                    x-model="variante.talla"
-                    placeholder="Talla"
-                    class="border p-2 rounded"
-                    required
-                >
+                {{-- Card de Variantes --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
+                                <x-heroicon-o-swatch class="w-5 h-5" />
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Variantes de Stock</h2>
+                        </div>
+                        <button type="button" @click="addVariante"
+                            class="flex items-center gap-2 text-xs font-black text-indigo-600 hover:underline">
+                            <x-heroicon-o-plus-circle class="w-5 h-5" />
+                            Añadir Variante
+                        </button>
+                    </div>
 
-                <input
-                    type="text"
-                    :name="`variantes[${index}][color]`"
-                    x-model="variante.color"
-                    placeholder="Color"
-                    class="border p-2 rounded"
-                >
+                    <div class="space-y-4">
+                        <template x-for="(variante, index) in variantes" :key="variante.uid">
+                            <div class="relative grid grid-cols-1 md:grid-cols-5 gap-3 p-5 rounded-3xl transition-all border-2"
+                                :class="isDuplicated(index) ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-transparent'">
 
-                <input
-                    type="number"
-                    :name="`variantes[${index}][stock]`"
-                    x-model="variante.stock"
-                    placeholder="Stock"
-                    min="0"
-                    class="border p-2 rounded"
-                    required
-                >
+                                <input type="hidden" :name="`variantes[${index}][id_variante]`"
+                                    x-model="variante.id_variante">
 
-                <input
-                    type="text"
-                    :name="`variantes[${index}][sku]`"
-                    x-model="variante.sku"
-                    placeholder="SKU (único por variante)"
-                    class="border p-2 rounded"
-                >
+                                {{-- Inputs Talla, Color, Stock, SKU --}}
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Talla</label>
+                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla"
+                                        required
+                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
+                                        :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
+                                </div>
 
-                <button
-                    type="button"
-                    @click="removeVariante(index)"
-                    class="text-red-600 font-semibold hover:text-red-800"
-                    title="Eliminar variante"
-                >
-                    ✕
-                </button>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Color</label>
+                                    <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color"
+                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
+                                        :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Stock</label>
+                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock"
+                                        required
+                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm"
+                                        min="0">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">SKU</label>
+                                    <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku" required
+                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-[10px] shadow-sm outline-none"
+                                        :class="`{{ $errors->has('variantes.') }}${index}.sku` ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-transparent focus:border-indigo-500 bg-white'">
+                                </div>
+
+                                {{-- Botón Eliminar --}}
+                                <div class="flex items-center justify-center pt-5">
+                                    <button type="button" @click="removeVariante(index)"
+                                        class="p-3 text-rose-400 hover:text-rose-600 hover:bg-rose-100 rounded-xl transition-all">
+                                        <x-heroicon-o-trash class="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {{-- Aviso Error Duplicado --}}
+                                <template x-if="isDuplicated(index)">
+                                    <div
+                                        class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
+                                        <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
+                                        <span>Talla y Color repetidos en el formulario</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
-        </template>
 
-        <button
-            type="button"
-            @click="addVariante"
-            class="mt-3 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-        >
-            + Agregar variante
-        </button>
-    </section>
+            {{-- COLUMNA DERECHA --}}
+            <div class="space-y-8">
+                {{-- Imagen Principal --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
+                    <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Imagen Principal</label>
+                    <div
+                        class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
 
-    {{-- ACCIONES --}}
-    <div class="flex justify-end gap-4 pt-4 border-t">
-        <a
-            href="{{ route('admin.productos.index') }}"
-            class="px-6 py-2 rounded border"
-        >
-            Cancelar
-        </a>
+                        {{-- Mostrar previsualización si existe, si no, mostrar la imagen actual de la DB --}}
+                        <template x-if="imgPrincipalPreview">
+                            <img :src="imgPrincipalPreview" class="w-full h-full object-cover">
+                        </template>
 
-        <button
-            type="submit"
-            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-        >
-            Guardar cambios
-        </button>
-    </div>
-</form>
+                        <template x-if="!imgPrincipalPreview">
+                            @if($producto->imagen)
+                                <img src="{{ asset('productos/' . $producto->imagen) }}"
+                                    class="w-full h-full object-cover group-hover:opacity-50 transition-all">
+                            @endif
+                        </template>
 
-<script>
-function editProductoForm(initialVariantes) {
-    return {
-        variantes: initialVariantes.length
-            ? initialVariantes
-            : [{ id_variante:null, talla:'', color:'', stock:'', sku:'' }],
+                        <div
+                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
+                            <x-heroicon-o-camera class="w-10 h-10 text-white" />
+                        </div>
 
-        imagePreview: null,
+                        {{-- Importante: @change para activar la previsualización --}}
+                        <input type="file" name="imagen" @change="previewPrincipal"
+                            class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                    </div>
+                    <p class="text-[9px] text-gray-400 text-center font-bold uppercase tracking-tighter">Click para cambiar
+                        imagen</p>
+                </div>
 
-        addVariante() {
-            this.variantes.push({
-                id_variante: null,
-                talla: '',
-                color: '',
-                stock: '',
-                sku: ''
-            })
-        },
+                {{-- Galería de Imágenes --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Galería</label>
+                    </div>
 
-        removeVariante(index) {
-            this.variantes.splice(index, 1)
-        },
+                    <div class="grid grid-cols-3 gap-2">
+                        {{-- Fotos actuales en la DB --}}
+                        @foreach($producto->galeria as $img)
+                            <div class="relative aspect-square rounded-xl overflow-hidden group border border-gray-50">
+                                <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
+                                <label
+                                    class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white">
+                                    <input type="checkbox" name="galeria_eliminar[]" value="{{ $img }}" class="hidden peer">
+                                    <x-heroicon-o-trash class="w-5 h-5 mb-1" />
+                                    <span class="text-[8px] font-black uppercase peer-checked:hidden">Eliminar</span>
+                                    <span class="hidden peer-checked:block text-[8px] font-black uppercase">¡Marcado!</span>
+                                </label>
+                            </div>
+                        @endforeach
 
-        previewImage(e) {
-            if (e.target.files.length) {
-                this.imagePreview = URL.createObjectURL(e.target.files[0])
+                        {{-- NUEVAS FOTOS: Previsualización de Alpine --}}
+                        <template x-for="url in galeriaPreviews">
+                            <div
+                                class="relative aspect-square rounded-xl overflow-hidden border-2 border-indigo-500 shadow-lg">
+                                <img :src="url" class="w-full h-full object-cover">
+                                <div class="absolute top-1 right-1">
+                                    <span class="bg-indigo-600 text-white text-[7px] px-1 rounded font-bold">NUEVA</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div
+                            class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all text-center">
+                            <x-heroicon-o-plus class="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                            <span class="text-[10px] font-black text-gray-400 uppercase">Añadir nuevas fotos</span>
+                            {{-- Importante: @change para activar la previsualización --}}
+                            <input type="file" name="galeria[]" multiple @change="previewGaleria"
+                                class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Botones de Acción --}}
+                <div class="flex flex-col gap-4">
+                    <button type="submit" :disabled="hasErrors()"
+                        :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'"
+                        class="w-full py-5 text-white font-black rounded-3xl shadow-xl transition-all active:scale-95">
+                        <span x-text="hasErrors() ? 'Corrige los errores' : 'Guardar Cambios'"></span>
+                    </button>
+                    <a href="{{ route('admin.productos.index') }}"
+                        class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition-all">
+                        Descartar Cambios
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <script>
+            function editProductoForm(initialVariantes = []) {
+                return {
+                    variantes: [],
+                    // Nuevas variables para vistas previas
+                    imgPrincipalPreview: null,
+                    galeriaPreviews: [],
+
+                    init() {
+                        if (Array.isArray(initialVariantes) && initialVariantes.length > 0) {
+                            this.variantes = initialVariantes.map(v => ({
+                                uid: crypto.randomUUID(),
+                                id_variante: v.id_variante ?? null,
+                                talla: v.talla ?? '',
+                                color: v.color ?? '',
+                                stock: v.stock ?? 0,
+                                sku: v.sku ?? ''
+                            }));
+                        } else {
+                            this.addVariante();
+                        }
+                    },
+
+                    // Función para ver la imagen principal antes de subirla
+                    previewPrincipal(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            this.imgPrincipalPreview = URL.createObjectURL(file);
+                        }
+                    },
+
+                    // Función para ver las fotos nuevas de la galería
+                    previewGaleria(event) {
+                        const files = event.target.files;
+                        this.galeriaPreviews = []; // Limpiar previas
+                        Array.from(files).forEach(file => {
+                            this.galeriaPreviews.push(URL.createObjectURL(file));
+                        });
+                    },
+
+                    addVariante() {
+                        this.variantes.push({ uid: crypto.randomUUID(), id_variante: null, talla: '', color: '', stock: 0, sku: '' });
+                    },
+                    removeVariante(index) {
+                        if (this.variantes.length > 1) this.variantes.splice(index, 1);
+                    },
+                    isDuplicated(index) {
+                        const current = this.variantes[index];
+                        if (!current.talla.trim()) return false;
+                        return this.variantes.some((v, i) => i !== index &&
+                            v.talla.toLowerCase().trim() === current.talla.toLowerCase().trim() &&
+                            v.color.toLowerCase().trim() === current.color.toLowerCase().trim());
+                    },
+                    hasErrors() {
+                        return this.variantes.some((_, i) => this.isDuplicated(i));
+                    }
+                }
             }
-        }
-    }
-}
-</script>
+        </script>
+    </div>
 @endsection
