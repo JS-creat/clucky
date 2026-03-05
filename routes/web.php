@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::patch('categorias/{id}/toggle', [CategoriaController::class, 'toggle'])
             ->name('categorias.toggle');
 
+        //genero
+        Route::post('generos', [App\Http\Controllers\Admin\GeneroController::class, 'store'])->name('generos.store');
     });
 
 

@@ -5,25 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Categoria;
+use App\Models\Genero;
 
 class CategoriaController extends Controller
 {
     /**
-     * Mostrar lista de categorías
+     * Mostrar lista de categorías y géneros
      */
     public function index()
     {
-        $categorias = Categoria::latest()->get();
+        $categorias = Categoria::withCount('productos')->get();
+        $generos = Genero::all();
 
-        return view('admin.categorias.index', compact('categorias'));
-    }
-
-    /**
-     * Formulario para crear categoría
-     */
-    public function create()
-    {
-        return view('admin.categorias.create');
+        return view('admin.categorias.index', compact('categorias', 'generos'));
     }
 
     /**
@@ -46,14 +40,6 @@ class CategoriaController extends Controller
     }
 
     /**
-     * Formulario editar
-     */
-    public function edit(Categoria $categoria)
-    {
-        return view('admin.categorias.edit', compact('categoria'));
-    }
-
-    /**
      * Actualizar categoría
      */
     public function update(Request $request, Categoria $categoria)
@@ -72,13 +58,12 @@ class CategoriaController extends Controller
     }
 
     /**
-     * Eliminar categoría
+     * Activar/Desactivar categoría
      */
     public function toggle($id)
     {
         $categoria = Categoria::with('productos')->findOrFail($id);
 
-        // Verificar si tiene productos con stock
         $tieneStock = $categoria->productos()
             ->whereHas('variantes', function ($q) {
                 $q->where('stock', '>', 0);
