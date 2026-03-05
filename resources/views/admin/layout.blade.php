@@ -3,127 +3,125 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | Panel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen text-gray-900 overflow-x-hidden">
 
-<div
-    x-data="{ open: true }"
-    class="flex min-h-screen"
->
-    <!-- SIDEBAR -->
-    <aside
-        :class="open ? 'w-64' : 'w-20'"
-        class="bg-gray-900 text-gray-300 transition-all duration-300 flex flex-col shadow-lg"
-    >
-        <!-- HEADER -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-800">
-            <span
-                x-show="open"
-                class="text-lg font-bold text-white"
-            >
-                C´LUCKY
-            </span>
+    <div x-data="{ open: true }" class="flex min-h-screen relative">
 
-            <button
-                @click="open = !open"
-                class="text-gray-400 hover:text-white"
-            >
-                <!-- menu icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-        </div>
+        <aside :class="open ? 'w-72' : 'w-24'"
+            class="bg-gray-900 text-gray-400 transition-all duration-300 flex flex-col shadow-2xl z-40">
 
-        <!-- NAV -->
-        <nav class="flex-1 p-3 space-y-1">
-
-            <!-- Dashboard -->
-            <a
-                href="{{ route('admin.dashboard') }}"
-                class="flex items-center gap-3 p-3 rounded transition
-                {{ request()->routeIs('admin.dashboard')
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-800' }}"
-            >
-                <!-- icon -->
-                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 12l2-2 4 4 8-8 4 4" />
-                </svg>
-
-                <span x-show="open">Dashboard</span>
-            </a>
-
-            <!-- Productos -->
-            <a
-                href="{{ route('admin.productos.index') }}"
-                class="flex items-center gap-3 p-3 rounded transition
-                {{ request()->routeIs('admin.productos.*')
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-800' }}"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        d="M20 13V7a2 2 0 00-2-2h-4M4 7h16M4 7v6a2 2 0 002 2h12" />
-                </svg>
-
-                <span x-show="open">Productos</span>
-            </a>
-
-        </nav>
-
-        <!-- LOGOUT -->
-        <div class="p-3 border-t border-gray-800">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button
-                    type="submit"
-                    class="w-full flex items-center gap-3 p-3 rounded text-red-400 hover:bg-gray-800 transition"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7" />
-                    </svg>
-
-                    <span x-show="open">Cerrar sesión</span>
+            <div class="flex items-center justify-between p-6 border-b border-gray-800/50">
+                <span x-show="open" x-transition.opacity class="text-xl font-black text-white tracking-tighter">
+                    C´LUCKY
+                </span>
+                <button @click="open = !open" class="p-2 rounded-xl bg-gray-800 text-white hover:bg-black transition-colors">
+                    {{-- Icono Menú --}}
+                    <x-heroicon-o-bars-3-bottom-left class="w-6 h-6" />
                 </button>
-            </form>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 mt-4">
+                @php
+                    $links = [
+                        ['route' => 'admin.dashboard', 'icon' => 'o-chart-bar', 'label' => 'Dashboard'],
+                        ['route' => 'admin.productos.index', 'icon' => 'o-shopping-bag', 'label' => 'Productos'],
+                        ['route' => 'admin.categorias.index', 'icon' => 'o-tag', 'label' => 'Categorías'],
+                    ];
+                @endphp
+
+                @foreach($links as $link)
+                <a href="{{ route($link['route']) }}"
+                   class="flex items-center gap-4 p-4 rounded-2xl font-semibold transition-all group
+                   {{ request()->routeIs($link['route']) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-gray-800 hover:text-white' }}">
+
+                    {{-- Renderizado dinámico del icono --}}
+                    <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-6 h-6 transition-transform group-hover:scale-110" />
+
+                    <span x-show="open" x-transition.opacity>{{ $link['label'] }}</span>
+                </a>
+                @endforeach
+            </nav>
+
+            <div class="p-4 border-t border-gray-800/50">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center gap-4 p-4 rounded-2xl font-semibold text-rose-400 hover:bg-rose-500/10 transition-all group text-left">
+                        <x-heroicon-o-arrow-left-on-rectangle class="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+                        <span x-show="open" x-transition.opacity>Cerrar sesión</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+
+            {{-- Toast de Éxito --}}
+            @if(session('success'))
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                     x-transition:enter="transform ease-out duration-300 transition"
+                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-10"
+                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-emerald-500 min-w-[320px]">
+
+                    <div class="flex-shrink-0 bg-emerald-100 text-emerald-600 p-2 rounded-xl">
+                        <x-heroicon-s-check-circle class="w-7 h-7" />
+                    </div>
+
+                    <div class="flex-1 text-center">
+                        <p class="font-black text-gray-900 text-sm leading-none">¡Éxito!</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">{{ session('success') }}</p>
+                    </div>
+                    <button @click="show = false" class="text-gray-300 hover:text-gray-500 transition">
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                    </button>
+                </div>
+            @endif
+
+            {{-- Toast de Error --}}
+            @if(session('error'))
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+                     x-transition:enter="transform ease-out duration-300 transition"
+                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-10"
+                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-rose-500 min-w-[320px]">
+
+                    <div class="flex-shrink-0 bg-rose-100 text-rose-600 p-2 rounded-xl">
+                        <x-heroicon-s-exclamation-circle class="w-7 h-7" />
+                    </div>
+
+                    <div class="flex-1 text-center">
+                        <p class="font-black text-gray-900 text-sm leading-none">Error</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">{{ session('error') }}</p>
+                    </div>
+                    <button @click="show = false" class="text-gray-300 hover:text-gray-500 transition">
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                    </button>
+                </div>
+            @endif
         </div>
-    </aside>
 
-    <!-- CONTENT -->
-    <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
-
-        <!-- ALERTAS -->
-        @if (session('error'))
-            <div class="mb-6 p-4 rounded bg-red-100 border border-red-300 text-red-800">
-                {{ session('error') }}
+        <main class="flex-1 p-8 lg:p-12 overflow-y-auto max-h-screen">
+            <div class="max-w-7xl mx-auto">
+                @yield('content')
             </div>
-        @endif
-
-        @if (session('success'))
-            <div
-                x-data="{ show: true }"
-                x-show="show"
-                x-init="setTimeout(() => show = false, 3000)"
-                class="mb-6 p-4 rounded bg-green-100 border border-green-300 text-green-800"
-            >
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @yield('content')
-    </main>
-</div>
+        </main>
+    </div>
 
 </body>
 </html>

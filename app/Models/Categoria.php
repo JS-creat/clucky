@@ -8,12 +8,10 @@ class Categoria extends Model
 {
     protected $table = 'categoria';
     protected $primaryKey = 'id_categoria';
-    
-    // La tabla categoría NO tiene timestamps en tu BD
-    public $timestamps = false;
 
     protected $fillable = [
-        'nombre_categoria'
+        'nombre_categoria',
+        'estado_categoria'
     ];
 
     /**
@@ -30,7 +28,7 @@ class Categoria extends Model
      */
     public function scopeConProductosActivos($query)
     {
-        return $query->whereHas('productos', function($q) {
+        return $query->whereHas('productos', function ($q) {
             $q->activos();
         });
     }

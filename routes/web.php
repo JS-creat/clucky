@@ -9,6 +9,7 @@ use App\Http\Controllers\UbicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Admin\ProductoController;
+use App\Http\Controllers\Admin\CategoriaController;
 use App\Models\Producto;
 use App\Models\Agencia;
 use App\Models\Provincia;
@@ -62,11 +63,11 @@ Route::get('/agencias/{idDistrito}', function ($idDistrito) {
 });
 
 //ubicacion
-Route::get('/provincias/{id}', function($id){
+Route::get('/provincias/{id}', function ($id) {
     return Provincia::where('id_departamento', $id)->get();
 });
 
-Route::get('/distritos/{id}', function($id){
+Route::get('/distritos/{id}', function ($id) {
     return Distrito::where('id_provincia', $id)->get();
 });
 
@@ -87,6 +88,13 @@ Route::middleware(['auth', 'verified', 'role:1'])
         // Productos (CRUD)
         Route::resource('productos', ProductoController::class)
             ->except(['show']);
+        //categorias
+        Route::resource('categorias', CategoriaController::class)
+            ->except(['show']);
+
+        Route::patch('categorias/{id}/toggle', [CategoriaController::class, 'toggle'])
+            ->name('categorias.toggle');
+
     });
 
 
@@ -100,4 +108,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

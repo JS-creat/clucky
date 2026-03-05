@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
 
-    public function up(): void {
+    public function up(): void
+    {
 
         /*
         =====================================
@@ -15,7 +16,7 @@ return new class extends Migration {
         */
         Schema::create('rol', function (Blueprint $table) {
             $table->id('id_rol');
-            $table->string('nombre_rol',50);
+            $table->string('nombre_rol', 50);
         });
 
 
@@ -26,7 +27,7 @@ return new class extends Migration {
         */
         Schema::create('tipo_documento', function (Blueprint $table) {
             $table->id('id_tipo_documento');
-            $table->string('nombre_tipo_documento',50);
+            $table->string('nombre_tipo_documento', 50);
         });
 
 
@@ -39,18 +40,18 @@ return new class extends Migration {
 
             $table->id('id_usuario');
 
-            $table->string('nombres',50);
-            $table->string('apellidos',50);
+            $table->string('nombres', 50);
+            $table->string('apellidos', 50);
 
-            $table->string('correo',100)->unique();
+            $table->string('correo', 100)->unique();
 
             $table->timestamp('email_verified_at')->nullable();
 
-            $table->string('contrasena',255);
+            $table->string('contrasena', 255);
 
-            $table->string('numero_documento',20)->nullable();
+            $table->string('numero_documento', 20)->nullable();
 
-            $table->string('telefono',20)->nullable();
+            $table->string('telefono', 20)->nullable();
 
             $table->unsignedBigInteger('id_tipo_documento')->nullable();
 
@@ -63,7 +64,6 @@ return new class extends Migration {
             $table->foreign('id_tipo_documento')->references('id_tipo_documento')->on('tipo_documento');
 
             $table->foreign('id_rol')->references('id_rol')->on('rol');
-
         });
 
 
@@ -78,8 +78,7 @@ return new class extends Migration {
 
             $table->id('id_departamento');
 
-            $table->string('nombre_departamento',100);
-
+            $table->string('nombre_departamento', 100);
         });
 
 
@@ -87,12 +86,11 @@ return new class extends Migration {
 
             $table->id('id_provincia');
 
-            $table->string('nombre_provincia',100);
+            $table->string('nombre_provincia', 100);
 
             $table->unsignedBigInteger('id_departamento');
 
             $table->foreign('id_departamento')->references('id_departamento')->on('departamento');
-
         });
 
 
@@ -100,14 +98,13 @@ return new class extends Migration {
 
             $table->id('id_distrito');
 
-            $table->string('nombre_distrito',100);
+            $table->string('nombre_distrito', 100);
 
-            $table->decimal('costo_envio',6,2)->default(0);
+            $table->decimal('costo_envio', 6, 2)->default(0);
 
             $table->unsignedBigInteger('id_provincia');
 
             $table->foreign('id_provincia')->references('id_provincia')->on('provincia');
-
         });
 
 
@@ -122,11 +119,11 @@ return new class extends Migration {
 
             $table->id('id_agencia');
 
-            $table->string('nombre_agencia',100);
+            $table->string('nombre_agencia', 100);
 
             $table->text('direccion');
 
-            $table->decimal('costo_envio',6,2);
+            $table->decimal('costo_envio', 6, 2);
 
             $table->unsignedBigInteger('id_distrito');
 
@@ -135,7 +132,6 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('id_distrito')->references('id_distrito')->on('distrito');
-
         });
 
 
@@ -150,8 +146,7 @@ return new class extends Migration {
 
             $table->id('id_genero');
 
-            $table->string('nombre_genero',20);
-
+            $table->string('nombre_genero', 20);
         });
 
 
@@ -166,7 +161,11 @@ return new class extends Migration {
 
             $table->id('id_categoria');
 
-            $table->string('nombre_categoria',50);
+            $table->string('nombre_categoria', 50);
+
+            $table->boolean('estado_categoria')->default(1); // Activa / Inactiva
+
+            $table->timestamps(); // created_at y updated_at
 
         });
 
@@ -182,18 +181,17 @@ return new class extends Migration {
 
             $table->id('id_promocion');
 
-            $table->string('nombre_promocion',50);
+            $table->string('nombre_promocion', 50);
 
             $table->text('descripcion')->nullable();
 
-            $table->decimal('descuento',6,2);
+            $table->decimal('descuento', 6, 2);
 
             $table->dateTime('fecha_inicio');
 
             $table->dateTime('fecha_fin');
 
             $table->boolean('estado_promocion')->default(1);
-
         });
 
 
@@ -208,19 +206,19 @@ return new class extends Migration {
 
             $table->id('id_producto');
 
-            $table->string('nombre_producto',150);
+            $table->string('nombre_producto', 150);
 
             $table->text('descripcion')->nullable();
 
-            $table->decimal('precio',10,2);
+            $table->decimal('precio', 10, 2);
 
-            $table->decimal('precio_oferta',10,2)->nullable();
+            $table->decimal('precio_oferta', 10, 2)->nullable();
 
             $table->string('imagen')->nullable();
 
             $table->text('galeria')->nullable();
 
-            $table->string('marca',50)->nullable();
+            $table->string('marca', 50)->nullable();
 
             $table->boolean('estado_producto')->default(1);
 
@@ -237,7 +235,6 @@ return new class extends Migration {
             $table->foreign('id_categoria')->references('id_categoria')->on('categoria');
 
             $table->foreign('id_promocion')->references('id_promocion')->on('promociones');
-
         });
 
 
@@ -254,18 +251,17 @@ return new class extends Migration {
 
             $table->unsignedBigInteger('id_producto');
 
-            $table->string('talla',50);
+            $table->string('talla', 50);
 
-            $table->string('color',50)->nullable();
+            $table->string('color', 50)->nullable();
 
             $table->integer('stock')->default(0);
 
-            $table->string('sku',50)->unique();
+            $table->string('sku', 50)->unique();
 
             $table->timestamps();
 
             $table->foreign('id_producto')->references('id_producto')->on('producto');
-
         });
 
 
@@ -280,16 +276,15 @@ return new class extends Migration {
 
             $table->id('id_cupon');
 
-            $table->string('codigo_cupon',50)->unique();
+            $table->string('codigo_cupon', 50)->unique();
 
-            $table->decimal('monto_cupon',6,2);
+            $table->decimal('monto_cupon', 6, 2);
 
-            $table->decimal('monto_compra_minima',6,2);
+            $table->decimal('monto_compra_minima', 6, 2);
 
             $table->date('fecha_vencimiento');
 
             $table->boolean('estado_cupon')->default(1);
-
         });
 
 
@@ -304,10 +299,9 @@ return new class extends Migration {
 
             $table->id('id_tipo_entrega');
 
-            $table->string('nombre_tipo_entrega',100);
+            $table->string('nombre_tipo_entrega', 100);
 
             $table->boolean('estado')->default(1);
-
         });
 
 
@@ -322,13 +316,13 @@ return new class extends Migration {
 
             $table->id('id_pedido');
 
-            $table->string('numero_pedido',20)->unique();
+            $table->string('numero_pedido', 20)->unique();
 
             $table->dateTime('fecha_pedido')->useCurrent();
 
-            $table->decimal('total_pedido',10,2);
+            $table->decimal('total_pedido', 10, 2);
 
-            $table->enum('estado_pedido',['Pendiente','Pagado','Enviado','En Agencia','Entregado','Cancelado'])->default('Pendiente');
+            $table->enum('estado_pedido', ['Pendiente', 'Pagado', 'Enviado', 'En Agencia', 'Entregado', 'Cancelado'])->default('Pendiente');
 
             $table->string('nombre_agencia')->nullable();
 
@@ -343,7 +337,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('id_tipo_entrega')->nullable();
 
             $table->timestamps();
-
         });
 
 
@@ -364,14 +357,13 @@ return new class extends Migration {
 
             $table->integer('cantidad');
 
-            $table->decimal('precio_unitario',10,2);
+            $table->decimal('precio_unitario', 10, 2);
 
-            $table->decimal('subtotal',10,2);
+            $table->decimal('subtotal', 10, 2);
 
             $table->foreign('id_pedido')->references('id_pedido')->on('pedido');
 
             $table->foreign('id_variante')->references('id_variante')->on('producto_variante');
-
         });
 
 
@@ -391,7 +383,6 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('id_usuario')->references('id_usuario')->on('usuario');
-
         });
 
 
@@ -408,8 +399,7 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            $table->unique(['id_carrito','id_variante']);
-
+            $table->unique(['id_carrito', 'id_variante']);
         });
 
 
@@ -430,12 +420,11 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            $table->unique(['id_usuario','id_producto']);
+            $table->unique(['id_usuario', 'id_producto']);
 
             $table->foreign('id_usuario')->references('id_usuario')->on('usuario');
 
             $table->foreign('id_producto')->references('id_producto')->on('producto');
-
         });
 
 
@@ -455,12 +444,12 @@ return new class extends Migration {
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
-
     }
 
 
 
-    public function down(): void {
+    public function down(): void
+    {
 
         // Eliminar en orden inverso al de creación
         Schema::dropIfExists('personal_access_tokens');
@@ -483,8 +472,5 @@ return new class extends Migration {
         Schema::dropIfExists('usuario');
         Schema::dropIfExists('tipo_documento');
         Schema::dropIfExists('rol');
-
     }
-
-
 };

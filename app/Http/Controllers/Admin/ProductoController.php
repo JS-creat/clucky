@@ -91,6 +91,15 @@ class ProductoController extends Controller
             $producto->galeria = $imagenesGaleria;
             $producto->save();
         }
+
+        // Activar categoría automáticamente
+        $categoria = Categoria::find($producto->id_categoria);
+
+        if ($categoria && !$categoria->estado_categoria) {
+            $categoria->estado_categoria = 1;
+            $categoria->save();
+        }
+
         return redirect()
             ->route('admin.productos.index')
             ->with('success', 'Producto creado correctamente');
@@ -222,8 +231,86 @@ class ProductoController extends Controller
             ->whereNotIn('id_variante', $idsEnviados)
             ->delete();
 
+        // 🔥 Verificar stock después de actualizar variantes
+        $tieneStock = $producto->variantes()->where('stock', '>', 0)->exists();
+
+        if ($tieneStock) {
+            $producto->estado_producto = 1;
+        } else {
+            $producto->estado_producto = 0;
+        }
+
+        $producto->save();
+
+        // Activar categoría si tiene productos con stock
+        $categoria = Categoria::find($producto->id_categoria);
+
+        if ($categoria) {
+            $categoriaTieneStock = $categoria->productos()
+                ->whereHas('variantes', function ($q) {
+                    $q->where('stock', '>', 0);
+                })
+                ->exists();
+
+            $categoria->estado_categoria = $categoriaTieneStock ? 1 : 0;
+            $categoria->save();
+        }
+
         return redirect()
             ->route('admin.productos.index')
             ->with('success', 'Producto actualizado correctamente');
+    }
+
+    public function toggle($id)
+    {
+        $producto = Producto::with('variantes')->findOrFail($id);
+
+        $tieneStock = $producto->variantes()
+            ->where('stock', '>', 0)
+            ->exists();
+
+        if ($tieneStock && $producto->estado_producto) {
+            return redirect()->back()
+                ->with('error', 'No se puede desactivar un producto con stock disponible.');
+        }
+
+        $producto->estado_producto = !$producto->estado_producto;
+        $producto->save();
+
+        return redirect()->back()
+            ->with('success', 'Estado actualizado correctamente.');
+    }
+
+    public function destroy($id)
+    {
+        // 1. Buscamos el producto con sus variantes para revisar el stock
+        $producto = Producto::with('variantes')->findOrFail($id);
+
+        // 2. Validación de seguridad: Si tiene stock, abortamos la eliminación
+        $tieneStock = $producto->variantes()->where('stock', '>', 0)->exists();
+
+        if ($tieneStock) {
+            return redirect()->route('admin.productos.index')
+                ->with('error', 'No se puede eliminar un producto que aún tiene stock disponible.');
+        }
+
+        // 3. Eliminar archivos físicos (Imagen principal)
+        if ($producto->imagen && file_exists(public_path('productos/' . $producto->imagen))) {
+            unlink(public_path('productos/' . $producto->imagen));
+        }
+
+        // 4. Eliminar archivos físicos (Galería)
+        if ($producto->galeria) {
+            foreach ($producto->galeria as $img) {
+                if (file_exists(public_path('productos/' . $img))) {
+                    unlink(public_path('productos/' . $img));
+                }
+            }
+        }
+        $producto->variantes()->delete();
+        $producto->delete();
+
+        return redirect()->route('admin.productos.index')
+            ->with('success', 'Producto eliminado definitivamente del catálogo.');
     }
 }
