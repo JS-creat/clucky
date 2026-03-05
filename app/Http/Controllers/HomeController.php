@@ -4,51 +4,47 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Producto;
-use Illuminate\Support\Facades\Auth;
-
+use App\Models\Banner;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-
-        $query = Producto::query();
+        $query = Producto::query()->where('estado_producto', 1);
 
         // Filtro por género
-        if ($request->has('categoria') && $request->categoria != 'Todo') {
-                $query->whereHas('genero', function ($q) use ($request) {
+        if ($request->filled('categoria') && $request->categoria != 'Todo') {
+            $query->whereHas('genero', function ($q) use ($request) {
                 $q->where('nombre_genero', $request->categoria);
             });
         }
 
-
-        // Filtro por promociones
+        // Filtro por promoción activa
         if ($request->has('promocion')) {
-            $query->whereNotNull('precio_oferta')
-            ->where('precio_oferta', '>', 0);
+            $query->whereNotNull('id_promocion')
+                  ->whereHas('promocion', function ($q) {
+                      $q->where('estado_promocion', 1)
+                        ->where('fecha_inicio', '<=', now())
+                        ->where('fecha_fin', '>=', now());
+                  });
         }
 
-         // Filtro por promoción activa
-    if ($request->has('promocion')) {
-        $query->whereNotNull('id_promocion')
-              ->whereHas('promocion', function ($q) {
-                  $q->where('estado_promocion', 1)
-                    ->where('fecha_inicio', '<=', now())
-                    ->where('fecha_fin', '>=', now());
-              });
-    }
+        // Filtro por búsqueda de texto
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre_producto', 'like', "%{$buscar}%")
+                  ->orWhere('marca', 'like', "%{$buscar}%")
+                  ->orWhere('descripcion', 'like', "%{$buscar}%");
+            });
+        }
 
-    $productos = $query->orderBy('created_at', 'desc')->get();
+        $productos = $query->orderBy('created_at', 'desc')->get();
 
-    // Cargar banners activos desde la BD, ordenados
-    $banners = \App\Models\Banner::where('estado', 1)
-                ->orderBy('orden', 'asc')
-                ->get();
-
-
-        $productos = $query->get();
+        $banners = Banner::where('estado', 1)
+                         ->orderBy('orden', 'asc')
+                         ->get();
 
         return view('home.index', compact('productos', 'banners'));
     }
-
 }
