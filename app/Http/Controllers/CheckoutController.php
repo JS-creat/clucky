@@ -9,8 +9,6 @@ use App\Models\TipoEntrega;
 use App\Models\TipoDocumento;
 use App\Models\Agencia;
 
-
-
 class CheckoutController extends Controller
 {
     public function index()
@@ -22,14 +20,14 @@ class CheckoutController extends Controller
                 'id_usuario' => Auth::id(),
             ]);
 
-            foreach (session('carrito') as $idProducto => $item) {
+            foreach (session('carrito') as $idVariante => $item) {
 
                 \App\Models\DetalleCarrito::updateOrCreate(
-        [
+                    [
                         'id_carrito' => $carrito->id_carrito,
-                        'id_producto' => $idProducto
+                        'id_variante' => $idVariante,   // ✅ era id_producto
                     ],
-            [
+                    [
                         'cantidad' => $item['cantidad']
                     ]
                 );
@@ -38,26 +36,22 @@ class CheckoutController extends Controller
             session()->forget('carrito');
         }
 
-        // Ahora buscamos el carrito en BD
-        $carrito = Carrito::with('detalles.producto')
+
+        $carrito = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', Auth::id())
             ->first();
 
-        $departamentos = Departamento::all();
-
-        //Tipo de entrega
-        $tiposEntrega = TipoEntrega::where('estado', 1)->get();
-
-        //tipos de documentos
+        $departamentos  = Departamento::all();
+        $tiposEntrega   = TipoEntrega::where('estado', 1)->get();
         $tiposDocumento = TipoDocumento::all();
+        $agencias       = Agencia::where('estado', 1)->get();
 
-        $agencias = Agencia::where('estado',1)->get();
-
-
-
-        return view('carrito.checkout', compact('carrito', 'departamentos', 'tiposEntrega', 'tiposDocumento', 'agencias'));
-
+        return view('carrito.checkout', compact(
+            'carrito',
+            'departamentos',
+            'tiposEntrega',
+            'tiposDocumento',
+            'agencias'
+        ));
     }
-
 }
-
