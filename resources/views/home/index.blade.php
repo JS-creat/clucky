@@ -47,9 +47,9 @@
         }"
         @mouseenter="stopAutoplay()"
         @mouseleave="startAutoplay()"
-        class="relative max-w-7xl mx-auto px-4 sm:px-6"
+        class="relative max-w-7xl mx-auto px-4 sm:px-8"
     >
-        {{-- CONTENEDOR DEL SLIDE con aspect ratio wide --}}
+        {{-- CONTENEDOR DEL SLIDE--}}
         <div class="relative rounded-2xl overflow-hidden shadow-xl bg-white" style="aspect-ratio: 21/7; min-height: 240px;">
 
             @foreach($banners as $index => $banner)
@@ -63,15 +63,13 @@
                 x-transition:leave-end="opacity-0"
                 class="absolute inset-0"
             >
-                {{-- Imagen completa, object-cover centrado --}}
+                {{-- Imagen completa --}}
                 <img
                     src="{{ asset('banners/' . $banner->imagen) }}"
                     alt="{{ $banner->titulo }}"
                     class="w-full h-full object-cover object-center"
                     loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
                 >
-
-                {{-- Overlay gradiente solo si hay texto --}}
                 @if($banner->titulo || $banner->texto_boton)
                 <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent"></div>
 
@@ -117,7 +115,7 @@
             </div>
             @endforeach
 
-            {{-- FLECHAS dentro del slide --}}
+            {{-- FLECHAS--}}
             @if($banners->count() > 1)
             <button @click="prev()" aria-label="Anterior"
                 class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center bg-white/90 text-gray-800 hover:bg-white hover:scale-110 transition-all duration-200 rounded-full shadow-md">
@@ -134,7 +132,6 @@
             @endif
         </div>
 
-        {{-- DOTS debajo del banner --}}
         @if($banners->count() > 1)
         <div class="flex items-center justify-center gap-2 mt-4">
             @foreach($banners as $index => $banner)
@@ -152,7 +149,6 @@
 </section>
 
 @else
-{{-- Fallback estático --}}
 <section class="w-full bg-gray-50 py-4 sm:py-6">
     <div class="max-w-6xl mx-auto px-4 sm:px-8">
         <div class="relative rounded-2xl overflow-hidden shadow-xl" style="aspect-ratio: 21/8; min-height: 200px;">
@@ -174,7 +170,7 @@
 @endif
 
 
-{{-- ===== GRID DE PRODUCTOS ===== --}}
+{{-- PRODUCTOS --}}
 <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10">
 
     <div class="flex items-center justify-between mb-7">
