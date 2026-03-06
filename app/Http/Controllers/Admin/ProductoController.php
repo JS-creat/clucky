@@ -140,6 +140,9 @@ class ProductoController extends Controller
 
         // Eliminar fotos marcadas en el checkbox
         if ($request->has('galeria_eliminar')) {
+            foreach ($request->galeria_eliminar as $fotoEliminar) {
+                File::delete(public_path('productos/' . $fotoEliminar)); // <-- Más corto y limpio
+            }
             $galeriaActual = array_diff($galeriaActual, $request->galeria_eliminar);
         }
 
