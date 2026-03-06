@@ -94,11 +94,13 @@
                             <div class="relative grid grid-cols-1 md:grid-cols-5 gap-3 p-5 rounded-3xl transition-all border-2"
                                 :class="isDuplicated(index) ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-transparent'">
 
-                                <input type="hidden" :name="`variantes[${index}][id_variante]`" x-model="variante.id_variante">
+                                <input type="hidden" :name="`variantes[${index}][id_variante]`"
+                                    x-model="variante.id_variante">
 
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Talla</label>
-                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla" required
+                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla"
+                                        required
                                         class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
                                         :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
                                 </div>
@@ -112,8 +114,10 @@
 
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Stock</label>
-                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock" required
-                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm" min="0">
+                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock"
+                                        required
+                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm"
+                                        min="0">
                                 </div>
 
                                 <div class="space-y-1">
@@ -131,7 +135,8 @@
                                 </div>
 
                                 <template x-if="isDuplicated(index)">
-                                    <div class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
+                                    <div
+                                        class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
                                         <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
                                         <span>Talla y Color repetidos</span>
                                     </div>
@@ -147,23 +152,27 @@
                 {{-- Imagen Principal --}}
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
                     <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Imagen Principal</label>
-                    <div class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
-                        
+                    <div
+                        class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
+
                         <template x-if="imgPrincipalPreview">
                             <img :src="imgPrincipalPreview" class="w-full h-full object-cover">
                         </template>
 
                         <template x-if="!imgPrincipalPreview">
                             @if($producto->imagen)
-                                <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-cover group-hover:opacity-50 transition-all">
+                                <img src="{{ asset('productos/' . $producto->imagen) }}"
+                                    class="w-full h-full object-cover group-hover:opacity-50 transition-all">
                             @endif
                         </template>
 
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
+                        <div
+                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
                             <x-heroicon-o-camera class="w-10 h-10 text-white" />
                         </div>
 
-                        <input type="file" name="imagen" @change="previewPrincipal" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <input type="file" name="imagen" @change="previewPrincipal"
+                            class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
                     </div>
                     <p class="text-[9px] text-gray-400 text-center font-bold uppercase">Click para cambiar imagen</p>
                 </div>
@@ -171,13 +180,15 @@
                 {{-- Galería de Imágenes --}}
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
                     <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Galería</label>
-                    
+
                     <div class="grid grid-cols-3 gap-2">
-                        {{-- Imágenes Existentes --}}
+
+                        {{-- Fotos actuales en la DB --}}
                         @forelse($producto->galeria ?? [] as $img)
                             <div class="relative aspect-square rounded-xl overflow-hidden group border border-gray-50">
                                 <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
-                                <label class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center">
+                                <label
+                                    class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center">
                                     <input type="checkbox" name="galeria_eliminar[]" value="{{ $img }}" class="hidden peer">
                                     <x-heroicon-o-trash class="w-5 h-5 mb-1" />
                                     <span class="text-[7px] font-black uppercase peer-checked:hidden">Eliminar</span>
@@ -185,7 +196,7 @@
                                 </label>
                             </div>
                         @empty
-                            <div class="col-span-3 py-6 border-2 border-dashed border-gray-50 rounded-2xl text-center">
+                            <div class="col-span-3 py-6 border-2 border-dashed border-gray-200 rounded-2xl text-center">
                                 <span class="text-[9px] font-bold text-gray-300 uppercase">Sin fotos previas</span>
                             </div>
                         @endforelse
@@ -202,14 +213,16 @@
                     </div>
 
                     {{-- Input para añadir más --}}
-                    <div class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all text-center">
+                    <div
+                        class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all text-center">
                         <x-heroicon-o-plus class="w-6 h-6 text-gray-400 mx-auto mb-1" />
                         <span class="text-[10px] font-black text-gray-400 uppercase">Añadir nuevas fotos</span>
-                        <input type="file" name="galeria[]" multiple @change="previewGaleria" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <input type="file" name="galeria[]" multiple @change="previewGaleria"
+                            class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
                     </div>
                 </div>
 
-                {{-- Botones de Acción --}}
+                {{-- Botones de Accion --}}
                 <div class="flex flex-col gap-4">
                     <button type="submit" :disabled="hasErrors()"
                         :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
@@ -245,10 +258,17 @@
                             this.addVariante();
                         }
                     },
+
+                    // funcion para ver la imagen principal antes de subirla
+
                     previewPrincipal(event) {
                         const file = event.target.files[0];
                         if (file) this.imgPrincipalPreview = URL.createObjectURL(file);
                     },
+
+
+                    // función para ver las fotos nuevas de la galeria
+
                     previewGaleria(event) {
                         const files = event.target.files;
                         this.galeriaPreviews = [];

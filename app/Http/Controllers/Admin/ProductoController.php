@@ -86,7 +86,9 @@ class ProductoController extends Controller
 
     public function edit($id)
     {
+        // Solo carga las relaciones reales (aquellas que tienen un método en el modelo)
         $producto = Producto::with('variantes')->findOrFail($id);
+
         $generos = Genero::all();
         $categorias = Categoria::all();
         $promociones = Promocion::where('estado_promocion', 1)->get();
