@@ -322,11 +322,17 @@ return new class extends Migration {
 
             $table->decimal('total_pedido', 10, 2);
 
-            $table->enum('estado_pedido', ['Pendiente', 'Pagado', 'Enviado', 'En Agencia', 'Entregado', 'Cancelado'])->default('Pendiente');
+            $table->enum('estado_pedido', ['Pendiente', 'Confirmado', 'En camino', 'Listo para recoger', 'Entregado', 'Anulado'])->default('Pendiente');
 
             $table->string('nombre_agencia')->nullable();
 
             $table->text('direccion_agencia')->nullable();
+
+            $table->dateTime('fecha_envio')->nullable();
+
+            $table->date('fecha_entrega_estimada')->nullable();
+
+            $table->dateTime('fecha_entrega_real')->nullable();
 
             $table->unsignedBigInteger('id_distrito')->nullable();
 
@@ -444,6 +450,25 @@ return new class extends Migration {
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
+
+        /*
+                =====================================
+                BANNERS
+                =====================================
+*/
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id('id_banner');
+            $table->string('titulo', 100);
+            $table->string('subtitulo', 150)->nullable();
+            $table->text('descripcion')->nullable();
+            $table->string('etiqueta', 50)->nullable();
+            $table->string('texto_boton', 50)->nullable();
+            $table->string('url_boton', 255)->nullable();
+            $table->string('imagen', 255);
+            $table->integer('orden')->default(0);
+            $table->boolean('estado')->default(1);
+            $table->timestamps();
+        });
     }
 
 
@@ -472,5 +497,6 @@ return new class extends Migration {
         Schema::dropIfExists('usuario');
         Schema::dropIfExists('tipo_documento');
         Schema::dropIfExists('rol');
+        Schema::dropIfExists('banners');
     }
 };
