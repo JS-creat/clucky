@@ -35,6 +35,7 @@
                         ['route' => 'admin.dashboard', 'icon' => 'o-chart-bar', 'label' => 'Dashboard'],
                         ['route' => 'admin.productos.index', 'icon' => 'o-shopping-bag', 'label' => 'Productos'],
                         ['route' => 'admin.categorias.index', 'icon' => 'o-tag', 'label' => 'Categorías y Género'],
+                        ['route' => 'admin.pedidos.index', 'icon' => 'o-clipboard-document-list', 'label' => 'Pedidos'],
                     ];
                 @endphp
 

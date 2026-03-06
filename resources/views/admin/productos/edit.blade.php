@@ -191,7 +191,7 @@
 
                     <div class="grid grid-cols-3 gap-2">
                         {{-- Fotos actuales en la DB --}}
-                        @foreach($producto->galeria as $img)
+                        @foreach($producto->galeria ?? [] as $img)
                             <div class="relative aspect-square rounded-xl overflow-hidden group border border-gray-50">
                                 <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
                                 <label
@@ -228,7 +228,7 @@
                     </div>
                 </div>
 
-                {{-- Botones de Acción --}}
+                {{-- Botones de Accion --}}
                 <div class="flex flex-col gap-4">
                     <button type="submit" :disabled="hasErrors()"
                         :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'"
@@ -266,7 +266,7 @@
                         }
                     },
 
-                    // Función para ver la imagen principal antes de subirla
+                    // funcion para ver la imagen principal antes de subirla
                     previewPrincipal(event) {
                         const file = event.target.files[0];
                         if (file) {
@@ -274,7 +274,7 @@
                         }
                     },
 
-                    // Función para ver las fotos nuevas de la galería
+                    // función para ver las fotos nuevas de la galeria
                     previewGaleria(event) {
                         const files = event.target.files;
                         this.galeriaPreviews = []; // Limpiar previas

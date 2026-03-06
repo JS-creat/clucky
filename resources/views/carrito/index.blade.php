@@ -29,9 +29,7 @@
 <body class="bg-stone-50 font-sans text-gray-900 antialiased">
 
 
-{{-- ══════════════════════════════
-     NAVBAR  (sin cambios)
-══════════════════════════════ --}}
+{{-- NAVBAR  --}}
 <nav class="border-b sticky top-0 bg-white z-50">
     <div class="max-w-full mx-auto px-4 sm:px-8">
         <div class="flex justify-between h-20 items-center">
@@ -46,9 +44,7 @@
 </nav>
 
 
-{{-- ══════════════════════════════
-     CONTENIDO
-══════════════════════════════ --}}
+{{-- CONTENIDO--}}
 <div x-data="carritoData()" x-cloak
      class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
 
@@ -67,9 +63,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
 
-        {{-- ─────────────────────────
-             IZQUIERDA  (3 columnas)
-        ───────────────────────── --}}
+        {{-- IZQUIERDA  --}}
         <div class="lg:col-span-3 space-y-3">
 
             @foreach($items as $id => $detalles)
@@ -87,7 +81,7 @@
                     @endif
                 </div>
 
-                {{-- Info + controles --}}
+                {{-- Info --}}
                 <div class="flex-1 flex flex-col justify-between min-w-0">
 
                     <div>
@@ -151,9 +145,7 @@
         </div>
 
 
-        {{-- ─────────────────────────
-             DERECHA  (2 columnas)
-        ───────────────────────── --}}
+        {{--DERECHA  --}}
         <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-24 h-fit">
 
             {{-- Resumen --}}
@@ -164,7 +156,7 @@
                     {{ count($items) }} {{ count($items) == 1 ? 'producto' : 'productos' }}
                 </p>
 
-                {{-- Líneas de total --}}
+                {{-- Lineas de total --}}
                 <div class="space-y-2 border-b border-gray-100 pb-4">
                     <div class="flex justify-between text-sm text-gray-500">
                         <span>Subtotal</span>
@@ -184,54 +176,13 @@
                     </div>
                 </div>
 
-                {{-- CTA --}}
-                <a href="{{ route('carrito.checkout') }}"
+                <a href="{{ route('checkout.index') }}"
                    class="mt-6 flex items-center justify-center gap-2 w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide hover:bg-gray-800 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                     </svg>
                     Finalizar compra
                 </a>
-
-                {{-- Pago seguro --}}
-                <div class="mt-4 text-center">
-                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        Pago 100% seguro
-                    </span>
-                </div>
-            </div>
-
-            {{-- Garantías --}}
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <div class="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                        <div class="w-9 h-9 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                        </div>
-                        <p class="text-xs font-medium text-gray-600">Pago seguro</p>
-                    </div>
-                    <div>
-                        <div class="w-9 h-9 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                            </svg>
-                        </div>
-                        <p class="text-xs font-medium text-gray-600">Devoluciones</p>
-                    </div>
-                    <div>
-                        <div class="w-9 h-9 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-xs font-medium text-gray-600">Soporte 24/7</p>
-                    </div>
-                </div>
             </div>
 
         </div>

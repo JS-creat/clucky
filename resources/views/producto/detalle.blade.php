@@ -38,9 +38,7 @@
 <body class="bg-stone-50 font-sans text-gray-900 antialiased">
 
 
-{{-- ══════════════════════════════
-     NAVBAR  (sin cambios)
-══════════════════════════════ --}}
+{{-- NAVBAR  --}}
 <nav class="border-b sticky top-0 bg-white z-50">
     <div class="max-w-full mx-auto px-4 sm:px-8">
         <div class="flex justify-between h-20 items-center">
@@ -76,34 +74,12 @@
 </nav>
 
 
-{{-- ══════════════════════════════
-     BREADCRUMB
-══════════════════════════════ --}}
-<div class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-2">
-    <nav class="flex items-center gap-2 text-xs text-gray-400">
-        <a href="{{ url('/') }}" class="hover:text-gray-700 transition-colors">Inicio</a>
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-        </svg>
-        <span class="text-gray-400">{{ $producto->marca }}</span>
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-        </svg>
-        <span class="text-gray-700 font-medium truncate max-w-[200px]">{{ $producto->nombre_producto }}</span>
-    </nav>
-</div>
-
-
-{{-- ══════════════════════════════
-     CONTENIDO PRINCIPAL
-══════════════════════════════ --}}
+{{--CONTENIDO PRINCIPAL--}}
 <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
     <div class="flex flex-col lg:flex-row gap-10 items-start">
 
 
-        {{-- ─────────────────────────
-             GALERÍA  (izquierda)
-        ───────────────────────── --}}
+        {{-- GALERÍA  --}}
         <div class="w-full lg:w-[58%] space-y-3">
 
             {{-- Imagen principal --}}
@@ -122,7 +98,6 @@
                 @endif
             </div>
 
-            {{-- Thumbnails --}}
             <div class="flex gap-2.5 overflow-x-auto pb-1 scroll-gallery">
                 <button type="button"
                         onclick="cambiarImagen(this, '{{ asset('productos/' . $producto->imagen) }}')"
@@ -143,9 +118,7 @@
         </div>
 
 
-        {{-- ─────────────────────────
-             INFO PRODUCTO  (derecha)
-        ───────────────────────── --}}
+        {{-- INFO PRODUCTO  --}}
         <div class="w-full lg:w-[42%] lg:sticky lg:top-28 space-y-0">
 
             {{-- Marca + Nombre --}}
@@ -176,7 +149,6 @@
                         S/ {{ number_format($producto->precio, 2) }}
                     </span>
                 @endif
-                <p class="text-xs text-gray-400 mt-2">IGV incluido · Envío disponible a todo el país</p>
             </div>
 
             @php
@@ -206,7 +178,7 @@
 
             {{-- Selector de Talla --}}
             <div class="py-5 border-b border-gray-100">
-
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Talla</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach($tallas as $talla)
                     <button type="button"
@@ -254,31 +226,9 @@
                     </button>
                     @endif
                 </form>
-
-                {{-- Confianza --}}
-                <div class="mt-4 grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-white border border-gray-100 rounded-xl py-2.5 px-1">
-                        <svg class="w-4 h-4 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                        <p class="text-[10px] font-medium text-gray-500 leading-tight">Pago<br>seguro</p>
-                    </div>
-                    <div class="bg-white border border-gray-100 rounded-xl py-2.5 px-1">
-                        <svg class="w-4 h-4 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                        </svg>
-                        <p class="text-[10px] font-medium text-gray-500 leading-tight">30 días<br>devolución</p>
-                    </div>
-                    <div class="bg-white border border-gray-100 rounded-xl py-2.5 px-1">
-                        <svg class="w-4 h-4 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"/>
-                        </svg>
-                        <p class="text-[10px] font-medium text-gray-500 leading-tight">Envío a<br>todo el país</p>
-                    </div>
-                </div>
             </div>
 
-            {{-- Descripción accordion --}}
+            {{-- Descripción --}}
             <div class="mt-5 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                 <details class="group">
                     <summary class="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">

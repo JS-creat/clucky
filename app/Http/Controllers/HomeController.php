@@ -11,27 +11,29 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        // 1. SI EL USUARIO ES ADMIN (ROL 1), REDIRIGIR AL PANEL
+        if (Auth::check() && (int) Auth::user()->id_rol === 1) {
+            return redirect()->route('admin.dashboard');
+        }
 
+        // 2. LÓGICA NORMAL PARA CLIENTES Y VISITANTES
         $query = Producto::query();
 
         // Filtro por género
         if ($request->has('categoria') && $request->categoria != 'Todo') {
-                $query->whereHas('genero', function ($q) use ($request) {
+            $query->whereHas('genero', function ($q) use ($request) {
                 $q->where('nombre_genero', $request->categoria);
             });
         }
 
-
         // Filtro por promociones
         if ($request->has('promocion')) {
             $query->whereNotNull('precio_oferta')
-            ->where('precio_oferta', '>', 0);
+                ->where('precio_oferta', '>', 0);
         }
-
 
         $productos = $query->get();
 
         return view('home.index', compact('productos'));
     }
-
 }
