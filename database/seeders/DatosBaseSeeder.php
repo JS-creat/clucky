@@ -23,7 +23,7 @@ class DatosBaseSeeder extends Seeder
         if (DB::table('rol')->count() === 0) {
             DB::table('rol')->insert([
                 ['id_rol' => 1, 'nombre_rol' => 'Administrador'],
-                ['id_rol' => 2, 'nombre_rol' => 'Cliente'],
+                ['id_rol' => 2, 'nombre_rol' => 'Usuario'],
             ]);
             $this->command->info('✅ Roles insertados.');
         }
