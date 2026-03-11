@@ -11,6 +11,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Admin\ProductoController;
 use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\PedidoController;
+use App\Http\Controllers\Admin\DashboardController; 
 use App\Models\Producto;
 use App\Models\Agencia;
 use App\Models\Provincia;
@@ -36,7 +37,6 @@ Route::get('/carrito/eliminar/{id}', [CarritoController::class, 'eliminar'])->na
 
 // USUARIOS AUTENTICADOS
 
-
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
@@ -59,7 +59,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 //UBICACIÓN / AGENCIAS
 
-
 Route::get('/ubicacion/provincias/{id}', [UbicacionController::class, 'provincias']);
 Route::get('/ubicacion/distritos/{id}', [UbicacionController::class, 'distritos']);
 
@@ -69,7 +68,6 @@ Route::get('/agencias/{idDistrito}', function ($idDistrito) {
         ->get();
 });
 
-//ubicacion
 Route::get('/provincias/{id}', function ($id) {
     return Provincia::where('id_departamento', $id)->get();
 });
@@ -81,31 +79,29 @@ Route::get('/distritos/{id}', function ($id) {
 
 //ADMINISTRADOR
 
-
 Route::middleware(['auth', 'verified', 'role:1'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
 
         // Dashboard admin
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard'); // ← CORREGIDO
 
         // Productos (CRUD)
         Route::resource('productos', ProductoController::class)
             ->except(['show']);
-        //categorias
+
+        // Categorias
         Route::resource('categorias', CategoriaController::class)
             ->except(['show']);
 
         Route::patch('categorias/{id}/toggle', [CategoriaController::class, 'toggle'])
             ->name('categorias.toggle');
 
-        //genero
+        // Genero
         Route::post('generos', [App\Http\Controllers\Admin\GeneroController::class, 'store'])->name('generos.store');
 
-        //Pedidos
+        // Pedidos
         Route::get('pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
         Route::get('pedidos/{id}', [PedidoController::class, 'show'])->name('pedidos.show');
         Route::put('pedidos/{id}', [PedidoController::class, 'update'])->name('pedidos.update');
@@ -113,8 +109,6 @@ Route::middleware(['auth', 'verified', 'role:1'])
 
 
 // PERFIL (BREEZE)
-
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
