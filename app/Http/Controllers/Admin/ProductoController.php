@@ -86,7 +86,9 @@ class ProductoController extends Controller
 
     public function edit($id)
     {
+        // Solo carga las relaciones reales (aquellas que tienen un método en el modelo)
         $producto = Producto::with('variantes')->findOrFail($id);
+
         $generos = Genero::all();
         $categorias = Categoria::all();
         $promociones = Promocion::where('estado_promocion', 1)->get();
@@ -138,6 +140,9 @@ class ProductoController extends Controller
 
         // Eliminar fotos marcadas en el checkbox
         if ($request->has('galeria_eliminar')) {
+            foreach ($request->galeria_eliminar as $fotoEliminar) {
+                File::delete(public_path('productos/' . $fotoEliminar)); // <-- Más corto y limpio
+            }
             $galeriaActual = array_diff($galeriaActual, $request->galeria_eliminar);
         }
 

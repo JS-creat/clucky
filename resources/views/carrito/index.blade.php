@@ -3,108 +3,221 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolsa de Compras – C Lucky</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        gold: '#C9A84C',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>[x-cloak] { display: none !important; }</style>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
-<body class="bg-gray-50">
-    <nav class="border-b sticky top-0 bg-white z-50">
-        <div class="max-w-full mx-auto px-4 sm:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <div class="flex-shrink-0 flex items-center">
-                    <a href="{{ url('/') }}">
-                        <img src="{{ asset('images/logo.jpg') }}" alt="Logo C'Lucky"
-                            class="h-14 w-auto transition-transform hover:scale-105">
-                    </a>
-                </div>
+<body class="bg-stone-50 font-sans text-gray-900 antialiased">
+
+
+{{-- NAVBAR  --}}
+<nav class="border-b sticky top-0 bg-white z-50">
+    <div class="max-w-full mx-auto px-4 sm:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <div class="flex-shrink-0 flex items-center">
+                <a href="{{ url('/') }}">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo C'Lucky"
+                        class="h-14 w-auto transition-transform hover:scale-105">
+                </a>
             </div>
         </div>
-    </nav>
-    <div class="max-w-5xl mx-auto px-4 py-12">
-        <h1 class="text-3xl font-black uppercase italic mb-8">Tu Bolsa de Compras</h1>
-
-        @if(count($items) > 0)
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-4">
-                    @foreach($items as $id => $detalles)
-                        <div class="flex bg-white p-5 shadow-sm rounded-sm border gap-5">
-
-                            <img src="{{ asset('productos/' . $detalles['imagen']) }}" class="w-24 h-28 object-cover rounded">
-
-                            <div class="flex-1 flex flex-col justify-between">
-
-                                <div>
-                                    <h3 class="font-bold uppercase text-sm tracking-wide">
-                                        {{ $detalles['nombre'] }}
-                                    </h3>
-
-                                    <div class="mt-2 text-xs text-gray-500 space-y-1">
-                                        <p><span class="font-semibold text-gray-700">Color:</span>
-                                            {{ $detalles['color'] ?? '-' }}</p>
-                                        <p><span class="font-semibold text-gray-700">Talla:</span>
-                                            {{ $detalles['talla'] ?? '-' }}</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between mt-4">
-
-                                    <div class="flex items-center gap-3">
-
-                                        <a href="{{ route('carrito.disminuir', $id) }}"
-                                            class="px-3 py-1 border text-sm font-bold hover:bg-gray-100">−</a>
-
-                                        <span class="text-sm font-bold">
-                                            {{ $detalles['cantidad'] }}
-                                        </span>
-
-                                        <a href="{{ route('carrito.aumentar', $id) }}"
-                                            class="px-3 py-1 border text-sm font-bold hover:bg-gray-100">+</a>
-
-                                        <a href="{{ route('carrito.eliminar', $id) }}"
-                                            class="ml-4 text-red-500 text-xs uppercase font-bold hover:underline">
-                                            Eliminar
-                                        </a>
-
-                                    </div>
-
-                                    <div class="text-right">
-                                        <p class="text-xs text-gray-400">
-                                            S/ {{ number_format($detalles['precio'], 2) }} c/u
-                                        </p>
-                                        <p class="font-black text-[#f50057]">
-                                            S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
-                                        </p>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="bg-white p-6 shadow-lg border h-fit sticky top-24">
-                    <h2 class="font-bold uppercase text-xs tracking-widest mb-4">Resumen del pedido</h2>
-                    <div class="flex justify-between border-b pb-4 mb-4">
-                        <span class="text-gray-600 text-sm">Subtotal</span>
-                        <span class="font-bold">S/ {{ number_format($total, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between mb-8">
-                        <span class="font-black text-lg">TOTAL</span>
-                        <span class="font-black text-lg text-[#f50057]">S/ {{ number_format($total, 2) }}</span>
-                    </div>
-
-                    <a href="{{ route('carrito.checkout') }}"
-                        class="block w-full bg-black text-white text-center py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-gray-800 transition">
-                        Finalizar Compra
-                    </a>
-                </div>
-            </div>
-        @else
-            <div class="text-center py-20 bg-white border">
-                <p class="text-gray-400 mb-4 tracking-widest uppercase">Tu bolsa está vacía</p>
-                <a href="{{ url('/') }}" class="underline font-bold uppercase text-xs">Volver a la tienda</a>
-            </div>
-        @endif
     </div>
-</body>
+</nav>
 
+
+{{-- CONTENIDO--}}
+<div x-data="carritoData()" x-cloak
+     class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-display font-semibold">Tu bolsa de compras</h1>
+        <p class="text-sm text-gray-500 mt-1">
+            @if(count($items) > 0)
+                {{ count($items) }} {{ count($items) == 1 ? 'producto' : 'productos' }} seleccionados
+            @else
+                No tienes productos en tu bolsa
+            @endif
+        </p>
+    </div>
+
+    @if(count($items) > 0)
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+        {{-- IZQUIERDA  --}}
+        <div class="lg:col-span-3 space-y-3">
+
+            @foreach($items as $id => $detalles)
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 group transition-all hover:shadow-md hover:border-gray-200">
+
+                {{-- Imagen --}}
+                <div class="relative shrink-0">
+                    <img src="{{ asset('productos/' . $detalles['imagen']) }}"
+                         alt="{{ $detalles['nombre'] }}"
+                         class="w-20 h-24 sm:w-24 sm:h-28 object-cover rounded-xl border border-gray-100">
+                    @if(isset($detalles['precio_oferta']))
+                    <span class="absolute -top-1.5 -left-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        OFERTA
+                    </span>
+                    @endif
+                </div>
+
+                {{-- Info --}}
+                <div class="flex-1 flex flex-col justify-between min-w-0">
+
+                    <div>
+                        <h3 class="font-semibold text-sm leading-snug truncate">{{ $detalles['nombre'] }}</h3>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-0.5">
+                                <span class="font-medium text-gray-700">Color:</span>
+                                {{ $detalles['color'] ?? '—' }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-0.5">
+                                <span class="font-medium text-gray-700">Talla:</span>
+                                {{ $detalles['talla'] ?? '—' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-3 flex-wrap gap-3">
+
+                        {{-- Cantidad --}}
+                        <div class="flex items-center gap-0.5 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden">
+                            <a href="{{ route('carrito.disminuir', $id) }}"
+                               class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-900 hover:text-white transition-all font-bold text-sm">−</a>
+                            <span class="w-8 text-center text-sm font-semibold">{{ $detalles['cantidad'] }}</span>
+                            <a href="{{ route('carrito.aumentar', $id) }}"
+                               class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-900 hover:text-white transition-all font-bold text-sm">+</a>
+                        </div>
+
+                        {{-- Eliminar --}}
+                        <a href="{{ route('carrito.eliminar', $id) }}"
+                           class="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors font-medium">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Eliminar
+                        </a>
+
+                        {{-- Precio --}}
+                        <div class="text-right ml-auto">
+                            <p class="text-xs text-gray-400">S/ {{ number_format($detalles['precio'], 2) }} c/u</p>
+                            <p class="text-sm font-bold text-gray-900">
+                                S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            @endforeach
+
+            {{-- Seguir comprando --}}
+            <div class="pt-2">
+                <a href="{{ url('/') }}"
+                   class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Seguir comprando
+                </a>
+            </div>
+
+        </div>
+
+
+        {{--DERECHA  --}}
+        <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-24 h-fit">
+
+            {{-- Resumen --}}
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+
+                <h2 class="font-display font-semibold text-lg mb-1">Resumen del pedido</h2>
+                <p class="text-xs text-gray-400 mb-5">
+                    {{ count($items) }} {{ count($items) == 1 ? 'producto' : 'productos' }}
+                </p>
+
+                {{-- Lineas de total --}}
+                <div class="space-y-2 border-b border-gray-100 pb-4">
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Subtotal</span>
+                        <span>S/ {{ number_format($total, 2) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Envío</span>
+                        <span class="text-gray-400 italic text-xs">Se calcula en el checkout</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end pt-4">
+                    <span class="font-display font-semibold">Total</span>
+                    <div class="text-right">
+                        <p class="text-2xl font-display font-bold">S/ {{ number_format($total, 2) }}</p>
+                        <p class="text-xs text-gray-400">IGV incluido</p>
+                    </div>
+                </div>
+
+                <a href="{{ route('checkout.index') }}"
+                   class="mt-6 flex items-center justify-center gap-2 w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide hover:bg-gray-800 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    Finalizar compra
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+    @else
+
+    {{-- ══ CARRITO VACÍO ══ --}}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm py-24 flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-5 border border-gray-100">
+            <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+        </div>
+        <h2 class="font-display font-semibold text-xl mb-2">Tu bolsa está vacía</h2>
+        <p class="text-sm text-gray-400 mb-8 max-w-xs">Aún no has agregado ningún producto. Descubre nuestra colección y encuentra algo que te guste.</p>
+        <a href="{{ url('/') }}"
+           class="inline-flex items-center gap-2 bg-gray-900 text-white rounded-2xl px-7 py-3 text-sm font-semibold hover:bg-gray-800 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Volver a la tienda
+        </a>
+    </div>
+
+    @endif
+
+</div>
+
+<script>
+function carritoData() {
+    return {}
+}
+</script>
+
+</body>
 </html>

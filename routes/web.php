@@ -10,6 +10,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Admin\ProductoController;
 use App\Http\Controllers\Admin\CategoriaController;
+use App\Http\Controllers\Admin\PedidoController;
 use App\Models\Producto;
 use App\Models\Agencia;
 use App\Models\Provincia;
@@ -39,7 +40,13 @@ Route::get('/carrito/eliminar/{id}', [CarritoController::class, 'eliminar'])->na
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/finalizar-compra', [CheckoutController::class, 'index'])
-        ->name('carrito.checkout');
+        ->name('checkout.index');
+
+    Route::post('/finalizar-compra/confirmar', [CheckoutController::class, 'confirmar'])
+        ->name('checkout.confirmar');
+
+    Route::get('/pedido-confirmado', fn() => view('pedido.confirmado'))
+        ->name('pedido.confirmado');
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])
         ->name('usuario.actualizar');
@@ -97,6 +104,11 @@ Route::middleware(['auth', 'verified', 'role:1'])
 
         //genero
         Route::post('generos', [App\Http\Controllers\Admin\GeneroController::class, 'store'])->name('generos.store');
+
+        //Pedidos
+        Route::get('pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
+        Route::get('pedidos/{id}', [PedidoController::class, 'show'])->name('pedidos.show');
+        Route::put('pedidos/{id}', [PedidoController::class, 'update'])->name('pedidos.update');
     });
 
 
