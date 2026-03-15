@@ -10,9 +10,17 @@ use App\Models\Genero;
 use App\Models\Categoria;
 use App\Models\Promocion;
 use Illuminate\Support\Facades\File;
+use App\Services\PusherBeamsService;
 
 class ProductoController extends Controller
 {
+    protected $pusherBeams;
+
+    public function __construct(PusherBeamsService $pusherBeams)
+    {
+        $this->pusherBeams = $pusherBeams;
+    }
+
     public function index(Request $request)
     {
         $buscar = $request->get('buscar');
@@ -44,7 +52,6 @@ class ProductoController extends Controller
             'variantes.*.sku' => 'nullable|string|max:50|distinct|unique:producto_variante,sku',
         ]);
 
-        // validamos que Talla + Color son unicos en el formulario
         $combinaciones = collect($request->variantes)->map(function ($v) {
             return strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? ''));
         });
@@ -63,7 +70,6 @@ class ProductoController extends Controller
             'id_categoria'
         ]));
 
-        // imagen principal
         if ($request->hasFile('imagen')) {
             $archivo = $request->file('imagen');
             $nombre = uniqid() . '.' . $archivo->getClientOriginalExtension();
@@ -71,22 +77,30 @@ class ProductoController extends Controller
             $producto->update(['imagen' => $nombre]);
         }
 
-        // Creación de variantes
         foreach ($request->variantes as $v) {
             $producto->variantes()->create([
                 'talla' => $v['talla'],
                 'color' => $v['color'] ?? null,
                 'stock' => $v['stock'],
-                // Si el usuario no pone SKU generamos uno basado en el nombre para que sea más legible
                 'sku' => $v['sku'] ?? strtoupper(substr($producto->nombre_producto, 0, 3)) . '-' . uniqid(),
             ]);
         }
+
+        try {
+            $categoriaNombre = $producto->categoria->nombre ?? '';
+            $this->pusherBeams->enviarLanzamiento(
+                $producto->nombre_producto,
+                $categoriaNombre
+            );
+        } catch (\Exception $e) {
+            // Silencioso - no interrumpimos el flujo
+        }
+
         return redirect()->route('admin.productos.index')->with('success', 'Producto creado exitosamente.');
     }
 
     public function edit($id)
     {
-        // Solo carga las relaciones reales (aquellas que tienen un método en el modelo)
         $producto = Producto::with('variantes')->findOrFail($id);
 
         $generos = Genero::all();
@@ -100,10 +114,13 @@ class ProductoController extends Controller
     {
         $producto = Producto::findOrFail($id);
 
-        //  Validación
+        $teniaOfertaAntes = !is_null($producto->precio_oferta) && $producto->precio_oferta > 0;
+        $precioOfertaAntes = $producto->precio_oferta;
+
         $request->validate([
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
+            'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'galeria.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'variantes' => 'required|array|min:1',
@@ -112,7 +129,6 @@ class ProductoController extends Controller
             'variantes.*.sku' => 'required|string|max:50|distinct',
         ]);
 
-        // Lógica de combinaciones duplicadas y SKU
         $combinaciones = collect($request->variantes)->map(fn($v) => strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? '')));
         if ($combinaciones->duplicates()->isNotEmpty()) {
             return back()->withErrors(['variantes' => 'Hay combinaciones de Talla y Color duplicadas.'])->withInput();
@@ -127,37 +143,30 @@ class ProductoController extends Controller
             }
         }
 
-        // ACTUALIZAR IMÁGENES
         $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_genero', 'id_categoria', 'id_promocion']);
 
-        // Imagen Principal
         if ($request->hasFile('imagen')) {
             $datos['imagen'] = $this->cargarArchivo($request->file('imagen'));
         }
 
-        // Galería de Imágenes
         $galeriaActual = $producto->galeria ?? [];
 
-        // Eliminar fotos marcadas en el checkbox
         if ($request->has('galeria_eliminar')) {
             foreach ($request->galeria_eliminar as $fotoEliminar) {
-                File::delete(public_path('productos/' . $fotoEliminar)); // <-- Más corto y limpio
+                File::delete(public_path('productos/' . $fotoEliminar));
             }
             $galeriaActual = array_diff($galeriaActual, $request->galeria_eliminar);
         }
 
-        // Agregar nuevas fotos a la galería
         if ($request->hasFile('galeria')) {
             foreach ($request->file('galeria') as $foto) {
                 $galeriaActual[] = $this->cargarArchivo($foto);
             }
         }
-        $datos['galeria'] = array_values($galeriaActual); // Reindexamos para evitar huecos en el array
+        $datos['galeria'] = array_values($galeriaActual);
 
-        //  Guardar cambios del Producto
         $producto->update($datos);
 
-        //  Sincronizar Variantes
         $idsEnviados = [];
         foreach ($request->variantes as $v) {
             $variante = $producto->variantes()->updateOrCreate(
@@ -174,12 +183,27 @@ class ProductoController extends Controller
 
         $producto->variantes()->whereNotIn('id_variante', $idsEnviados)->delete();
 
+        $tieneOfertaAhora = !is_null($request->precio_oferta) && $request->precio_oferta > 0;
+
+        if ($tieneOfertaAhora) {
+            if (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta) {
+                try {
+                    $categoriaNombre = $producto->categoria->nombre ?? '';
+                    
+                    $this->pusherBeams->enviarOferta(
+                        $producto->nombre_producto,
+                        $request->precio_oferta, 
+                        $categoriaNombre
+                    );
+                } catch (\Exception $e) {
+                    // Silencioso - no interrumpimos el flujo
+                }
+            }
+        }
+
         return redirect()->route('admin.productos.index')->with('success', 'Producto actualizado correctamente');
     }
 
-    /**
-     * Método privado para procesar la subida de cualquier imagen
-     */
     private function cargarArchivo($file)
     {
         $nombre = time() . '_' . $file->getClientOriginalName();
@@ -195,7 +219,6 @@ class ProductoController extends Controller
             return redirect()->back()->with('error', 'No se puede eliminar un producto con stock.');
         }
 
-        // Eliminar archivos
         if ($producto->imagen) File::delete(public_path('productos/' . $producto->imagen));
         if ($producto->galeria) {
             foreach ($producto->galeria as $img) File::delete(public_path('productos/' . $img));

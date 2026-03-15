@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\CarritoController;
-use App\Http\Controllers\Api\ImageController; // ← AGREGAR
+use App\Http\Controllers\Api\ImageController; 
+use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
 
