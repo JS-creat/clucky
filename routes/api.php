@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\CarritoController;
-use App\Http\Controllers\Api\ImageController; 
+use App\Http\Controllers\Api\ImageController;
+use App\Http\Controllers\Api\FavoritoController; 
 use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
@@ -17,6 +18,13 @@ Route::middleware('auth:sanctum')->get('/perfil', function (Request $request) {
 // autenticacion
 Route::post('/register', [MobileAuthController::class, 'register']);
 Route::post('/login', [MobileAuthController::class, 'login']);
+
+// ==================== RUTAS DE FAVORITOS ====================
+Route::prefix('favoritos')->group(function () {
+    Route::get('/', [FavoritoController::class, 'obtener']); // Obtener favoritos del usuario
+    Route::post('/agregar', [FavoritoController::class, 'agregar']); // Agregar a favoritos
+    Route::delete('/eliminar', [FavoritoController::class, 'eliminar']); // Eliminar de favoritos
+});
 
 // ==================== RUTAS DE CARRITO ====================
 Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CarritoResource; // ← IMPORTAR
 use Illuminate\Http\Request;
 use App\Models\Carrito;
 use App\Models\DetalleCarrito;
@@ -18,7 +19,7 @@ class CarritoController extends Controller
             
         return response()->json([
             'success' => true,
-            'data' => $carrito
+            'data' => $carrito ? new CarritoResource($carrito) : null // ← USAR RESOURCE
         ]);
     }
 
@@ -32,7 +33,7 @@ class CarritoController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $carrito
+            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
         ]);
     }
 
@@ -67,7 +68,7 @@ class CarritoController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $carrito
+            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
         ]);
     }
 
@@ -89,7 +90,7 @@ class CarritoController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $carrito
+            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
         ]);
     }
 
@@ -112,7 +113,7 @@ class CarritoController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $carrito
+            'data' => $carrito ? new CarritoResource($carrito) : null // ← USAR RESOURCE
         ]);
     }
 
@@ -129,7 +130,7 @@ class CarritoController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $carrito,
+            'data' => $carrito ? new CarritoResource($carrito) : null, // ← USAR RESOURCE
             'message' => 'Carrito limpiado'
         ]);
     }

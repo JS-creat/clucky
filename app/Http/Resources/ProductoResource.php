@@ -8,15 +8,15 @@ class ProductoResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Imagen principal
+        // Imagen principal - CORREGIDO
         $imagenPrincipal = null;
         if ($this->imagen) {
             $imagenPrincipal = filter_var($this->imagen, FILTER_VALIDATE_URL)
                 ? $this->imagen
-                : asset('productos/' . $this->imagen); // ← CAMBIADO
+                : url('/api/imagen/' . $this->imagen); // ← CAMBIADO
         }
 
-        // Procesar la galería de imágenes si existe
+        // Procesar la galería de imágenes si existe - CORREGIDO
         $galeria = [];
         if ($this->galeria) {
             // Decodificar JSON si es string
@@ -30,7 +30,7 @@ class ProductoResource extends JsonResource
             $galeria = collect($imagenesGaleria)->map(function($img) {
                 return filter_var($img, FILTER_VALIDATE_URL)
                     ? $img
-                    : asset('productos/' . $img); // ← CAMBIADO
+                    : url('/api/imagen/' . $img); // ← CAMBIADO
             })->toArray();
         }
 
