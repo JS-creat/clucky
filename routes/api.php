@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\ImageController;
 use App\Http\Controllers\Api\FavoritoController; 
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
@@ -22,9 +23,9 @@ Route::post('/login', [MobileAuthController::class, 'login']);
 
 // ==================== RUTAS DE FAVORITOS ====================
 Route::prefix('favoritos')->group(function () {
-    Route::get('/', [FavoritoController::class, 'obtener']); // Obtener favoritos del usuario
-    Route::post('/agregar', [FavoritoController::class, 'agregar']); // Agregar a favoritos
-    Route::delete('/eliminar', [FavoritoController::class, 'eliminar']); // Eliminar de favoritos
+    Route::get('/', [FavoritoController::class, 'obtener']);
+    Route::post('/agregar', [FavoritoController::class, 'agregar']);
+    Route::delete('/eliminar', [FavoritoController::class, 'eliminar']);
 });
 
 // ==================== RUTAS DE CARRITO ====================
@@ -41,9 +42,21 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
 // Ruta pública para verificar stock
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
 
-// ==================== RUTA DE IMÁGENES (NUEVA) ====================
+// ==================== RUTA DE IMÁGENES (PRODUCTOS) ====================
 Route::get('/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*\.(jpg|jpeg|png|gif|webp)$');
+
+// ==================== RUTA DE IMÁGENES DE BANNERS (NUEVA) ====================
+Route::get('/banner/{filename}', function ($filename) {
+    $path = public_path('banners/' . $filename);
+    
+    if (!file_exists($path)) {
+        return response()->json(['error' => 'Imagen no encontrada'], 404);
+    }
+    
+    // 👇 ESTO ES MÁS RÁPIDO Y EFICIENTE
+    return response()->file($path);
+})->where('filename', '.*');
 
 // ==================== RUTAS DE PRODUCTOS ====================
 Route::prefix('productos')->group(function () {
@@ -53,10 +66,7 @@ Route::prefix('productos')->group(function () {
     Route::get('/ofertas', [ProductoController::class, 'ofertas']);
     Route::get('/buscar', [ProductoController::class, 'buscar']);
     
-    // Obtener variantes de un producto
     Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
-
-    // Obtener producto por ID (va al final)
     Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
 });
 
@@ -75,7 +85,10 @@ Route::get('/categorias/{id}/productos', [App\Http\Controllers\Api\CategoriaCont
 Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
 Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
 
-// ==================== RUTAS DEL CHAT ====================
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/message', [ChatController::class, 'sendMessage']);
+});
+
+Route::prefix('banners')->group(function () {
+    Route::get('/', [BannerController::class, 'index']);
 });
