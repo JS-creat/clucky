@@ -3,28 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductoResource; // 👈 IMPORTAR
+use App\Http\Resources\ProductoResource;
 use Illuminate\Http\Request;
 use App\Models\Favorito;
-use App\Models\Producto;
 
 class FavoritoController extends Controller
 {
-    // Obtener favoritos del usuario
     public function obtener(Request $request)
     {
         $favoritos = Favorito::where('id_usuario', $request->id_usuario)
-            ->with('producto')
+            ->with('producto.variantes')
             ->get()
             ->pluck('producto');
 
         return response()->json([
             'success' => true,
-            'data' => ProductoResource::collection($favoritos) // 👈 USAR RESOURCE
+            'data' => ProductoResource::collection($favoritos)
         ]);
     }
 
-    // Agregar producto a favoritos
     public function agregar(Request $request)
     {
         $request->validate([
@@ -40,11 +37,10 @@ class FavoritoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Producto agregado a favoritos',
-            'data' => new ProductoResource($favorito->producto) // 👈 USAR RESOURCE
+            'data' => new ProductoResource($favorito->load('producto.variantes')->producto)
         ]);
     }
 
-    // Eliminar producto de favoritos
     public function eliminar(Request $request)
     {
         $request->validate([

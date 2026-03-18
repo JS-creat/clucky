@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\ImageController;
 use App\Http\Controllers\Api\FavoritoController; 
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
@@ -73,3 +74,8 @@ Route::get('/categorias/{id}/productos', [App\Http\Controllers\Api\CategoriaCont
 // Rutas para géneros
 Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
 Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
+
+// ==================== RUTAS DEL CHAT ====================
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chat/message', [ChatController::class, 'sendMessage']);
+});
