@@ -1,18 +1,18 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Departamento extends Model
 {
-    protected $table = 'departamento';
+    protected $table      = 'departamento';
     protected $primaryKey = 'id_departamento';
-    public $timestamps = false;
+    public    $timestamps = false;
+
+    protected $fillable = ['nombre_departamento'];
 
     public function provincias()
     {
-        return $this->hasMany(Provincia::class, 'id_departamento');
+        return $this->hasMany(Provincia::class, 'id_departamento', 'id_departamento');
     }
 }
-
