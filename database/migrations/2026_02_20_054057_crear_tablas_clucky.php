@@ -100,8 +100,6 @@ return new class extends Migration {
 
             $table->string('nombre_distrito', 100);
 
-            $table->decimal('costo_envio', 6, 2)->default(0);
-
             $table->unsignedBigInteger('id_provincia');
 
             $table->foreign('id_provincia')->references('id_provincia')->on('provincia');

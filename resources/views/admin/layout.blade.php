@@ -17,7 +17,7 @@
     <div x-data="{ open: true }" class="flex min-h-screen relative">
 
         <aside :class="open ? 'w-72' : 'w-24'"
-            class="bg-gray-900 text-gray-400 transition-all duration-300 flex flex-col shadow-2xl z-40">
+            class="bg-black text-gray-400 transition-all duration-300 flex flex-col shadow-2xl z-40">
 
             <div class="flex items-center justify-between p-6 border-b border-gray-800/50">
                 <span x-show="open" x-transition.opacity class="text-xl font-black text-white tracking-tighter">
@@ -36,13 +36,14 @@
                         ['route' => 'admin.productos.index', 'icon' => 'o-shopping-bag', 'label' => 'Productos'],
                         ['route' => 'admin.categorias.index', 'icon' => 'o-tag', 'label' => 'Categorías y Género'],
                         ['route' => 'admin.pedidos.index', 'icon' => 'o-clipboard-document-list', 'label' => 'Pedidos'],
+                        ['route' => 'admin.agencias.index', 'icon' => 'o-building-office', 'label' => 'Agencias']
                     ];
                 @endphp
 
                 @foreach($links as $link)
                 <a href="{{ route($link['route']) }}"
                    class="flex items-center gap-4 p-4 rounded-2xl font-semibold transition-all group
-                   {{ request()->routeIs($link['route']) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-gray-800 hover:text-white' }}">
+                   {{ request()->routeIs($link['route']) ? 'bg-black text-white shadow-lg shadow-black/30' : 'hover:bg-white/10 hover:text-white' }}">
 
                     {{-- Renderizado dinámico del icono --}}
                     <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-6 h-6 transition-transform group-hover:scale-110" />
