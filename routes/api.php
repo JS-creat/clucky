@@ -8,18 +8,19 @@ use App\Http\Controllers\Api\ImageController;
 use App\Http\Controllers\Api\FavoritoController; 
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
-use Illuminate\Http\Middleware\HandleCors;
 
 // protegida perfil
-Route::middleware('auth:sanctum')->get('/perfil', function (Request $request) {
-    return response()->json($request->user());
-});
+Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
 
 // autenticacion
 Route::post('/register', [MobileAuthController::class, 'register']);
 Route::post('/login', [MobileAuthController::class, 'login']);
+
+// Actualizar perfil
+Route::middleware('auth:sanctum')->put('/perfil', [MobileAuthController::class, 'updatePerfil']);
 
 // ==================== RUTAS DE FAVORITOS ====================
 Route::prefix('favoritos')->group(function () {
@@ -46,7 +47,7 @@ Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class,
 Route::get('/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*\.(jpg|jpeg|png|gif|webp)$');
 
-// ==================== RUTA DE IMÁGENES DE BANNERS (NUEVA) ====================
+// ==================== RUTA DE IMÁGENES DE BANNERS ====================
 Route::get('/banner/{filename}', function ($filename) {
     $path = public_path('banners/' . $filename);
     
@@ -54,7 +55,6 @@ Route::get('/banner/{filename}', function ($filename) {
         return response()->json(['error' => 'Imagen no encontrada'], 404);
     }
     
-    // 👇 ESTO ES MÁS RÁPIDO Y EFICIENTE
     return response()->file($path);
 })->where('filename', '.*');
 
@@ -78,17 +78,19 @@ Route::prefix('productos')->group(function () {
 });
 
 // Rutas para categorías
-Route::get('/categorias', [App\Http\Controllers\Api\CategoriaController::class, 'index']);
-Route::get('/categorias/{id}/productos', [App\Http\Controllers\Api\CategoriaController::class, 'productos']);
+Route::get('/categorias', [CategoriaController::class, 'index']);
+Route::get('/categorias/{id}/productos', [CategoriaController::class, 'productos']);
 
 // Rutas para géneros
 Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
 Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
 
+// Rutas del chat
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/message', [ChatController::class, 'sendMessage']);
 });
 
+// Rutas de banners
 Route::prefix('banners')->group(function () {
     Route::get('/', [BannerController::class, 'index']);
 });

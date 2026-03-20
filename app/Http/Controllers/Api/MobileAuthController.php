@@ -33,7 +33,12 @@ class MobileAuthController extends Controller
                 'nombres' => $user->nombres,
                 'apellidos' => $user->apellidos,
                 'correo' => $user->correo,
-                'id_rol' => $user->id_rol
+                'id_rol' => $user->id_rol,
+                'telefono' => $user->telefono,
+                'numero_documento' => $user->numero_documento,
+                'id_tipo_documento' => $user->id_tipo_documento,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
             ],
             'token' => $token
         ]);
@@ -53,10 +58,12 @@ class MobileAuthController extends Controller
             'apellidos' => $request->apellidos,
             'correo' => $request->correo,
             'contrasena' => Hash::make($request->contrasena),
-            'id_rol' => 2
+            'id_rol' => 2,
+            'telefono' => $request->telefono,
+            'numero_documento' => $request->numero_documento,
+            'id_tipo_documento' => $request->id_tipo_documento,
         ]);
 
-        // Generar token para login automático después del registro
         $token = $user->createToken('mobile_token')->plainTextToken;
 
         return response()->json([
@@ -66,7 +73,12 @@ class MobileAuthController extends Controller
                 'nombres' => $user->nombres,
                 'apellidos' => $user->apellidos,
                 'correo' => $user->correo,
-                'id_rol' => $user->id_rol
+                'id_rol' => $user->id_rol,
+                'telefono' => $user->telefono,
+                'numero_documento' => $user->numero_documento,
+                'id_tipo_documento' => $user->id_tipo_documento,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
             ],
             'token' => $token
         ], 201);
@@ -90,7 +102,46 @@ class MobileAuthController extends Controller
             'nombres' => $user->nombres,
             'apellidos' => $user->apellidos,
             'correo' => $user->correo,
-            'id_rol' => $user->id_rol
+            'id_rol' => $user->id_rol,
+            'telefono' => $user->telefono,
+            'numero_documento' => $user->numero_documento,
+            'id_tipo_documento' => $user->id_tipo_documento,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ]);
+    }
+
+    public function updatePerfil(Request $request)
+    {
+        $user = $request->user();
+        
+        $request->validate([
+            'nombres' => 'required|string|max:50',
+            'apellidos' => 'required|string|max:50',
+            'telefono' => 'nullable|string|max:20',
+        ]);
+        
+        $user->update([
+            'nombres' => $request->nombres,
+            'apellidos' => $request->apellidos,
+            'telefono' => $request->telefono,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente',
+            'user' => [
+                'id' => $user->id_usuario,
+                'nombres' => $user->nombres,
+                'apellidos' => $user->apellidos,
+                'correo' => $user->correo,
+                'id_rol' => $user->id_rol,
+                'telefono' => $user->telefono,
+                'numero_documento' => $user->numero_documento,
+                'id_tipo_documento' => $user->id_tipo_documento,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
         ]);
     }
 }
