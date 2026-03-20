@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ProductoController;
 use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\PedidoController;
 use App\Http\Controllers\Admin\AgenciaController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Producto;
 
 // ── PÚBLICAS
@@ -38,12 +39,11 @@ Route::prefix('ubicacion')->name('ubicacion.')->group(function () {
 });
 
 // ── AUTENTICADOS
-
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/finalizar-compra',           [CheckoutController::class, 'index'])    ->name('checkout.index');
-    Route::post('/finalizar-compra/confirmar',[CheckoutController::class, 'confirmar'])->name('checkout.confirmar');
-    Route::get('/pedido-confirmado',           fn() => view('pedido.confirmado'))       ->name('pedido.confirmado');
+    Route::get('/finalizar-compra',            [CheckoutController::class, 'index'])    ->name('checkout.index');
+    Route::post('/finalizar-compra/confirmar', [CheckoutController::class, 'confirmar'])->name('checkout.confirmar');
+    Route::get('/pedido-confirmado',            fn() => view('pedido.confirmado'))       ->name('pedido.confirmado');
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])->name('usuario.actualizar');
 
@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified', 'role:1'])
     ->name('admin.')
     ->group(function () {
 
-        Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Productos
         Route::resource('productos', ProductoController::class)->except(['show']);
@@ -80,7 +80,7 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::resource('agencias', AgenciaController::class)->except(['show']);
         Route::patch('agencias/{agencia}/toggle', [AgenciaController::class, 'toggleEstado'])->name('agencias.toggle');
 
-        // API selects encadenados (departamento → provincia → distrito) para el form de agencias
+        // selects encadenados (departamento → provincia → distrito)
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('provincias/{id}', [AgenciaController::class, 'provincias'])->name('provincias');
             Route::get('distritos/{id}',  [AgenciaController::class, 'distritos']) ->name('distritos');
