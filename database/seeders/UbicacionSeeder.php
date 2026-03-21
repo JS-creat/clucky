@@ -238,7 +238,6 @@ class UbicacionSeeder extends Seeder
                 foreach ($distritos as $nombreDist) {
                     DB::table('distrito')->insert([
                         'nombre_distrito' => $nombreDist,
-                        'costo_envio'     => 0.00, // El admin lo configura por agencia
                         'id_provincia'    => $provId,
                     ]);
                 }
@@ -246,6 +245,6 @@ class UbicacionSeeder extends Seeder
         }
 
         $this->command->info('✅ Departamentos, provincias y distritos del Perú cargados correctamente.');
-        $this->command->info('ℹ  El costo de envío por distrito se configura al crear agencias desde el panel admin.');
+        $this->command->info('ℹ  El costo de envío por agencia se configura al crear agencias desde el panel admin.');
     }
 }
