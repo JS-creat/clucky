@@ -15,7 +15,6 @@ class CategoriaController extends Controller
     {
         $query = Categoria::where('estado_categoria', true);
 
-        // Filtrar por género si se envía el parámetro
         if ($request->has('genero_id') && $request->genero_id) {
             $query->whereHas('productos', function ($q) use ($request) {
                 $q->where('id_genero', $request->genero_id);
@@ -26,28 +25,33 @@ class CategoriaController extends Controller
 
         $categorias = $categorias->map(function ($categoria) {
             return [
-                'id_categoria' => $categoria->id_categoria,
+                'id_categoria'     => $categoria->id_categoria,
                 'nombre_categoria' => $categoria->nombre_categoria,
                 'estado_categoria' => $categoria->estado_categoria,
-                'created_at' => $categoria->created_at,
-                'updated_at' => $categoria->updated_at,
+                'created_at'       => $categoria->created_at,
+                'updated_at'       => $categoria->updated_at,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $categorias
+            'data'    => $categorias
         ]);
     }
 
     /**
-     * Obtener productos por categoría
+     * Obtener productos por categoría, filtrados por género
      */
-    public function productos($id)
+    public function productos($id, Request $request)
     {
-        $categoria = Categoria::with(['productos' => function ($query) {
+        $categoria = Categoria::with(['productos' => function ($query) use ($request) {
             $query->where('estado_producto', true)
                   ->with('variantes');
+
+            // ✅ Filtrar por género si viene el parámetro
+            if ($request->has('genero_id') && $request->genero_id) {
+                $query->where('id_genero', $request->genero_id);
+            }
         }])->find($id);
 
         if (!$categoria) {
@@ -57,48 +61,48 @@ class CategoriaController extends Controller
             ], 404);
         }
 
-        $productos = $categoria->productos->map(function ($producto) {
-            $imagenPrincipal = $producto->imagen 
-                ? url('/api/imagen/' . $producto->imagen) 
+        $productos = $categoria->productos->map(function ($producto) use ($categoria) {
+            $imagenPrincipal = $producto->imagen
+                ? url('/api/imagen/' . $producto->imagen)
                 : null;
 
             $galeria = [];
             if ($producto->galeria) {
-                $imagenesGaleria = is_array($producto->galeria) 
-                    ? $producto->galeria 
+                $imagenesGaleria = is_array($producto->galeria)
+                    ? $producto->galeria
                     : json_decode($producto->galeria, true) ?? [];
-                
+
                 $galeria = collect($imagenesGaleria)->map(function ($img) {
                     return url('/api/imagen/' . $img);
                 })->toArray();
             }
 
             $precioOriginal = (float) $producto->precio;
-            $precioFinal = $precioOriginal;
-            $descuento = 0;
+            $precioFinal    = $precioOriginal;
+            $descuento      = 0;
 
             if ($producto->precio_oferta) {
                 $precioFinal = (float) $producto->precio_oferta;
-                $descuento = round((($precioOriginal - $precioFinal) / $precioOriginal) * 100, 0);
+                $descuento   = round((($precioOriginal - $precioFinal) / $precioOriginal) * 100, 0);
             }
 
             return [
-                'id' => $producto->id_producto,
-                'titulo' => $producto->nombre_producto,
-                'descripcion' => $producto->descripcion ?? '',
-                'precio' => $precioFinal,
-                'precio_antes' => $precioFinal < $precioOriginal ? $precioOriginal : null,
-                'descuento' => $descuento > 0 ? $descuento : null,
+                'id'             => $producto->id_producto,
+                'titulo'         => $producto->nombre_producto,
+                'descripcion'    => $producto->descripcion ?? '',
+                'precio'         => $precioFinal,
+                'precio_antes'   => $precioFinal < $precioOriginal ? $precioOriginal : null,
+                'descuento'      => $descuento > 0 ? $descuento : null,
                 'imagen_principal' => $imagenPrincipal,
-                'imagenes' => $galeria,
-                'categoria' => $categoria->nombre_categoria,
-                'categoria_id' => $categoria->id_categoria,
+                'imagenes'       => $galeria,
+                'categoria'      => $categoria->nombre_categoria,
+                'categoria_id'   => $categoria->id_categoria,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $productos
+            'data'    => $productos
         ]);
     }
 }
