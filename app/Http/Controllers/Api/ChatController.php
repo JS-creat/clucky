@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Events\MessageSentEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class ChatController extends Controller
 {
+    // Configuración de Ollama
+    protected $ollamaUrl = 'http://localhost:11434'; // Cambia si tu servidor está en otra IP
+    protected $model = 'gemma3:4b'; // Modelo que estás usando
+    
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -21,17 +26,78 @@ class ChatController extends Controller
 
         $user = User::find($userId);
         $userName = $user ? $user->nombres : 'usuario';
-
-        $response = "¡Hola $userName! Por ahora no tengo información.";
-
+        
+        try {
+            // Preparar los mensajes para Ollama
+            $messages = [
+                [
+                    "role" => "system",
+                    "content" => "eres un asistente de C lucky respondes de forma breve. Vendemos ropa y tenemos en oferta pantalones al dos por uno. Si no sabes la respuesta sugiere que contacte al numero: 992387342"
+                ],
+                [
+                    "role" => "user",
+                    "content" => $userMessage
+                ]
+            ];
+            
+            // Llamar a Ollama
+            $response = Http::timeout(30) // Timeout de 30 segundos
+                ->post("{$this->ollamaUrl}/api/chat", [
+                    'model' => $this->model,
+                    'messages' => $messages,
+                    'stream' => false,
+                    'options' => [
+                        'temperature' => 0.7,
+                        'max_tokens' => 500
+                    ]
+                ]);
+            
+            // Verificar si la petición fue exitosa
+            if ($response->successful()) {
+                $ollamaResponse = $response->json();
+                $aiMessage = $ollamaResponse['message']['content'] ?? 'Lo siento, no pude procesar tu solicitud.';
+            } else {
+                // Fallback si Ollama no responde
+                $aiMessage = "Lo siento, el servicio de asistente no está disponible en este momento. Por favor, contacta al 992387342 para atención personalizada.";
+                \Log::error('Error al llamar a Ollama: ' . $response->body());
+            }
+            
+        } catch (\Exception $e) {
+            // Manejar errores de conexión
+            $aiMessage = "Lo siento, no puedo conectarme al asistente. Por favor, contacta al 992387342 para atención personalizada.";
+            \Log::error('Excepción al llamar a Ollama: ' . $e->getMessage());
+        }
+        
+        // Transmitir la respuesta
         broadcast(new MessageSentEvent(
             $userId,
-            $response
+            $aiMessage
         ));
-
+        
         return response()->json([
             'success' => true,
-            'message' => 'Respuesta enviada'
+            'message' => 'Respuesta enviada',
+            'ai_response' => $aiMessage // Opcional: incluir la respuesta en el JSON
         ]);
+    }
+    
+    // Método adicional para verificar el estado de Ollama
+    public function checkOllamaStatus()
+    {
+        try {
+            $response = Http::timeout(5)->get("{$this->ollamaUrl}/api/tags");
+            
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => 'online',
+                    'models' => $response->json()['models'] ?? []
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'offline',
+                'error' => $e->getMessage()
+            ], 503);
+        }
     }
 }
