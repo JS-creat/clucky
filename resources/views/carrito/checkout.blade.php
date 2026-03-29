@@ -25,20 +25,16 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <style>
-        [x-cloak] {
-            display: none !important;
-        }
+        [x-cloak] { display: none !important; }
     </style>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
 <body class="bg-stone-50 font-sans text-gray-900 antialiased">
 
-
     {{-- NAVBAR --}}
     <nav class="bg-gray-900 sticky top-0 z-50 border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-
             <div class="flex items-center gap-4">
                 <a href="{{ url('/carrito') }}"
                     class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
@@ -49,33 +45,28 @@
                     Volver al carrito
                 </a>
             </div>
-
         </div>
     </nav>
 
-
-    {{--CALCULAR TOTAL --}}
+    {{-- CALCULAR TOTAL --}}
     @php
         $total = 0;
         if ($carrito && $carrito->detalles->count()) {
             foreach ($carrito->detalles as $detalle) {
                 $variante = $detalle->variante ?? null;
                 $producto = $variante?->producto;
-                if (!$producto)
-                    continue;
+                if (!$producto) continue;
                 $precio = $producto->precio_oferta ?? $producto->precio;
                 $total += $precio * $detalle->cantidad;
             }
         }
     @endphp
 
-
-    {{--CONTENIDO PRINCIPAL--}}
+    {{-- CONTENIDO PRINCIPAL --}}
     <div x-data="checkoutData()" x-cloak
         class="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-5 gap-8">
 
-
-        {{--IZQUIERDA  --}}
+        {{-- IZQUIERDA --}}
         <div class="lg:col-span-3 space-y-5">
 
             <div>
@@ -83,15 +74,12 @@
                 <p class="text-sm text-gray-500 mt-1">Completa los datos para confirmar tu compra</p>
             </div>
 
-
-            {{--  TIPO DE ENTREGA  --}}
+            {{-- TIPO DE ENTREGA --}}
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
-                {{-- Cabecera --}}
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="font-semibold flex items-center gap-2">
-                        <span
-                            class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">1</span>
+                        <span class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">1</span>
                         Tipo de entrega
                     </h2>
                     <button x-show="!editandoEntrega" @click="editandoEntrega = true"
@@ -115,13 +103,16 @@
                         </div>
                         <div>
                             <p class="text-sm font-semibold" x-text="tipoEntregaNombre"></p>
-                            <p x-show="tipoEntrega == 2 && distritoNombre" class="text-xs text-gray-500 mt-0.5"
-                                x-text="'Envío a: ' + distritoNombre"></p>
+                            <p x-show="tipoEntrega == 2 && distritoNombre"
+                                class="text-xs text-gray-500 mt-0.5"
+                                x-text="'Distrito: ' + distritoNombre"></p>
+                            <p x-show="tipoEntrega == 2 && agenciaNombre"
+                                class="text-xs text-gray-500 mt-0.5"
+                                x-text="'Agencia: ' + agenciaNombre"></p>
                             <p x-show="tipoEntrega == 2 && costoEnvio > 0"
                                 class="text-xs text-amber-600 font-semibold mt-0.5"
                                 x-text="'Costo: S/ ' + parseFloat(costoEnvio).toFixed(2)"></p>
-                            <p x-show="tipoEntrega != 2" class="text-xs text-emerald-600 font-medium mt-0.5">Sin costo
-                                de envío</p>
+                            <p x-show="tipoEntrega != 2" class="text-xs text-emerald-600 font-medium mt-0.5">Sin costo de envío</p>
                         </div>
                     </div>
                 </div>
@@ -132,13 +123,13 @@
                     @foreach($tiposEntrega as $tipo)
                         <label class="flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all"
                             :class="tipoEntrega == {{ $tipo->id_tipo_entrega }}
-                                       ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-                                       : 'border-gray-200 hover:border-gray-400'">
+                                ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                                : 'border-gray-200 hover:border-gray-400'">
 
                             <input type="radio" name="tipo_entrega" value="{{ $tipo->id_tipo_entrega }}" class="sr-only"
                                 @click="tipoEntrega = {{ $tipo->id_tipo_entrega }};
-                                          tipoEntregaNombre = '{{ $tipo->nombre_tipo_entrega }}';
-                                          calcularEnvioPorTipo()">
+                                        tipoEntregaNombre = '{{ $tipo->nombre_tipo_entrega }}';
+                                        calcularEnvioPorTipo()">
 
                             <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
                                 :class="tipoEntrega == {{ $tipo->id_tipo_entrega }} ? 'border-gray-900 bg-gray-900' : 'border-gray-300'">
@@ -150,7 +141,7 @@
                                 <p class="text-sm font-medium">{{ $tipo->nombre_tipo_entrega }}</p>
                                 <p class="text-xs text-gray-400 mt-0.5">
                                     @if($tipo->id_tipo_entrega == 2)
-                                        Calculado según distrito
+                                        Calculado según agencia de envío
                                     @else
                                         Recoge en tienda · Sin costo adicional
                                     @endif
@@ -158,17 +149,16 @@
                             </div>
 
                             @if($tipo->id_tipo_entrega != 2)
-                                <span
-                                    class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Gratis</span>
+                                <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Gratis</span>
                             @endif
                         </label>
                     @endforeach
 
-                    {{-- Selección de envio--}}
+                    {{-- Selección de envío --}}
                     <div x-show="tipoEntrega == 2" class="space-y-3 pt-3 border-t border-gray-100">
-                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecciona tu ubicación
-                        </p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecciona tu ubicación</p>
 
+                        {{-- Departamento --}}
                         <select x-model="departamento" @change="cargarProvincias"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-gray-900 transition-colors">
                             <option value="">Departamento</option>
@@ -177,6 +167,7 @@
                             @endforeach
                         </select>
 
+                        {{-- Provincia --}}
                         <select x-show="provincias.length" x-model="provincia" @change="cargarDistritos"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-gray-900 transition-colors">
                             <option value="">Provincia</option>
@@ -185,7 +176,9 @@
                             </template>
                         </select>
 
-                        <select x-show="distritos.length" x-model="distrito" @change="mostrarCosto"
+                        {{-- Distrito --}}
+                        <select x-show="distritos.length"
+                            @change="distrito = $event.target.value; cargarAgencias()"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-gray-900 transition-colors">
                             <option value="">Distrito</option>
                             <template x-for="dist in distritos" :key="dist.id_distrito">
@@ -193,11 +186,67 @@
                             </template>
                         </select>
 
-                        <div x-show="costoEnvio > 0"
+                        {{-- Cargando agencias --}}
+                        <div x-show="cargandoAgencias" class="flex items-center gap-2 text-sm text-gray-400 px-1">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Buscando agencias disponibles…
+                        </div>
+
+                        {{-- Agencias disponibles --}}
+                        <div x-show="!cargandoAgencias && agencias.length > 0" class="space-y-2">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                Agencia de envío
+                            </p>
+                            <template x-for="ag in agencias" :key="ag.id_agencia">
+                                <label class="flex items-start gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all"
+                                    :class="agenciaSeleccionada == ag.id_agencia
+                                        ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                                        : 'border-gray-200 hover:border-gray-400'">
+
+                                    <input type="radio" class="sr-only"
+                                        @click="agenciaSeleccionada = ag.id_agencia;
+                                                costoEnvio = parseFloat(ag.costo_envio);
+                                                agenciaNombre = ag.nombre_agencia">
+
+                                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors"
+                                        :class="agenciaSeleccionada == ag.id_agencia
+                                            ? 'border-gray-900 bg-gray-900'
+                                            : 'border-gray-300'">
+                                        <div class="w-2 h-2 bg-white rounded-full"
+                                            x-show="agenciaSeleccionada == ag.id_agencia"></div>
+                                    </div>
+
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold" x-text="ag.nombre_agencia"></p>
+                                        <p class="text-xs text-gray-400 mt-0.5" x-text="ag.direccion"></p>
+                                    </div>
+
+                                    <span class="text-sm font-bold text-amber-700 shrink-0">
+                                        S/ <span x-text="parseFloat(ag.costo_envio).toFixed(2)"></span>
+                                    </span>
+                                </label>
+                            </template>
+                        </div>
+
+                        {{-- Sin agencias en este distrito --}}
+                        <div x-show="!cargandoAgencias && distrito && agencias.length === 0"
+                            class="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                            <p class="text-sm text-red-700 font-medium">
+                                No hay agencias de envío disponibles para este distrito.
+                                Selecciona otro distrito o contáctanos.
+                            </p>
+                        </div>
+
+                        {{-- Resumen costo seleccionado --}}
+                        <div x-show="agenciaSeleccionada && costoEnvio > 0"
                             class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                             <span class="text-sm text-amber-800 font-medium">Costo de envío</span>
-                            <span class="text-sm font-bold text-amber-900">S/ <span
-                                    x-text="parseFloat(costoEnvio).toFixed(2)"></span></span>
+                            <span class="text-sm font-bold text-amber-900">
+                                S/ <span x-text="parseFloat(costoEnvio).toFixed(2)"></span>
+                            </span>
                         </div>
                     </div>
 
@@ -209,14 +258,12 @@
                 </div>
             </div>
 
-
-            {{-- DATOS PERSONALES  --}}
+            {{-- DATOS PERSONALES --}}
             <div x-data="{ editandoDatos: false }" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="font-semibold flex items-center gap-2">
-                        <span
-                            class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">2</span>
+                        <span class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">2</span>
                         Datos personales
                     </h2>
                     <button x-show="!editandoDatos" @click="editandoDatos = true"
@@ -233,8 +280,7 @@
                 <div x-show="!editandoDatos" class="grid grid-cols-2 gap-3">
                     <div class="bg-gray-50 rounded-xl p-3">
                         <p class="text-xs text-gray-400 mb-0.5">Nombre completo</p>
-                        <p class="text-sm font-semibold">{{ auth()->user()->nombres }} {{ auth()->user()->apellidos }}
-                        </p>
+                        <p class="text-sm font-semibold">{{ auth()->user()->nombres }} {{ auth()->user()->apellidos }}</p>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-3">
                         <p class="text-xs text-gray-400 mb-0.5">Documento</p>
@@ -255,7 +301,6 @@
                     <form method="POST" action="{{ route('usuario.actualizar') }}">
                         @csrf
                         @method('PUT')
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-xs font-medium text-gray-500 block mb-1.5">Nombres</label>
@@ -269,8 +314,7 @@
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-gray-500 block mb-1.5">N° Documento</label>
-                                <input type="text" name="numero_documento"
-                                    value="{{ auth()->user()->numero_documento }}"
+                                <input type="text" name="numero_documento" value="{{ auth()->user()->numero_documento }}"
                                     class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition-colors"
                                     placeholder="DNI / RUC">
                             </div>
@@ -281,7 +325,6 @@
                                     placeholder="9XXXXXXXX">
                             </div>
                         </div>
-
                         <div class="flex items-center gap-3 mt-4">
                             <button type="submit"
                                 class="text-sm font-medium border border-gray-200 rounded-xl px-5 py-2 hover:border-gray-900 hover:bg-gray-50 transition-all">
@@ -296,36 +339,27 @@
                 </div>
             </div>
 
-
             {{-- TERMINOS --}}
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-
                 <h2 class="font-semibold flex items-center gap-2 mb-5">
-                    <span
-                        class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">3</span>
+                    <span class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">3</span>
                     Términos y condiciones
                 </h2>
 
-                <div
-                    class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed max-h-24 overflow-y-auto mb-4">
-                    Al completar esta compra, aceptas nuestros <strong class="text-gray-700">Términos y
-                        Condiciones</strong>
+                <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed max-h-24 overflow-y-auto mb-4">
+                    Al completar esta compra, aceptas nuestros <strong class="text-gray-700">Términos y Condiciones</strong>
                     de venta, incluyendo la política de devoluciones (30 días desde recepción), política de privacidad
-                    y condiciones de envío. Los precios incluyen IGV. Las compras están sujetas a disponibilidad de
-                    stock.
+                    y condiciones de envío. Los precios incluyen IGV. Las compras están sujetas a disponibilidad de stock.
                 </div>
 
-                {{-- Checkbox --}}
                 <div class="flex items-start gap-3">
                     <button type="button" @click="aceptaTerminos = !aceptaTerminos"
                         class="mt-0.5 w-5 h-5 rounded shrink-0 border-2 flex items-center justify-center transition-colors"
                         :class="aceptaTerminos ? 'bg-gray-900 border-gray-900' : 'bg-white border-gray-300'">
-                        <svg x-show="aceptaTerminos" class="w-3 h-3 text-white" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg x-show="aceptaTerminos" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                         </svg>
                     </button>
-
                     <div>
                         <p class="text-sm text-gray-700">
                             He leído y acepto los
@@ -346,19 +380,17 @@
                 </div>
             </div>
 
-            {{-- Boton pagar  --}}
+            {{-- Botón pagar mobile --}}
             <div class="lg:hidden">
-                <button @click="intentarPagar" :disabled="!aceptaTerminos" class="w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide
-                           hover:bg-gray-800 transition-all disabled:bg-gray-200 disabled:cursor-not-allowed">
+                <button @click="intentarPagar" :disabled="!aceptaTerminos"
+                    class="w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide hover:bg-gray-800 transition-all disabled:bg-gray-200 disabled:cursor-not-allowed">
                     <span x-show="!procesando">
-                        Continuar al pago · S/ <span
-                            x-text="(parseFloat(totalProductos) + parseFloat(costoEnvio || 0)).toFixed(2)"></span>
+                        Continuar al pago · S/ <span x-text="totalConEnvio()"></span>
                     </span>
                     <span x-show="procesando" class="flex items-center justify-center gap-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         Procesando…
                     </span>
@@ -367,11 +399,10 @@
 
         </div>
 
-
-        {{--DERECHA --}}
+        {{-- DERECHA --}}
         <div class="lg:col-span-2 space-y-4 lg:sticky lg:top-24 h-fit">
 
-            {{-- RESUMEN DEL PEDIDO  --}}
+            {{-- RESUMEN DEL PEDIDO --}}
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
                 <h2 class="font-display font-semibold text-lg mb-1">Resumen del pedido</h2>
@@ -385,52 +416,42 @@
                         @php
                             $variante = $detalle->variante ?? null;
                             $producto = $variante?->producto;
-                            if (!$producto)
-                                continue;
-                            $precio = $producto->precio_oferta ?? $producto->precio;
+                            if (!$producto) continue;
+                            $precio   = $producto->precio_oferta ?? $producto->precio;
                             $subtotal = $precio * $detalle->cantidad;
                         @endphp
 
                         <div class="flex items-center gap-3 py-3">
-
                             <div class="relative shrink-0">
                                 @if($producto->imagen)
                                     <img src="{{ asset('productos/' . $producto->imagen) }}"
                                         alt="{{ $producto->nombre_producto }}"
                                         class="w-14 h-14 rounded-xl object-cover border border-gray-100">
                                 @else
-                                    <div
-                                        class="w-14 h-14 rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
+                                    <div class="w-14 h-14 rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
                                     </div>
                                 @endif
-                                <span
-                                    class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-900 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                <span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-900 text-white text-xs font-bold rounded-full flex items-center justify-center">
                                     {{ $detalle->cantidad }}
                                 </span>
                             </div>
 
-                            {{-- Info --}}
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold truncate">{{ $producto->nombre_producto }}</p>
-                                <p class="text-xs text-gray-400 mt-0.5">{{ $variante->color }} · Talla
-                                    {{ $variante->talla }}
-                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $variante->color }} · Talla {{ $variante->talla }}</p>
                                 @if($producto->precio_oferta)
                                     <span class="text-xs text-emerald-600 font-medium">En oferta</span>
                                 @endif
                             </div>
 
-                            {{-- Precio --}}
                             <div class="text-right shrink-0">
                                 <p class="text-sm font-bold">S/ {{ number_format($subtotal, 2) }}</p>
                                 <p class="text-xs text-gray-400">S/ {{ number_format($precio, 2) }} c/u</p>
                             </div>
-
                         </div>
                     @endforeach
                 </div>
@@ -443,54 +464,52 @@
                     </div>
                     <div class="flex justify-between text-sm text-gray-500">
                         <span>Envío</span>
-                        <span x-show="costoEnvio > 0">S/ <span x-text="parseFloat(costoEnvio).toFixed(2)"></span></span>
-                        <span x-show="costoEnvio == 0" class="text-emerald-600 font-medium">Gratis</span>
+                        <span x-show="costoEnvio > 0" class="font-medium text-amber-700">
+                            + S/ <span x-text="parseFloat(costoEnvio).toFixed(2)"></span>
+                        </span>
+                        <span x-show="costoEnvio == 0" class="text-emerald-600 font-medium">
+                            <span x-show="tipoEntrega != 2 || !agenciaSeleccionada">—</span>
+                            <span x-show="tipoEntrega != 2">Gratis</span>
+                        </span>
                     </div>
                 </div>
 
+                {{-- TOTAL FINAL --}}
                 <div class="border-t border-gray-100 pt-4 mt-3 flex justify-between items-end">
                     <span class="font-display font-semibold">Total a pagar</span>
                     <div class="text-right">
                         <p class="text-2xl font-display font-bold">
-                            S/ <span
-                                x-text="(parseFloat(totalProductos) + parseFloat(costoEnvio || 0)).toFixed(2)"></span>
+                            S/ <span x-text="totalConEnvio()"></span>
                         </p>
                         <p class="text-xs text-gray-400">IGV incluido</p>
                     </div>
                 </div>
             </div>
 
-
-            {{-- Botón pagar  --}}
+            {{-- Botón pagar desktop --}}
             <div class="hidden lg:block">
-                <button @click="intentarPagar" :disabled="!aceptaTerminos" class="w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide
-                           hover:bg-gray-800 transition-all disabled:bg-gray-200 disabled:cursor-not-allowed
-                           flex items-center justify-center gap-2">
+                <button @click="intentarPagar" :disabled="!aceptaTerminos"
+                    class="w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide hover:bg-gray-800 transition-all disabled:bg-gray-200 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     <span x-show="!procesando" class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
-                        Continuar al pago
+                        Continuar al pago · S/ <span x-text="totalConEnvio()"></span>
                     </span>
                     <span x-show="procesando" class="flex items-center gap-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         Procesando…
                     </span>
                 </button>
 
-                {{-- Mercado Pago badge --}}
                 <div class="mt-3 text-center space-y-1.5">
                     <p class="text-xs text-gray-400">Serás redirigido a</p>
-                    <span
-                        class="inline-flex items-center gap-1.5 bg-[#009EE3] text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                    <span class="inline-flex items-center gap-1.5 bg-[#009EE3] text-white text-xs font-bold px-3 py-1.5 rounded-lg">
                         <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c4.411 0 8 3.589 8 8s-3.589 8-8 8-8-3.589-8-8 3.589-8 8-8z" />
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4c4.411 0 8 3.589 8 8s-3.589 8-8 8-8-3.589-8-8 3.589-8 8-8z" />
                         </svg>
                         Mercado Pago
                     </span>
@@ -499,75 +518,67 @@
             </div>
 
         </div>
+
         {{-- Formulario oculto para enviar el pedido --}}
         <form id="form-pedido" method="POST" action="{{ route('checkout.confirmar') }}">
             @csrf
             <input type="hidden" name="id_tipo_entrega" x-bind:value="tipoEntrega">
-            <input type="hidden" name="id_distrito" x-bind:value="distrito">
-            <input type="hidden" name="costo_envio" x-bind:value="costoEnvio">
+            <input type="hidden" name="id_distrito"     x-bind:value="distrito">
+            <input type="hidden" name="id_agencia"      x-bind:value="agenciaSeleccionada">
+            <input type="hidden" name="costo_envio"     x-bind:value="costoEnvio">
         </form>
 
     </div>
 
-
-    {{-- MODAL TERMINOS Y CONDICIONES --}}
-    <div x-show="modalTerminos" x-cloak x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
+    {{-- MODAL TERMINOS --}}
+    <div x-show="modalTerminos" x-cloak
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         @click.self="modalTerminos = false">
 
         <div class="bg-white rounded-2xl p-8 w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl"
-            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-3"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-3"
             x-transition:enter-end="opacity-100 translate-y-0">
 
-            {{-- Header --}}
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-display font-semibold">Términos y Condiciones</h2>
                 <button @click="modalTerminos = false"
                     class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            {{-- Contenido --}}
             <div class="space-y-5 text-sm text-gray-600 leading-relaxed">
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-1">1. Compra y Disponibilidad</h3>
-                    <p>Todos los productos están sujetos a disponibilidad de stock. Nos reservamos el derecho de
-                        cancelar un pedido si el producto no está disponible al momento de confirmar el pago.</p>
+                    <p>Todos los productos están sujetos a disponibilidad de stock. Nos reservamos el derecho de cancelar un pedido si el producto no está disponible al momento de confirmar el pago.</p>
                 </div>
                 <div class="h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent"></div>
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-1">2. Precios y Pagos</h3>
-                    <p>Los precios incluyen IGV (18%). El pago se realiza de forma segura a través de Mercado Pago. C
-                        Lucky no almacena datos bancarios del cliente.</p>
+                    <p>Los precios incluyen IGV (18%). El pago se realiza de forma segura a través de Mercado Pago. C Lucky no almacena datos bancarios del cliente.</p>
                 </div>
                 <div class="h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent"></div>
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-1">3. Política de Envíos</h3>
-                    <p>Los costos de envío varían según el distrito de destino. Los tiempos de entrega son referenciales
-                        y pueden variar por factores externos.</p>
+                    <p>Los costos de envío varían según la agencia de destino. Los tiempos de entrega son referenciales y pueden variar por factores externos.</p>
                 </div>
                 <div class="h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent"></div>
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-1">4. Devoluciones y Cambios</h3>
-                    <p>Aceptamos cambios dentro de los 30 días calendario desde la recepción, siempre que el
-                        artículo esté sin usar, con etiquetas y en su empaque original.</p>
+                    <p>Aceptamos cambios dentro de los 30 días calendario desde la recepción, siempre que el artículo esté sin usar, con etiquetas y en su empaque original.</p>
                 </div>
                 <div class="h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent"></div>
                 <div>
                     <h3 class="font-semibold text-gray-900 mb-1">5. Privacidad de Datos</h3>
-                    <p>Los datos personales serán utilizados exclusivamente para gestionar el pedido, en cumplimiento
-                        con la Ley N° 29733 de Protección de Datos Personales del Perú.</p>
+                    <p>Los datos personales serán utilizados exclusivamente para gestionar el pedido, en cumplimiento con la Ley N° 29733 de Protección de Datos Personales del Perú.</p>
                 </div>
             </div>
 
-            {{-- Acciones --}}
             <div class="flex gap-3 mt-8">
                 <button @click="aceptaTerminos = true; modalTerminos = false"
                     class="flex-1 bg-gray-900 text-white rounded-xl py-3 text-sm font-semibold hover:bg-gray-800 transition-colors">
@@ -578,120 +589,142 @@
                     Cerrar
                 </button>
             </div>
-
         </div>
     </div>
 
-
-    {{--ALPINE LOGICA PRINCIPAL --}}
+    {{-- ALPINE LÓGICA PRINCIPAL --}}
     <script>
         function checkoutData() {
             return {
-                // Estado entrega
-                editandoEntrega: false,
-                tipoEntrega:        {{ $tiposEntrega->first()->id_tipo_entrega ?? 1 }},
-                tipoEntregaNombre: '{{ $tiposEntrega->first()->nombre_tipo_entrega ?? "Recojo en tienda" }}',
-                departamento: '',
-                provincia: '',
-                distrito: '',
-                distritoNombre: '',
-                provincias: [],
-                distritos: [],
-                costoEnvio: 0,
+                editandoEntrega:     true,
+                tipoEntrega:         {{ $tiposEntrega->first()->id_tipo_entrega ?? 1 }},
+                tipoEntregaNombre:   '{{ $tiposEntrega->first()->nombre_tipo_entrega ?? "Recojo en tienda" }}',
 
-                // Totales
-                totalProductos:     {{ $total }},
+                departamento:        '',
+                provincia:           '',
+                distrito:            '',
+                distritoNombre:      '',
+                provincias:          [],
+                distritos:           [],
+                agencias:            [],
+                agenciaSeleccionada: null,
+                agenciaNombre:       '',
+                cargandoAgencias:    false,
+                costoEnvio:          0,
 
-                aceptaTerminos: false,
-                intentoPagar: false,
-                procesando: false,
-                modalTerminos: false,
+                totalProductos:      {{ $total }},
 
-                // ── Métodos
+                aceptaTerminos:      false,
+                intentoPagar:        false,
+                procesando:          false,
+                modalTerminos:       false,
 
+                // ── Total con envío
+                totalConEnvio() {
+                    return (parseFloat(this.totalProductos) + parseFloat(this.costoEnvio || 0)).toFixed(2);
+                },
+
+                // ── Confirmar sección de entrega
                 guardarEntrega() {
                     if (this.tipoEntrega == 2 && !this.distrito) {
                         alert('Selecciona un distrito para el envío.');
                         return;
                     }
+                    if (this.tipoEntrega == 2 && !this.agenciaSeleccionada) {
+                        alert('Selecciona una agencia de envío.');
+                        return;
+                    }
                     this.editandoEntrega = false;
                 },
 
+                // ── Resetea envío si cambia a recojo en tienda
                 calcularEnvioPorTipo() {
                     if (this.tipoEntrega != 2) {
-                        this.costoEnvio = 0;
-                        this.distritoNombre = '';
+                        this.costoEnvio          = 0;
+                        this.distritoNombre      = '';
+                        this.distrito            = '';
+                        this.agencias            = [];
+                        this.agenciaSeleccionada = null;
+                        this.agenciaNombre       = '';
                     }
                 },
 
+                // ── Selects encadenados
                 cargarProvincias() {
                     if (!this.departamento) return;
-                    this.provincias = [];
-                    this.distritos = [];
-                    this.provincia = '';
-                    this.distrito = '';
-                    this.costoEnvio = 0;
+                    this.provincias          = [];
+                    this.distritos           = [];
+                    this.agencias            = [];
+                    this.provincia           = '';
+                    this.distrito            = '';
+                    this.costoEnvio          = 0;
+                    this.distritoNombre      = '';
+                    this.agenciaSeleccionada = null;
+                    this.agenciaNombre       = '';
 
-                    fetch('/provincias/' + this.departamento)
+                    fetch('/ubicacion/provincias/' + this.departamento)
                         .then(r => r.json())
                         .then(data => { this.provincias = data; });
                 },
 
                 cargarDistritos() {
                     if (!this.provincia) return;
-                    this.distritos = [];
-                    this.distrito = '';
-                    this.costoEnvio = 0;
+                    this.distritos           = [];
+                    this.agencias            = [];
+                    this.distrito            = '';
+                    this.costoEnvio          = 0;
+                    this.distritoNombre      = '';
+                    this.agenciaSeleccionada = null;
+                    this.agenciaNombre       = '';
 
-                    fetch('/distritos/' + this.provincia)
+                    fetch('/ubicacion/distritos/' + this.provincia)
                         .then(r => r.json())
                         .then(data => { this.distritos = data; });
                 },
 
-                mostrarCosto() {
-                    const dist = this.distritos.find(d => d.id_distrito == this.distrito);
-                    if (dist) {
-                        this.costoEnvio = parseFloat(dist.costo_envio);
-                        this.distritoNombre = dist.nombre_distrito;
-                    }
+                cargarAgencias() {
+                    if (!this.distrito) return;
+
+                    // Nombre del distrito seleccionado
+                    const dist = this.distritos.find(
+                        d => String(d.id_distrito) === String(this.distrito)
+                    );
+                    this.distritoNombre      = dist ? dist.nombre_distrito : '';
+                    this.agencias            = [];
+                    this.agenciaSeleccionada = null;
+                    this.agenciaNombre       = '';
+                    this.costoEnvio          = 0;
+                    this.cargandoAgencias    = true;
+
+                    fetch('/ubicacion/agencias/' + this.distrito)
+                        .then(r => r.json())
+                        .then(data => {
+                            this.agencias         = data;
+                            this.cargandoAgencias = false;
+                        })
+                        .catch(() => {
+                            this.cargandoAgencias = false;
+                        });
                 },
 
+                // ── Enviar pedido
                 intentarPagar() {
                     this.intentoPagar = true;
-
                     if (!this.aceptaTerminos) return;
-
                     if (this.tipoEntrega == 2 && !this.distrito) {
-                        alert('Completa la información de entrega.');
+                        alert('Selecciona un distrito de envío.');
                         return;
                     }
-
-                    // ── Mercado Pago (pendiente de implementar) ──────
-                    // this.procesarPago();
+                    if (this.tipoEntrega == 2 && !this.agenciaSeleccionada) {
+                        alert('Selecciona una agencia de envío.');
+                        return;
+                    }
                     this.procesando = true;
                     document.getElementById('form-pedido').submit();
                 },
-
-                // async procesarPago() {
-                //     const res = await fetch('/checkout/crear-preferencia', {
-                //         method: 'POST',
-                //         headers: {
-                //             'Content-Type': 'application/json',
-                //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                //         },
-                //         body: JSON.stringify({
-                //             tipo_entrega: this.tipoEntrega,
-                //             id_distrito:  this.distrito,
-                //             costo_envio:  this.costoEnvio,
-                //         })
-                //     });
-                //     const { init_point } = await res.json();
-                //     window.location.href = init_point;
-                // },
             }
         }
     </script>
 
 </body>
-
 </html>
