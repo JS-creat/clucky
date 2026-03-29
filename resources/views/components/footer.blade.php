@@ -1,4 +1,3 @@
-{{-- resources/views/components/footer.blade.php --}}
 <footer class="bg-black text-white py-12">
     <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 justify-items-center">
 
