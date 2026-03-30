@@ -42,7 +42,11 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::get('/{idCarrito}/total', [CarritoController::class, 'total']);
 });
 
-Route::middleware('auth:sanctum')->post('/checkout/confirmar', [CheckoutApiController::class, 'confirmar']);
+// ==================== RUTAS DE CHECKOUT ====================
+Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
+    Route::post('/confirmar', [CheckoutApiController::class, 'confirmar']);
+    Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']); 
+});
 
 // Ruta pública para verificar stock
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);

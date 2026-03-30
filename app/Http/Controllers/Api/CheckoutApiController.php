@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckoutApiController extends Controller
 {
+    /**
+     * Confirmar pedido y crear la orden
+     */
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -45,14 +48,16 @@ class CheckoutApiController extends Controller
         }
 
         $subtotal = 0;
+        $costoEnvio = 0;
+        $nombreAgencia = null;
+        $direccionAgencia = null;
+        $tiempoEstimado = null;
 
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
             $precio   = $producto->precio_oferta ?? $producto->precio;
             $subtotal += $precio * $detalle->cantidad;
         }
-
-        $costoEnvio = 0;
 
         if ((int) $request->id_tipo_entrega === 2) {
             $agencia = Agencia::where('id_distrito', $request->id_distrito)
@@ -67,6 +72,9 @@ class CheckoutApiController extends Controller
             }
 
             $costoEnvio = $agencia->costo_envio ?? 0;
+            $nombreAgencia = $agencia->nombre_agencia ?? null;
+            $direccionAgencia = $agencia->direccion ?? null;
+            $tiempoEstimado = $agencia->tiempo_estimado ?? '3-5 días hábiles';
         }
 
         $total = $subtotal + $costoEnvio;
@@ -89,6 +97,8 @@ class CheckoutApiController extends Controller
                 'id_distrito'     => (int) $request->id_tipo_entrega === 2
                     ? $request->id_distrito
                     : null,
+                'nombre_agencia' => $nombreAgencia,
+                'direccion_agencia' => $direccionAgencia,
             ]);
 
             foreach ($carrito->detalles as $detalle) {
@@ -123,6 +133,9 @@ class CheckoutApiController extends Controller
                     'numero_pedido' => $pedido->numero_pedido,
                     'subtotal' => $subtotal,
                     'costo_envio' => $costoEnvio,
+                    'nombre_agencia' => $nombreAgencia,
+                    'direccion_agencia' => $direccionAgencia,
+                    'tiempo_estimado' => $tiempoEstimado,
                     'total_pedido' => $pedido->total_pedido,
                     'estado_pedido' => $pedido->estado_pedido,
                 ],
@@ -137,6 +150,72 @@ class CheckoutApiController extends Controller
         }
     }
 
+    /**
+     * Calcular costo de envío sin crear pedido
+     * Útil para mostrar al usuario antes de confirmar
+     */
+    public function calcularEnvio(Request $request)
+    {
+        $request->validate([
+            'id_distrito' => 'required|integer|exists:distrito,id_distrito',
+        ]);
+
+        $usuario = Auth::user();
+
+        // Obtener carrito del usuario
+        $carrito = Carrito::with('detalles.variante.producto')
+            ->where('id_usuario', $usuario->id_usuario)
+            ->first();
+
+        if (!$carrito || $carrito->detalles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu carrito está vacío.',
+            ], 422);
+        }
+
+        // Calcular subtotal
+        $subtotal = 0;
+        foreach ($carrito->detalles as $detalle) {
+            $producto = $detalle->variante->producto;
+            $precio = $producto->precio_oferta ?? $producto->precio;
+            $subtotal += $precio * $detalle->cantidad;
+        }
+
+        // Buscar agencia en el distrito
+        $agencia = Agencia::where('id_distrito', $request->id_distrito)
+            ->where('estado', 1)
+            ->first();
+
+        if (!$agencia) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No existe una agencia activa para el distrito seleccionado.',
+            ], 422);
+        }
+
+        $costoEnvio = $agencia->costo_envio ?? 0;
+        $nombreAgencia = $agencia->nombre_agencia ?? null;
+        $direccionAgencia = $agencia->direccion ?? null;
+        $tiempoEstimado = $agencia->tiempo_estimado ?? '3-5 días hábiles';
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'costo_envio' => (float) $costoEnvio,
+                'nombre_agencia' => $nombreAgencia,
+                'direccion_agencia' => $direccionAgencia,
+                'tiempo_estimado' => $tiempoEstimado,
+                'subtotal' => (float) $subtotal,
+                'total_con_envio' => (float) ($subtotal + $costoEnvio),
+            ]
+        ]);
+    }
+
+    /**
+     * Generar número de pedido único
+     * Formato: CLK-YYYYMMDD-XXX
+     */
     private function generarNumeroPedido(): string
     {
         $fecha       = now()->format('Ymd');
