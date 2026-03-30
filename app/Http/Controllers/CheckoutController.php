@@ -53,9 +53,15 @@ class CheckoutController extends Controller
     public function confirmar(Request $request)
     {
         $request->validate([
-            'id_tipo_entrega' => 'required|integer',
-            'id_distrito'     => 'nullable|integer',
+            'id_tipo_entrega' => 'required|integer|in:1,2',
+            'id_distrito'     => 'nullable|integer|exists:distrito,id_distrito',
         ]);
+
+        if ((int) $request->id_tipo_entrega === 2 && empty($request->id_distrito)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Debes seleccionar un distrito para el envío.');
+        }
 
         $carrito = Carrito::with('detalles.variante.producto')
                     ->where('id_usuario', Auth::id())
@@ -65,8 +71,8 @@ class CheckoutController extends Controller
             return back()->with('error', 'Tu carrito está vacío.');
         }
 
-        // Calcular total
         $total = 0;
+
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
             $precio   = $producto->precio_oferta ?? $producto->precio;
@@ -76,20 +82,17 @@ class CheckoutController extends Controller
         $costoEnvio = (float) $request->costo_envio;
         $total     += $costoEnvio;
 
-        // dentro de una transacción: si algo falla, nada queda a medias
         DB::transaction(function () use ($carrito, $request, $total) {
 
-            // 1. Crear el pedido
             $pedido = Pedido::create([
                 'numero_pedido'    => $this->generarNumeroPedido(),
                 'total_pedido'     => $total,
                 'estado_pedido'    => 'Pendiente',
                 'id_usuario'       => Auth::id(),
                 'id_tipo_entrega'  => $request->id_tipo_entrega,
-                'id_distrito'      => $request->id_distrito,
+                'id_distrito'      => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
             ]);
 
-            // 2. Crear detalles y descontar stock
             foreach ($carrito->detalles as $detalle) {
                 $producto = $detalle->variante->producto;
                 $precio   = $producto->precio_oferta ?? $producto->precio;
@@ -102,17 +105,15 @@ class CheckoutController extends Controller
                     'subtotal'        => $precio * $detalle->cantidad,
                 ]);
 
-                // Descontar stock de la variante
                 ProductoVariante::where('id_variante', $detalle->id_variante)
                     ->decrement('stock', $detalle->cantidad);
             }
 
-            // 3. Vaciar el carrito
             $carrito->detalles()->delete();
         });
 
         return redirect()->route('pedido.confirmado')
-               ->with('success', '¡Pedido realizado con éxito!');
+            ->with('success', '¡Pedido realizado con éxito!');
     }
 
 

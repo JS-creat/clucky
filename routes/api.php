@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\FavoritoController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CategoriaController;
+use App\Http\Controllers\Api\UbicacionController;
+use App\Http\Controllers\Api\CheckoutApiController;
 use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 
@@ -39,6 +41,8 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::delete('/limpiar', [CarritoController::class, 'limpiar']);
     Route::get('/{idCarrito}/total', [CarritoController::class, 'total']);
 });
+
+Route::middleware('auth:sanctum')->post('/checkout/confirmar', [CheckoutApiController::class, 'confirmar']);
 
 // Ruta pública para verificar stock
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
@@ -94,3 +98,12 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('banners')->group(function () {
     Route::get('/', [BannerController::class, 'index']);
 });
+
+// ==================== RUTAS DE UBICACIONES ====================
+Route::prefix('ubicaciones')->group(function () {
+    Route::get('/tipos-documento', [UbicacionController::class, 'tiposDocumento']);
+    Route::get('/departamentos', [UbicacionController::class, 'departamentos']);
+    Route::get('/provincias/{idDepartamento}', [UbicacionController::class, 'provincias']);
+    Route::get('/distritos/{idProvincia}', [UbicacionController::class, 'distritos']);
+});
+

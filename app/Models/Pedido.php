@@ -46,9 +46,4 @@ class Pedido extends Model
     {
         return $this->belongsTo(TipoEntrega::class, 'id_tipo_entrega');
     }
-
-    public function agencia()
-    {
-        return $this->belongsTo(Agencia::class, 'id_agencia');
-    }
 }
