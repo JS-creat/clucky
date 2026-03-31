@@ -22,6 +22,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Instalar dependencias Laravel
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
+RUN php artisan key:generate
+RUN php artisan config:clear
+RUN php artisan cache:clear
+
 # Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
