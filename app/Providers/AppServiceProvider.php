@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -16,13 +17,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     public function boot(): void
-{
-    Log::info('APP SERVICE PROVIDER CARGADO');
+    {
+        // FORZAR HTTPS EN PRODUCCIÓN
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
 
-    Event::listen(Login::class, function ($event) {
+        Log::info('APP SERVICE PROVIDER CARGADO');
 
-        Log::info('LOGIN DETECTADO');
-
-    });
-}
+        Event::listen(Login::class, function ($event) {
+            Log::info('LOGIN DETECTADO');
+        });
+    }
 }
