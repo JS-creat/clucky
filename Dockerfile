@@ -19,17 +19,13 @@ WORKDIR /var/www/html
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instalar dependencias Laravel
+# Instalar Laravel
 RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-RUN php artisan key:generate
-RUN php artisan config:clear
-RUN php artisan cache:clear
 
 # Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configurar Apache para Laravel
+# Apache apunta a public
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
