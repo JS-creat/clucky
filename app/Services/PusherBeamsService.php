@@ -28,6 +28,12 @@ class PusherBeamsService
         $resultado = $this->beams->publishToInterests(
             ['ofertas'],
             [
+                "fcm" => [
+                    "notification" => [
+                        "title" => $titulo,
+                        "body" => $mensaje,
+                    ]
+                ],
                 "web" => [
                     "notification" => [
                         "title" => $titulo,
@@ -53,6 +59,12 @@ class PusherBeamsService
         $resultado = $this->beams->publishToInterests(
             ['lanzamientos'],  
             [
+                "fcm" => [
+                    "notification" => [
+                        "title" => $titulo,
+                        "body" => $mensaje,
+                    ]
+                ],
                 "web" => [
                     "notification" => [
                         "title" => $titulo,
@@ -73,6 +85,12 @@ class PusherBeamsService
         $resultado = $this->beams->publishToUsers(
             ["carrito-$userId"],
             [
+                "fcm" => [
+                    "notification" => [
+                        "title" => $titulo,
+                        "body" => $mensaje,
+                    ]
+                ],
                 "web" => [
                     "notification" => [
                         "title" => $titulo,
