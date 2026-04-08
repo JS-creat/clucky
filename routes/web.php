@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\PedidoController;
 use App\Http\Controllers\Admin\AgenciaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Producto;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\CuponController;
 
 // ── PÚBLICAS
 
@@ -85,6 +87,10 @@ Route::middleware(['auth', 'verified', 'role:1'])
             Route::get('provincias/{id}', [AgenciaController::class, 'provincias'])->name('provincias');
             Route::get('distritos/{id}',  [AgenciaController::class, 'distritos']) ->name('distritos');
         });
+
+        //Banners y cupones
+        Route::resource('banners', BannerController::class)->except(['show']);
+        Route::resource('cupones', CuponController::class)->except(['show']);
     });
 
 // ── PERFIL
