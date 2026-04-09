@@ -77,6 +77,14 @@ class ProductoController extends Controller
             $producto->update(['imagen' => $nombre]);
         }
 
+        if ($request->hasFile('galeria')) {
+            $galeria = [];
+            foreach ($request->file('galeria') as $foto) {
+                $galeria[] = $this->cargarArchivo($foto);
+            }
+            $producto->update(['galeria' => $galeria]);
+        }
+
         foreach ($request->variantes as $v) {
             $producto->variantes()->create([
                 'talla' => $v['talla'],
@@ -189,14 +197,13 @@ class ProductoController extends Controller
             if (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta) {
                 try {
                     $categoriaNombre = $producto->categoria->nombre ?? '';
-                    
+
                     $this->pusherBeams->enviarOferta(
                         $producto->nombre_producto,
-                        $request->precio_oferta, 
+                        $request->precio_oferta,
                         $categoriaNombre
                     );
                 } catch (\Exception $e) {
-                    // Silencioso - no interrumpimos el flujo
                 }
             }
         }
