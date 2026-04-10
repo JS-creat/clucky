@@ -17,6 +17,7 @@ use App\Models\Producto;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
+use App\Http\Controllers\PedidoUsuarioController;
 
 // ── PÚBLICAS
 
@@ -105,10 +106,15 @@ Route::middleware(['auth', 'verified', 'role:1'])
 
 // ── PERFIL
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware('auth')->prefix('perfil')->name('perfil.')->group(function () {
+    Route::get('/',        [PerfilController::class, 'index'])->name('index');
+    Route::get('/editar',  [PerfilController::class, 'edit'])->name('edit');
+    Route::put('/update',  [PerfilController::class, 'update'])->name('update');
+    Route::put('/email',   [PerfilController::class, 'updateEmail'])->name('update-email');
+    Route::put('/password', [PerfilController::class, 'updatePassword'])->name('update-password');
+    Route::delete('/',     [PerfilController::class, 'destroy'])->name('destroy');
+    Route::get('/mis-pedidos', [PedidoUsuarioController::class, 'index'])
+        ->name('pedidos.index');
 });
 
 require __DIR__ . '/auth.php';
