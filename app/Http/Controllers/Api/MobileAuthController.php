@@ -144,4 +144,38 @@ class MobileAuthController extends Controller
             ],
         ]);
     }
+
+    public function updateDatosContacto(Request $request)
+    {
+        $user = $request->user();
+        
+        $request->validate([
+            'id_tipo_documento' => 'required|integer|exists:tipo_documento,id_tipo_documento',
+            'numero_documento' => 'required|string|max:20',
+            'telefono' => 'required|string|max:20',
+        ]);
+        
+        $user->update([
+            'id_tipo_documento' => $request->id_tipo_documento,
+            'numero_documento' => $request->numero_documento,
+            'telefono' => $request->telefono,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Datos de contacto actualizados correctamente',
+            'data' => [
+                'id' => $user->id_usuario,
+                'nombres' => $user->nombres,
+                'apellidos' => $user->apellidos,
+                'correo' => $user->correo,
+                'id_rol' => $user->id_rol,
+                'telefono' => $user->telefono,
+                'numero_documento' => $user->numero_documento,
+                'id_tipo_documento' => $user->id_tipo_documento,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
+        ]);
+    }
 }
