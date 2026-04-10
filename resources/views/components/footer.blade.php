@@ -1,20 +1,11 @@
 <footer class="bg-black text-white py-12">
     <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 justify-items-center">
 
-        {{-- Servicio al cliente --}}
-        <div class="w-full text-left">
-            <h3 class="text-base font-semibold mb-4">Servicio al cliente</h3>
-            <div class="space-y-2 text-sm">
-                <p><a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">Métodos de pago</a></p>
-                <p><a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">Cambios y devoluciones</a></p>
-            </div>
-        </div>
 
         {{-- Contáctanos --}}
         <div class="w-full text-left">
             <h3 class="text-base font-semibold mb-4">Contáctanos</h3>
             <div class="space-y-2 text-sm">
-                <p>cluckyropaconcepcion@gmail.com</p>
                 <p>
                     <a href="https://wa.me/51964374401" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
                         Teléfono: +51 964 374 401

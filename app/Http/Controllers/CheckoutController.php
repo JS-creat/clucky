@@ -89,8 +89,13 @@ class CheckoutController extends Controller
 
         // ── Crear pedido en BD ──────────────────────────────────────────────
         $pedido = null;
+        $agencia = null;
 
-        DB::transaction(function () use ($carrito, $request, $total, &$pedido) {
+        if ($request->id_tipo_entrega == 2 && $request->id_agencia) {
+            $agencia = Agencia::find($request->id_agencia);
+        }
+
+        DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia) {
 
             $pedido = Pedido::create([
                 'numero_pedido'   => $this->generarNumeroPedido(),
@@ -99,6 +104,10 @@ class CheckoutController extends Controller
                 'id_usuario'      => Auth::id(),
                 'id_tipo_entrega' => $request->id_tipo_entrega,
                 'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
+                'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
+                'costo_envio'     => $request->costo_envio ?? 0,
+                'nombre_agencia'    => $agencia?->nombre_agencia,
+                'direccion' => $agencia?->direccion,
             ]);
 
             foreach ($carrito->detalles as $detalle) {

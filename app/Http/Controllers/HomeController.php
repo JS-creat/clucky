@@ -26,12 +26,11 @@ class HomeController extends Controller
 
         //  Filtro por promoción activa
         if ($request->has('promocion')) {
-            $query->whereNotNull('id_promocion')
-                ->whereHas('promocion', function ($q) {
-                    $q->where('estado_promocion', 1)
-                        ->where('fecha_inicio', '<=', now())
-                        ->where('fecha_fin', '>=', now());
-                });
+            $query->where(function ($q) {
+                $q->whereNotNull('precio_oferta')
+                    ->where('precio_oferta', '>', 0)
+                    ->whereColumn('precio_oferta', '<', 'precio');
+            });
         }
 
         //  Filtro por búsqueda de texto
