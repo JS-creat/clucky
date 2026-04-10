@@ -24,7 +24,6 @@
                     C´LUCKY
                 </span>
                 <button @click="open = !open" class="p-2 rounded-xl bg-gray-800 text-white hover:bg-black transition-colors">
-                    {{-- Icono Menú --}}
                     <x-heroicon-o-bars-3-bottom-left class="w-6 h-6" />
                 </button>
             </div>
@@ -32,25 +31,77 @@
             <nav class="flex-1 p-4 space-y-2 mt-4">
                 @php
                     $links = [
-                        ['route' => 'admin.dashboard', 'icon' => 'o-chart-bar', 'label' => 'Dashboard'],
-                        ['route' => 'admin.productos.index', 'icon' => 'o-shopping-bag', 'label' => 'Productos'],
-                        ['route' => 'admin.categorias.index', 'icon' => 'o-tag', 'label' => 'Categorías y Género'],
-                        ['route' => 'admin.pedidos.index', 'icon' => 'o-clipboard-document-list', 'label' => 'Pedidos'],
-                        ['route' => 'admin.agencias.index', 'icon' => 'o-building-office', 'label' => 'Agencias']
+                        ['route' => 'admin.dashboard',          'icon' => 'o-chart-bar',             'label' => 'Dashboard'],
+                        ['route' => 'admin.productos.index',    'icon' => 'o-shopping-bag',          'label' => 'Productos'],
+                        ['route' => 'admin.categorias.index',   'icon' => 'o-tag',                   'label' => 'Categorías y Género'],
+                        ['route' => 'admin.pedidos.index',      'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
+                        ['route' => 'admin.agencias.index',     'icon' => 'o-building-office',       'label' => 'Agencias'],
                     ];
+
+                    $otrosRoutes = ['admin.banners.index', 'admin.cupones.index'];
+                    $otrosActive = request()->routeIs($otrosRoutes);
                 @endphp
 
                 @foreach($links as $link)
                 <a href="{{ route($link['route']) }}"
                    class="flex items-center gap-4 p-4 rounded-2xl font-semibold transition-all group
-                   {{ request()->routeIs($link['route']) ? 'bg-black text-white shadow-lg shadow-black/30' : 'hover:bg-white/10 hover:text-white' }}">
-
-                    {{-- Renderizado dinámico del icono --}}
-                    <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-6 h-6 transition-transform group-hover:scale-110" />
-
+                   {{ request()->routeIs($link['route']) ? 'bg-white/10 text-white shadow-lg' : 'hover:bg-white/10 hover:text-white' }}">
+                    <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-6 h-6 transition-transform group-hover:scale-110 flex-shrink-0" />
                     <span x-show="open" x-transition.opacity>{{ $link['label'] }}</span>
                 </a>
                 @endforeach
+
+                {{-- DROPDOWN OTROS --}}
+                <div x-data="{ otrosOpen: {{ $otrosActive ? 'true' : 'false' }} }">
+                    <button @click="otrosOpen = !otrosOpen"
+                        class="w-full flex items-center gap-4 p-4 rounded-2xl font-semibold transition-all group
+                        {{ $otrosActive ? 'bg-white/10 text-white' : 'hover:bg-white/10 hover:text-white' }}">
+                        <x-heroicon-o-squares-2x2 class="w-6 h-6 transition-transform group-hover:scale-110 flex-shrink-0" />
+                        <span x-show="open" x-transition.opacity class="flex-1 text-left">Otros</span>
+                        <x-heroicon-o-chevron-down
+                            x-show="open"
+                            :class="otrosOpen ? 'rotate-180' : ''"
+                            class="w-4 h-4 transition-transform duration-200" />
+                    </button>
+
+                    <div x-show="otrosOpen && open"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-2"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 -translate-y-2"
+                         class="mt-1 ml-4 pl-4 border-l border-gray-700/60 space-y-1">
+
+                        <a href="{{ route('admin.banners.index') }}"
+                           class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all group
+                           {{ request()->routeIs('admin.banners.index') ? 'bg-white/10 text-white' : 'text-gray-500 hover:bg-white/10 hover:text-white' }}">
+                            <x-heroicon-o-photo class="w-5 h-5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                            <span>Banners</span>
+                        </a>
+
+                        <a href="{{ route('admin.cupones.index') }}"
+                           class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all group
+                           {{ request()->routeIs('admin.cupones.index') ? 'bg-white/10 text-white' : 'text-gray-500 hover:bg-white/10 hover:text-white' }}">
+                            <x-heroicon-o-ticket class="w-5 h-5 transition-transform group-hover:scale-110 flex-shrink-0" />
+                            <span>Cupones</span>
+                        </a>
+                    </div>
+
+                    {{-- Íconos en modo colapsado --}}
+                    <div x-show="otrosOpen && !open" class="mt-1 ml-1 space-y-1">
+                        <a href="{{ route('admin.banners.index') }}"
+                           class="flex items-center justify-center p-3 rounded-xl transition-all
+                           {{ request()->routeIs('admin.banners.index') ? 'bg-white/10 text-white' : 'text-gray-500 hover:bg-white/10 hover:text-white' }}">
+                            <x-heroicon-o-photo class="w-5 h-5" />
+                        </a>
+                        <a href="{{ route('admin.cupones.index') }}"
+                           class="flex items-center justify-center p-3 rounded-xl transition-all
+                           {{ request()->routeIs('admin.cupones.index') ? 'bg-white/10 text-white' : 'text-gray-500 hover:bg-white/10 hover:text-white' }}">
+                            <x-heroicon-o-ticket class="w-5 h-5" />
+                        </a>
+                    </div>
+                </div>
             </nav>
 
             <div class="p-4 border-t border-gray-800/50">
@@ -58,16 +109,16 @@
                     @csrf
                     <button type="submit"
                         class="w-full flex items-center gap-4 p-4 rounded-2xl font-semibold text-rose-400 hover:bg-rose-500/10 transition-all group text-left">
-                        <x-heroicon-o-arrow-left-on-rectangle class="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+                        <x-heroicon-o-arrow-left-on-rectangle class="w-6 h-6 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
                         <span x-show="open" x-transition.opacity>Cerrar sesión</span>
                     </button>
                 </form>
             </div>
         </aside>
 
+        {{-- TOASTS --}}
         <div class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
 
-            {{-- Toast de Éxito --}}
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
                      x-transition:enter="transform ease-out duration-300 transition"
@@ -77,11 +128,9 @@
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
                      class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-emerald-500 min-w-[320px]">
-
                     <div class="flex-shrink-0 bg-emerald-100 text-emerald-600 p-2 rounded-xl">
                         <x-heroicon-s-check-circle class="w-7 h-7" />
                     </div>
-
                     <div class="flex-1 text-center">
                         <p class="font-black text-gray-900 text-sm leading-none">¡Éxito!</p>
                         <p class="text-gray-500 text-xs font-medium mt-1">{{ session('success') }}</p>
@@ -92,7 +141,6 @@
                 </div>
             @endif
 
-            {{-- Toast de Error --}}
             @if(session('error'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
                      x-transition:enter="transform ease-out duration-300 transition"
@@ -102,11 +150,9 @@
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
                      class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-rose-500 min-w-[320px]">
-
                     <div class="flex-shrink-0 bg-rose-100 text-rose-600 p-2 rounded-xl">
                         <x-heroicon-s-exclamation-circle class="w-7 h-7" />
                     </div>
-
                     <div class="flex-1 text-center">
                         <p class="font-black text-gray-900 text-sm leading-none">Error</p>
                         <p class="text-gray-500 text-xs font-medium mt-1">{{ session('error') }}</p>

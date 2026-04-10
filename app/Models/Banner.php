@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
-    protected $table = 'banners';
     protected $primaryKey = 'id_banner';
 
     protected $fillable = [
@@ -18,10 +17,15 @@ class Banner extends Model
         'url_boton',
         'imagen',
         'orden',
-        'estado',
+        'estado'
     ];
 
     protected $casts = [
         'estado' => 'boolean',
     ];
+
+    public function scopeActivos($query)
+    {
+        return $query->where('estado', 1)->orderBy('orden');
+    }
 }
