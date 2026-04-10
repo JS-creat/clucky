@@ -100,3 +100,8 @@ Route::prefix('ubicaciones')->group(function () {
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'time' => now()]);
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
+    Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
+});
