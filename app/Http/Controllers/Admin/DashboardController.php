@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ─── KPIs principales ───────────────────────────────────────────
+        //principal
         $totalVentas = DB::table('pedido')
             ->whereNotIn('estado_pedido', ['Cancelado'])
             ->sum('total_pedido') ?? 0;
@@ -36,12 +36,23 @@ class DashboardController extends Controller
         $totalClientes     = DB::table('usuario')->where('id_rol', 2)->count();
         $totalProductos    = DB::table('producto')->where('estado_producto', 1)->count();
 
-        $stockBajo = DB::table('producto_variante')
-            ->where('stock', '<=', 5)->where('stock', '>', 0)->count();
+        $stockBajo = DB::table('producto')
+            ->join('producto_variante', 'producto.id_producto', '=', 'producto_variante.id_producto')
+            ->select('producto.id_producto')
+            ->groupBy('producto.id_producto')
+            ->havingRaw('SUM(producto_variante.stock) > 0 AND SUM(producto_variante.stock) <= 10')
+            ->get()
+            ->count();
 
-        $sinStock = DB::table('producto_variante')->where('stock', 0)->count();
+        $sinStock = DB::table('producto')
+            ->join('producto_variante', 'producto.id_producto', '=', 'producto_variante.id_producto')
+            ->select('producto.id_producto')
+            ->groupBy('producto.id_producto')
+            ->havingRaw('SUM(producto_variante.stock) = 0')
+            ->get()
+            ->count();
 
-        // ─── Ventas últimos 30 días ──────────────────────────────────────
+        // ─── Ventas últimos 30 días
         $ventasRaw = DB::table('pedido')
             ->selectRaw('DATE(fecha_pedido) as dia, SUM(total_pedido) as total, COUNT(*) as cantidad')
             ->whereNotIn('estado_pedido', ['Cancelado'])
@@ -62,13 +73,13 @@ class DashboardController extends Controller
             ]);
         }
 
-        // ─── Pedidos por estado ──────────────────────────────────────────
+        // ─── Pedidos por estado
         $pedidosPorEstado = DB::table('pedido')
             ->selectRaw('estado_pedido, COUNT(*) as total')
             ->groupBy('estado_pedido')
             ->pluck('total', 'estado_pedido');
 
-        // ─── Ventas por categoría ────────────────────────────────────────
+        // ─── Ventas por categoría
         $ventasPorCategoria = DB::table('detalle_pedido as dp')
             ->join('pedido as p',            'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
@@ -81,7 +92,7 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
-        // ─── Top 5 productos más vendidos ────────────────────────────────
+        // ─── Top 5 productos más vendidos
         $topProductos = DB::table('detalle_pedido as dp')
             ->join('pedido as p',            'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
@@ -93,7 +104,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // ─── Últimos 8 pedidos ───────────────────────────────────────────
+        // ─── Últimos 8 pedidos
         $ultimosPedidos = DB::table('pedido as p')
             ->leftJoin('usuario as u', 'u.id_usuario', '=', 'p.id_usuario')
             ->select(

@@ -13,13 +13,6 @@
                 {{ $pedidos->total() }} registros totales
             </div>
         </div>
-
-        <div class="pb-2">
-            <button class="inline-flex items-center gap-3 bg-white border border-gray-100 hover:bg-gray-50 text-gray-900 px-7 py-4 rounded-2xl font-bold shadow-sm transition-all hover:-translate-y-1 active:scale-95">
-                <x-heroicon-o-arrow-down-tray class="w-6 h-6 text-indigo-600" />
-                Exportar Lista
-            </button>
-        </div>
     </div>
 
     <hr class="border-gray-100">

@@ -156,7 +156,7 @@
                         </div>
                     </div>
 
-                    @if($pedido->id_tipo_entrega != 2)
+                    @if($pedido->id_tipo_entrega == 2)
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
                             <div class="space-y-4">
                                 <div>

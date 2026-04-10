@@ -89,6 +89,21 @@
                         </button>
                     </div>
 
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
+                        <select name="estado_producto"
+                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+
+                            <option value="1" {{ $producto->estado_producto ? 'selected' : '' }}>
+                                Activo
+                            </option>
+
+                            <option value="0" {{ !$producto->estado_producto ? 'selected' : '' }}>
+                                Inactivo
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="space-y-4">
                         <template x-for="(variante, index) in variantes" :key="variante.uid">
                             <div class="relative grid grid-cols-1 md:grid-cols-5 gap-3 p-5 rounded-3xl transition-all border-2"
