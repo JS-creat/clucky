@@ -168,32 +168,6 @@ return new class extends Migration {
         });
 
 
-
-        /*
-        =====================================
-        PROMOCIONES
-        =====================================
-        */
-
-        Schema::create('promociones', function (Blueprint $table) {
-
-            $table->id('id_promocion');
-
-            $table->string('nombre_promocion', 50);
-
-            $table->text('descripcion')->nullable();
-
-            $table->decimal('descuento', 6, 2);
-
-            $table->dateTime('fecha_inicio');
-
-            $table->dateTime('fecha_fin');
-
-            $table->boolean('estado_promocion')->default(1);
-        });
-
-
-
         /*
         =====================================
         PRODUCTO
@@ -224,15 +198,12 @@ return new class extends Migration {
 
             $table->unsignedBigInteger('id_categoria')->nullable();
 
-            $table->unsignedBigInteger('id_promocion')->nullable();
-
             $table->timestamps();
 
             $table->foreign('id_genero')->references('id_genero')->on('genero');
 
             $table->foreign('id_categoria')->references('id_categoria')->on('categoria');
 
-            $table->foreign('id_promocion')->references('id_promocion')->on('promociones');
         });
 
 
@@ -485,7 +456,6 @@ return new class extends Migration {
         Schema::dropIfExists('cupones');
         Schema::dropIfExists('producto_variante');
         Schema::dropIfExists('producto');
-        Schema::dropIfExists('promociones');
         Schema::dropIfExists('categoria');
         Schema::dropIfExists('genero');
         Schema::dropIfExists('agencia');
