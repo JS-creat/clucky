@@ -60,6 +60,6 @@
     </div>
 
     <p class="text-center text-xs text-gray-500 mt-8 px-4">
-        © 2026 C'Lucky. Todos los derechos reservados.
+        © 2026 B-EDEN. Todos los derechos reservados.
     </p>
 </footer>
