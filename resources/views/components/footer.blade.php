@@ -1,29 +1,30 @@
-<footer class="bg-black text-white py-12">
-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 justify-items-center">
-
+<footer class="bg-black text-white py-10 sm:py-12">
+    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
 
         {{-- Contáctanos --}}
-        <div class="w-full text-left">
-            <h3 class="text-base font-semibold mb-4">Contáctanos</h3>
+        <div class="w-full">
+            <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Contáctanos</h3>
             <div class="space-y-2 text-sm">
                 <p>
-                    <a href="https://wa.me/51964374401" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <a href="https://wa.me/51964374401" target="_blank" rel="noopener noreferrer"
+                       class="text-gray-400 hover:text-white transition-colors duration-200">
                         Teléfono: +51 964 374 401
                     </a>
                 </p>
-                <p class="text-gray-400">9:00 am a 8:00 pm de lunes a viernes</p>
+                <p class="text-gray-400 text-xs sm:text-sm">9:00 am a 8:00 pm de lunes a viernes</p>
                 <p>
-                    <a href="https://maps.google.com/?q=Jr.+Bolognesi+908+Concepcion+Peru" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <a href="https://maps.google.com/?q=Jr.+Bolognesi+908+Concepcion+Peru" target="_blank" rel="noopener noreferrer"
+                       class="text-gray-400 hover:text-white transition-colors duration-200 text-xs sm:text-sm">
                         Jr. Bolognesi N° 908, Concepción
                     </a>
                 </p>
             </div>
         </div>
 
-        {{-- Acerca de nosotros --}}
-        <div class="w-full text-left">
-            <h3 class="text-base font-semibold mb-4">Acerca de nosotros</h3>
-            <div class="space-y-2 text-sm">
+        {{-- Acerca de nosotros + redes --}}
+        <div class="w-full">
+            <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Acerca de nosotros</h3>
+            <div class="space-y-2 text-xs sm:text-sm">
                 <p><a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">Quiénes somos</a></p>
                 <p><a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">Términos y condiciones</a></p>
             </div>
@@ -58,7 +59,7 @@
 
     </div>
 
-    <p class="text-center text-xs text-gray-500 mt-8">
+    <p class="text-center text-xs text-gray-500 mt-8 px-4">
         © 2026 C'Lucky. Todos los derechos reservados.
     </p>
 </footer>
