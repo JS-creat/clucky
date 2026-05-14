@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Pusher\PushNotifications\PushNotifications;
+use Illuminate\Support\Facades\Log;
 
 class PusherBeamsService
 {
@@ -10,22 +11,39 @@ class PusherBeamsService
 
     public function __construct()
     {
-        $this->beams = new PushNotifications([
-            'instanceId' => env('PUSHER_BEAMS_INSTANCE_ID'),
-            'secretKey' => env('PUSHER_BEAMS_SECRET_KEY'),
-        ]);
+        $instanceId = env('PUSHER_BEAMS_INSTANCE_ID');
+        $secretKey = env('PUSHER_BEAMS_SECRET_KEY');
+
+        // Validamos que existan las credenciales antes de instanciar
+        if (!empty($instanceId) && !empty($secretKey)) {
+            try {
+                $this->beams = new PushNotifications([
+                    'instanceId' => $instanceId,
+                    'secretKey' => $secretKey,
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Error al inicializar Pusher Beams: " . $e->getMessage());
+                $this->beams = null;
+            }
+        } else {
+            // Si no hay credenciales, asignamos null para evitar el error 500
+            $this->beams = null;
+        }
     }
 
     public function enviarOferta($nombreProducto, $precioOferta, $categoria = '')
     {
+        // Si no se pudo inicializar Beams, salimos silenciosamente
+        if (!$this->beams) return null;
+
         $iconUrl = url('/images/logo_notificacion.jpg');
-        
+
         $titulo = "OFERTA ESPECIAL";
-        $mensaje = $categoria 
+        $mensaje = $categoria
             ? "$nombreProducto en $categoria ahora a solo S/ " . number_format($precioOferta, 2)
             : "$nombreProducto ahora a solo S/ " . number_format($precioOferta, 2);
-        
-        $resultado = $this->beams->publishToInterests(
+
+        return $this->beams->publishToInterests(
             ['ofertas'],
             [
                 "fcm" => [
@@ -43,21 +61,21 @@ class PusherBeamsService
                 ]
             ]
         );
-        
-        return $resultado;
     }
 
     public function enviarLanzamiento($nombreProducto, $categoria = '')
     {
+        if (!$this->beams) return null;
+
         $iconUrl = url('/images/logo_notificacion.jpg');
-        
+
         $titulo = "NUEVO PRODUCTO!";
-        $mensaje = $categoria 
+        $mensaje = $categoria
             ? "Ya disponible: $nombreProducto en $categoria"
             : "Ya disponible: $nombreProducto";
-        
-        $resultado = $this->beams->publishToInterests(
-            ['lanzamientos'],  
+
+        return $this->beams->publishToInterests(
+            ['lanzamientos'],
             [
                 "fcm" => [
                     "notification" => [
@@ -74,15 +92,15 @@ class PusherBeamsService
                 ]
             ]
         );
-        
-        return $resultado;
     }
 
     public function enviarCarrito($userId, $titulo, $mensaje)
     {
+        if (!$this->beams) return null;
+
         $iconUrl = url('/images/logo_notificacion.jpg');
-        
-        $resultado = $this->beams->publishToUsers(
+
+        return $this->beams->publishToUsers(
             ["carrito-$userId"],
             [
                 "fcm" => [
@@ -100,7 +118,5 @@ class PusherBeamsService
                 ]
             ]
         );
-        
-        return $resultado;
     }
 }
