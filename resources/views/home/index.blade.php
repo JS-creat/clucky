@@ -70,11 +70,9 @@
         class="relative max-w-7xl mx-auto px-3 sm:px-8"
     >
         {{-- CONTENEDOR DEL SLIDE --}}
-        {{-- En móvil usamos aspect-ratio 4/3 para que sea más alto y visible; en sm+ volvemos al 21/7 --}}
-        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-white"
-             style="aspect-ratio: 4/3; min-height: 220px;"
-             x-data="{}"
-             :style="window.innerWidth >= 640 ? 'aspect-ratio: 21/7; min-height: 240px;' : 'aspect-ratio: 4/3; min-height: 220px;'"
+        {{-- Móvil: 4/3 para tener altura visible | sm+: 21/7 proporción cine wide --}}
+        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-white [aspect-ratio:4/3] sm:[aspect-ratio:21/7]"
+             style="min-height: 220px;"
         >
 
             @foreach($banners as $index => $banner)
@@ -175,16 +173,9 @@
 {{-- Banner por defecto si no hay banners en BD --}}
 <section class="w-full bg-gray-50 py-3 sm:py-6">
     <div class="max-w-6xl mx-auto px-3 sm:px-8">
-        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg"
-             style="aspect-ratio: 4/3; min-height: 200px;">
-            <style>
-                @media (min-width: 640px) {
-                    .banner-default { aspect-ratio: 21/8 !important; }
-                }
-            </style>
-            <div class="banner-default absolute inset-0" style="aspect-ratio: 4/3; min-height: 200px;">
-                <img src="{{ asset('images/banner-home.jpg') }}" alt="Banner" class="w-full h-full object-cover">
-            </div>
+        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg [aspect-ratio:4/3] sm:[aspect-ratio:21/8]"
+             style="min-height: 200px;">
+            <img src="{{ asset('images/banner-home.jpg') }}" alt="Banner" class="absolute inset-0 w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex items-center px-6 sm:px-10">
                 <div class="text-white">
                     <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-widest text-white/65 mb-1">Nueva Colección 2026</p>

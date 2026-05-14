@@ -8,15 +8,22 @@ class Producto extends Model
 {
     protected $table = 'producto';
     protected $primaryKey = 'id_producto';
-    
+
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
-        'nombre_producto', 'descripcion', 'precio', 'precio_oferta',
-        'imagen', 'galeria', 'marca', 'estado_producto',
-        'id_genero', 'id_categoria', 'id_promocion'
+        'nombre_producto',
+        'descripcion',
+        'precio',
+        'precio_oferta',
+        'imagen',
+        'galeria',
+        'marca',
+        'estado_producto',
+        'id_genero',
+        'id_categoria',
     ];
 
     protected $casts = [
@@ -42,14 +49,6 @@ class Producto extends Model
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
-    }
-
-    /**
-     * Relación con promoción
-     */
-    public function promocion()
-    {
-        return $this->belongsTo(Promocion::class, 'id_promocion', 'id_promocion');
     }
 
     /**
@@ -98,19 +97,19 @@ class Producto extends Model
     public function getImagenesAttribute()
     {
         $imagenes = [];
-        
+
         if ($this->galeria && is_array($this->galeria)) {
             $imagenes = $this->galeria;
         }
-        
+
         if ($this->imagen) {
             array_unshift($imagenes, $this->imagen);
         }
-        
+
         if (empty($imagenes)) {
             $imagenes = ['default-product.jpg'];
         }
-        
+
         return $imagenes;
     }
 
@@ -123,16 +122,7 @@ class Producto extends Model
         if ($this->precio_oferta) {
             return (float) $this->precio_oferta;
         }
-        
-        // Si hay promoción activa, aplicar descuento
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return (float) ($this->precio - $this->promocion->descuento);
-            }
-        }
-        
+
         return (float) $this->precio;
     }
 
@@ -144,15 +134,7 @@ class Producto extends Model
         if ($this->precio_oferta) {
             return (float) $this->precio;
         }
-        
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return (float) $this->precio;
-            }
-        }
-        
+
         return null;
     }
 
@@ -164,15 +146,7 @@ class Producto extends Model
         if ($this->precio_oferta && $this->precio > 0) {
             return round((($this->precio - $this->precio_oferta) / $this->precio) * 100);
         }
-        
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return round(($this->promocion->descuento / $this->precio) * 100);
-            }
-        }
-        
+
         return null;
     }
 
@@ -244,7 +218,7 @@ class Producto extends Model
      */
     public function scopeConStock($query)
     {
-        return $query->whereHas('variantes', function($q) {
+        return $query->whereHas('variantes', function ($q) {
             $q->where('stock', '>', 0);
         });
     }
@@ -258,18 +232,12 @@ class Producto extends Model
     }
 
     /**
-     * Scope para productos en oferta
+     * Scope para productos en oferta (Solo precio_oferta)
      */
     public function scopeEnOferta($query)
     {
-        return $query->where(function($q) {
-            $q->whereNotNull('precio_oferta')
-              ->orWhereHas('promocion', function($q2) {
-                  $q2->where('estado_promocion', 1)
-                    ->where('fecha_inicio', '<=', now())
-                    ->where('fecha_fin', '>=', now());
-              });
-        });
+        return $query->whereNotNull('precio_oferta')
+            ->where('precio_oferta', '>', 0);
     }
 
     /**
@@ -294,8 +262,8 @@ class Producto extends Model
     public function scopeBuscar($query, $termino)
     {
         return $query->where('nombre_producto', 'LIKE', "%{$termino}%")
-                     ->orWhere('descripcion', 'LIKE', "%{$termino}%")
-                     ->orWhere('marca', 'LIKE', "%{$termino}%");
+            ->orWhere('descripcion', 'LIKE', "%{$termino}%")
+            ->orWhere('marca', 'LIKE', "%{$termino}%");
     }
 
     /**
@@ -306,4 +274,3 @@ class Producto extends Model
         return $query->orderBy('precio', $direccion);
     }
 }
-

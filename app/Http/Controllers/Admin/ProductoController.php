@@ -8,7 +8,6 @@ use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Genero;
 use App\Models\Categoria;
-use App\Models\Promocion;
 use Illuminate\Support\Facades\File;
 use App\Services\PusherBeamsService;
 
@@ -113,9 +112,8 @@ class ProductoController extends Controller
 
         $generos = Genero::all();
         $categorias = Categoria::all();
-        $promociones = Promocion::where('estado_promocion', 1)->get();
 
-        return view('admin.productos.edit', compact('producto', 'generos', 'categorias', 'promociones'));
+        return view('admin.productos.edit', compact('producto', 'generos', 'categorias'));
     }
 
     public function update(Request $request, $id)
@@ -151,7 +149,7 @@ class ProductoController extends Controller
             }
         }
 
-        $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_genero', 'id_categoria', 'id_promocion']);
+        $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_genero', 'id_categoria']);
 
         if ($request->hasFile('imagen')) {
             $datos['imagen'] = $this->cargarArchivo($request->file('imagen'));
