@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Verificar email - C Lucky</title>
+    <title>Verificar email - B-EDEN</title>
     @vite('resources/css/app.css')
 </head>
 
@@ -47,7 +47,7 @@
                         {{ __('¡Gracias por registrarte') }}, <strong>{{ auth()->user()->nombres }}</strong>!
                     </p>
                     <p class="text-gray-700 text-sm leading-relaxed mt-2 text-justify">
-                        {{ __('Antes de comenzar, verifica tu dirección de correo electrónico haciendo clic en el enlace que te acabamos de enviar a') }} 
+                        {{ __('Antes de comenzar, verifica tu dirección de correo electrónico haciendo clic en el enlace que te acabamos de enviar a') }}
                         <strong class="text-gray-900">{{ auth()->user()->correo ?? auth()->user()->email }}</strong>.
                     </p>
                     <p class="text-gray-700 text-sm leading-relaxed mt-2 text-justify">
@@ -58,7 +58,7 @@
                 <div class="space-y-4">
                     <form method="POST" action="{{ route('verification.send') }}" class="w-full">
                         @csrf
-                        <button type="submit" 
+                        <button type="submit"
                             class="w-full bg-black text-white py-3 rounded-lg text-base font-bold hover:bg-gray-800 transition cursor-pointer">
                             Reenviar correo de verificación
                         </button>
@@ -71,8 +71,8 @@
                 </form>
 
                 <p class="text-center text-xs text-gray-500 mt-6">
-                    ¿No eres tú? 
-                    <button onclick="logoutAndRedirect()" 
+                    ¿No eres tú?
+                    <button onclick="logoutAndRedirect()"
                             class="text-black underline font-medium hover:text-gray-600 transition cursor-pointer bg-transparent border-0 p-0">
                         Registrarse
                     </button>
@@ -103,9 +103,9 @@
 
     <!-- FOOTER -->
     <footer class="bg-black text-white py-12 mt-auto">
-        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 justify-items-center"> 
+        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 justify-items-center">
 
-            <div class="w-full text-left"> 
+            <div class="w-full text-left">
                 <h3 class="text-base font-semibold mb-4">
                     Servicio al cliente
                 </h3>
@@ -136,9 +136,9 @@
                     <p>Quiénes somos</p>
                     <p>Términos y condiciones</p>
                 </div>
-                
-                <div class="flex space-x-4 mt-4"> 
-                    <a href="https://www.facebook.com/Lucibet" target="_blank" rel="noopener noreferrer" 
+
+                <div class="flex space-x-4 mt-4">
+                    <a href="https://www.facebook.com/Lucibet" target="_blank" rel="noopener noreferrer"
                     class="text-white hover:text-gray-300 transition-colors">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />

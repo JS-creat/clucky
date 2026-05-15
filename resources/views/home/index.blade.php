@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'C\'Lucky - Tienda Online')
+@section('title', 'B-EDEN - Premium Clothing')
 
 @section('categorias')
     {{-- BARRA DE CATEGORÍAS STICKY --}}

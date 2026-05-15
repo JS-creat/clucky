@@ -10,6 +10,7 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 </head>
 
 <body class="bg-gray-50 min-h-screen text-gray-900 overflow-x-hidden">
@@ -21,7 +22,7 @@
 
             <div class="flex items-center justify-between p-6 border-b border-gray-800/50">
                 <span x-show="open" x-transition.opacity class="text-xl font-black text-white tracking-tighter">
-                    C´LUCKY
+                    B-EDEN
                 </span>
                 <button @click="open = !open" class="p-2 rounded-xl bg-gray-800 text-white hover:bg-black transition-colors">
                     <x-heroicon-o-bars-3-bottom-left class="w-6 h-6" />

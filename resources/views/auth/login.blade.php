@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Login - C Lucky')
+@section('title', 'Login - B-EDEN')
 
 @section('content')
 <div class="flex justify-center items-center py-20 px-4">
@@ -33,7 +33,7 @@
         </div>
 
         <div class="bg-white p-10 md:p-12 rounded shadow text-center flex-1">
-            <h2 class="text-lg font-semibold mb-4">¿Eres nuevo en C’Lucky?</h2>
+            <h2 class="text-lg font-semibold mb-4">¿Eres nuevo en B-EDEN?</h2>
             <p class="text-gray-600 mb-6">
                 Crea una cuenta para comprar más rápido y acceder a ofertas especiales
             </p>
