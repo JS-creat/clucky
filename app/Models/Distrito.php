@@ -16,7 +16,7 @@ class Distrito extends Model
         return $this->belongsTo(Provincia::class, 'id_provincia', 'id_provincia');
     }
 
-    public function agencias()
+    public function agencia()
     {
         return $this->hasMany(Agencia::class, 'id_distrito', 'id_distrito');
     }
