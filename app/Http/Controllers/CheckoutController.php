@@ -169,6 +169,7 @@ class CheckoutController extends Controller
                     "failure" => route('pago.fallo'),
                     "pending" => route('pago.pendiente'),
                 ],
+                "auto_return"        => "approved",
                 "external_reference" => (string) $pedido->id_pedido,
             ]);
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
@@ -178,7 +179,7 @@ class CheckoutController extends Controller
             ]);
         }
 
-        return redirect($preference->sandbox_init_point);
+        return redirect($preference->init_point);
     }
 
 
