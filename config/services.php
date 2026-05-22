@@ -36,7 +36,11 @@ return [
     ],
 
     'pusher' => [
-    'beams_instance_id' => env('PUSHER_BEAMS_INSTANCE_ID'),
-    'beams_secret_key' => env('PUSHER_BEAMS_SECRET_KEY'),
+        'beams_instance_id' => env('PUSHER_BEAMS_INSTANCE_ID'),
+        'beams_secret_key' => env('PUSHER_BEAMS_SECRET_KEY'),
+    ],
+
+    'mercadopago' => [
+        'access_token' => env('MP_ACCESS_TOKEN'),
     ],
 ];
