@@ -32,6 +32,7 @@ class PagoController extends Controller
                 $pedido = Pedido::with('detalles.variante')->find($orderId);
 
                 if ($pedido) {
+                    // Si el usuario refresca la página de éxito, esto evita que se vuelva a descontar stock
                     if ($pedido->payment_id === $paymentId) {
                         return view('pagos.exito', compact('pedido'));
                     }
@@ -39,16 +40,18 @@ class PagoController extends Controller
                     DB::transaction(function () use ($pedido, $paymentId) {
 
                         $pedido->update([
-                            'payment_id' => $paymentId,
-                            // Aquí también podrías cambiar el 'estado_pago' a 'Aprobado' si tuvieras esa columna
+                            'payment_id'    => $paymentId,
+                            'estado_pedido' => 'Confirmado',
                         ]);
 
+                        // Descontar el stock de las variantes
                         foreach ($pedido->detalles as $detalle) {
                             if ($detalle->variante) {
-                                $detalle->variante->decrement('stock', $detalle->cantidad);
+                                $detalle->variante->decrement('stock', $detalle->amount ?? $detalle->cantidad);
                             }
                         }
 
+                        // Vaciar el carrito del usuario
                         $carrito = Carrito::where('id_usuario', $pedido->id_usuario)->first();
                         if ($carrito) {
                             $carrito->detalles()->delete();

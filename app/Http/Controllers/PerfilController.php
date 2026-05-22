@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Pedido; // 🌟 IMPORTANTE: Añadimos el modelo Pedido aquí arriba
 
 class PerfilController extends Controller
 {
     public function index()
     {
-        return view('perfil.index');
+        $pedidos = Pedido::where('id_usuario', Auth::id())
+                         ->where('estado_pedido', '!=', 'Pendiente')
+                         ->orderBy('created_at', 'desc')
+                         ->get();
+        return view('perfil.index', compact('pedidos'));
     }
 
     public function edit()
