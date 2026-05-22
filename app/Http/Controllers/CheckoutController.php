@@ -23,7 +23,6 @@ class CheckoutController extends Controller
 
     public function index()
     {
-        // Cambiamos session() por Session::
         if (Session::has('carrito')) {
             $carrito = Carrito::firstOrCreate(['id_usuario' => Auth::id()]);
 
@@ -56,7 +55,7 @@ class CheckoutController extends Controller
     }
 
 
-    // ── Confirmar: SOLO crea preferencia
+    // ── Confirmar: Crea o REUTILIZA el pedido y genera preferencia
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -76,7 +75,7 @@ class CheckoutController extends Controller
             return back()->with('error', 'Tu carrito está vacío.');
         }
 
-        // MEJORA: Validar stock antes de continuar
+        // Validar stock antes de continuar
         foreach ($carrito->detalles as $detalle) {
             if ($detalle->cantidad > $detalle->variante->stock) {
                 return back()->with('error', "El producto {$detalle->variante->producto->nombre_producto} no tiene suficiente stock disponible.");
@@ -94,7 +93,7 @@ class CheckoutController extends Controller
         $costoEnvio = (float) $request->costo_envio;
         $total     += $costoEnvio;
 
-        // ── Crear pedido en BD
+        // ── Crear o REUTILIZAR pedido en BD ─────────────────────────────────
         $pedido = null;
         $agencia = null;
 
@@ -104,19 +103,44 @@ class CheckoutController extends Controller
 
         DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia) {
 
-            $pedido = Pedido::create([
-                'numero_pedido'   => $this->generarNumeroPedido(),
-                'total_pedido'    => $total,
-                'estado_pedido'   => 'Pendiente',
-                'id_usuario'      => Auth::id(),
-                'id_tipo_entrega' => $request->id_tipo_entrega,
-                'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
-                'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
-                'costo_envio'     => $request->costo_envio ?? 0,
-                'nombre_agencia'  => $agencia?->nombre_agencia,
-                'direccion'       => $agencia?->direccion,
-            ]);
+            // 🌟 1. Buscamos si este cliente ya tiene una orden 'Pendiente' estancada
+            $pedidoExistente = Pedido::where('id_usuario', Auth::id())
+                ->where('estado_pedido', 'Pendiente')
+                ->first();
 
+            if ($pedidoExistente) {
+                // 🌟 2. Si ya existía, sobreescribimos sus datos con los nuevos del formulario
+                $pedidoExistente->update([
+                    'total_pedido'    => $total,
+                    'id_tipo_entrega' => $request->id_tipo_entrega,
+                    'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
+                    'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
+                    'costo_envio'     => $request->costo_envio ?? 0,
+                    'nombre_agencia'  => $agencia?->nombre_agencia,
+                    'direccion'       => $agencia?->direccion,
+                ]);
+
+                // Limpiamos los productos viejos que tenía guardados ese pedido
+                DetallePedido::where('id_pedido', $pedidoExistente->id_pedido)->delete();
+
+                $pedido = $pedidoExistente;
+            } else {
+                // 🌟 3. Si no tenía ningún pedido pendiente, lo creamos desde cero
+                $pedido = Pedido::create([
+                    'numero_pedido'   => $this->generarNumeroPedido(),
+                    'total_pedido'    => $total,
+                    'estado_pedido'   => 'Pendiente',
+                    'id_usuario'      => Auth::id(),
+                    'id_tipo_entrega' => $request->id_tipo_entrega,
+                    'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
+                    'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
+                    'costo_envio'     => $request->costo_envio ?? 0,
+                    'nombre_agencia'  => $agencia?->nombre_agencia,
+                    'direccion'       => $agencia?->direccion,
+                ]);
+            }
+
+            // 🌟 4. Registramos los productos actuales del carrito (aplica para el nuevo o el reciclado)
             foreach ($carrito->detalles as $detalle) {
                 $producto = $detalle->variante->producto;
                 $precio   = $producto->precio_oferta ?? $producto->precio;
@@ -156,7 +180,8 @@ class CheckoutController extends Controller
         }
 
         // ── Crear preferencia en MP ─────────────────────────────────────────
-        MercadoPagoConfig::setAccessToken(env('MP_ACCESS_TOKEN'));
+        // Solución al error 500: Cambiado env() por config()
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
         $client = new PreferenceClient();
 
         try {
@@ -172,7 +197,7 @@ class CheckoutController extends Controller
                     "pending" => route('pago.pendiente'),
                 ],
                 "auto_return"        => "approved",
-                "external_reference" => (string) $pedido->id_pedido,
+                "external_reference" => (string) $pedido->id_pedido, // Siempre mandamos el ID correcto
             ]);
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
             dd([
@@ -193,6 +218,6 @@ class CheckoutController extends Controller
         $cantidad    = Pedido::whereDate('created_at', today())->count() + 1;
         $correlativo = str_pad($cantidad, 3, '0', STR_PAD_LEFT);
 
-        return "CLK-{$fecha}-{$correlativo}";
+        return "BND-{$fecha}-{$correlativo}";
     }
 }
