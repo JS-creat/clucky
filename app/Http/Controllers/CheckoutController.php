@@ -7,6 +7,7 @@ use App\Models\Departamento;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
 use App\Models\ProductoVariante;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,22 +23,24 @@ class CheckoutController extends Controller
 
     public function index()
     {
-        if (session()->has('carrito')) {
+        // Cambiamos session() por Session::
+        if (Session::has('carrito')) {
             $carrito = Carrito::firstOrCreate(['id_usuario' => Auth::id()]);
 
-            foreach (session('carrito') as $idVariante => $item) {
+            foreach (Session::get('carrito', []) as $idVariante => $item) {
                 \App\Models\DetalleCarrito::updateOrCreate(
                     ['id_carrito' => $carrito->id_carrito, 'id_variante' => $idVariante],
                     ['cantidad'   => $item['cantidad']]
                 );
             }
 
-            session()->forget('carrito');
+            Session::forget('carrito');
         }
 
         $carrito        = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', Auth::id())
             ->first();
+
         $departamentos  = Departamento::all();
         $tiposEntrega   = TipoEntrega::where('estado', 1)->get();
         $tiposDocumento = TipoDocumento::all();
@@ -53,8 +56,7 @@ class CheckoutController extends Controller
     }
 
 
-    // ── Confirmar: SOLO crea preferencia, NO guarda pedido ──────────────────
-
+    // ── Confirmar: SOLO crea preferencia
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -63,9 +65,7 @@ class CheckoutController extends Controller
         ]);
 
         if ((int) $request->id_tipo_entrega === 2 && empty($request->id_distrito)) {
-            return back()
-                ->withInput()
-                ->with('error', 'Debes seleccionar un distrito para el envío.');
+            return back()->withInput()->with('error', 'Debes seleccionar un distrito para el envío.');
         }
 
         $carrito = Carrito::with('detalles.variante.producto')
@@ -74,6 +74,13 @@ class CheckoutController extends Controller
 
         if ($carrito->detalles->isEmpty()) {
             return back()->with('error', 'Tu carrito está vacío.');
+        }
+
+        // MEJORA: Validar stock antes de continuar
+        foreach ($carrito->detalles as $detalle) {
+            if ($detalle->cantidad > $detalle->variante->stock) {
+                return back()->with('error', "El producto {$detalle->variante->producto->nombre_producto} no tiene suficiente stock disponible.");
+            }
         }
 
         // ── Calcular total ──────────────────────────────────────────────────
@@ -87,7 +94,7 @@ class CheckoutController extends Controller
         $costoEnvio = (float) $request->costo_envio;
         $total     += $costoEnvio;
 
-        // ── Crear pedido en BD ──────────────────────────────────────────────
+        // ── Crear pedido en BD
         $pedido = null;
         $agencia = null;
 
@@ -106,8 +113,8 @@ class CheckoutController extends Controller
                 'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
                 'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
                 'costo_envio'     => $request->costo_envio ?? 0,
-                'nombre_agencia'    => $agencia?->nombre_agencia,
-                'direccion' => $agencia?->direccion,
+                'nombre_agencia'  => $agencia?->nombre_agencia,
+                'direccion'       => $agencia?->direccion,
             ]);
 
             foreach ($carrito->detalles as $detalle) {
@@ -121,12 +128,7 @@ class CheckoutController extends Controller
                     'precio_unitario' => $precio,
                     'subtotal'        => $precio * $detalle->cantidad,
                 ]);
-
-                ProductoVariante::where('id_variante', $detalle->id_variante)
-                    ->decrement('stock', $detalle->cantidad);
             }
-
-            $carrito->detalles()->delete();
         });
 
         // ── Armar ítems para MP ─────────────────────────────────────────────
