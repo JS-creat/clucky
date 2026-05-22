@@ -22,7 +22,7 @@ class PagoController extends Controller
         }
 
         try {
-            MercadoPagoConfig::setAccessToken(env('MP_ACCESS_TOKEN'));
+            MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
             $client = new PaymentClient();
 
             $payment = $client->get($paymentId);
