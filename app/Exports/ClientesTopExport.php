@@ -4,9 +4,11 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles; 
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet; 
 use Illuminate\Support\Facades\DB;
 
-class ClientesTopExport implements FromCollection, WithHeadings
+class ClientesTopExport implements FromCollection, WithHeadings, WithStyles
 {
     public function collection()
     {
@@ -21,7 +23,7 @@ class ClientesTopExport implements FromCollection, WithHeadings
                 DB::raw('SUM(ped.total_pedido) as dinero_dejado')
             )
             ->groupBy('u.id_usuario', 'u.nombres', 'u.apellidos', 'u.correo')
-            ->orderBy('dinero_dejado', 'desc') // Ordenamos del cliente que gastó más al que gasto menos
+            ->orderBy('dinero_dejado', 'desc')
             ->limit(10)
             ->get();
     }
@@ -34,6 +36,23 @@ class ClientesTopExport implements FromCollection, WithHeadings
             'Correo Electrónico',
             'Cantidad de Órdenes Compradas',
             'Total Dinero Dejado (S/.)'
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => [
+                    'bold' => true, 
+                    'color' => ['argb' => 'FFFFFFFF'],
+                    'size' => 11
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF1E293B']
+                ]
+            ],
         ];
     }
 }
