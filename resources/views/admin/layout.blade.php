@@ -37,6 +37,7 @@
                         ['route' => 'admin.categorias.index',   'icon' => 'o-tag',                   'label' => 'Categorías y Género'],
                         ['route' => 'admin.pedidos.index',      'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
                         ['route' => 'admin.agencias.index',     'icon' => 'o-building-office',       'label' => 'Agencias'],
+                        ['route' => 'admin.reportes.index',     'icon' => 'o-document-chart-bar',    'label' => 'Reportes'],
                     ];
 
                     $otrosRoutes = ['admin.banners.index', 'admin.cupones.index'];

@@ -18,6 +18,7 @@ use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
 use App\Http\Controllers\PedidoUsuarioController;
+use App\Http\Controllers\Admin\ReporteController;
 
 // ── PÚBLICAS
 
@@ -97,11 +98,19 @@ Route::middleware(['auth', 'verified', 'role:1'])
         });
 
         //Banners y cupones
-        //Banners y cupones
         Route::resource('banners', BannerController::class)->except(['show']);
-        Route::patch('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle'); // ← agregar
+        Route::patch('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
         Route::resource('cupones', CuponController::class)->except(['show']);
-        Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');  // ← agregar
+        Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');
+
+        // ── SUB-GRUPO DE REPORTES CONECTADO AL EXCEL
+        Route::prefix('reportes')->name('reportes.')->group(function () {
+
+            Route::get('/', [ReporteController::class, 'index'])->name('index');
+            Route::get('/pedidos', [ReporteController::class, 'exportPedidos'])->name('pedidos');
+            Route::get('/productos', [ReporteController::class, 'exportProductos'])->name('productos');
+            Route::get('/clientes', [ReporteController::class, 'exportClientes'])->name('clientes');
+        });
     });
 
 // ── PERFIL
