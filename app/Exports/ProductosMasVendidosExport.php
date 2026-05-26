@@ -50,7 +50,7 @@ class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithSt
                 ],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['argb' => 'FF1E293B'] 
+                    'startColor' => ['argb' => 'FF1E3A8A'] 
                 ]
             ],
         ];
