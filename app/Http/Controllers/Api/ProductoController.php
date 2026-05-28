@@ -17,8 +17,9 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
+        // SE QUITÓ 'promocion'
         $query = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            ->with(['categoria', 'genero', 'variantes']);
         
         // Filtros
         if ($request->has('categoria')) {
@@ -84,8 +85,9 @@ class ProductoController extends Controller
      */
     public function show($id)
     {
+        // SE QUITÓ 'promocion'
         $producto = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes'])
+            ->with(['categoria', 'genero', 'variantes'])
             ->find($id);
         
         if (!$producto) {
@@ -131,8 +133,9 @@ class ProductoController extends Controller
     public function recomendados(Request $request)
     {
         try {
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'genero', 'variantes']);
             
             // NUEVO: Filtrar por género (hombre/mujer)
             if ($request->has('genero_id')) {
@@ -176,8 +179,9 @@ class ProductoController extends Controller
     public function populares(Request $request)
     {
         try {
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'genero', 'variantes']);
             
             // NUEVO: Filtrar por género (hombre/mujer)
             if ($request->has('genero_id')) {
@@ -197,7 +201,7 @@ class ProductoController extends Controller
             // Límite de resultados
             $limit = $request->get('limit', 10);
             
-            // Orden aleatorio para "populares" (podrías cambiar por más vendidos después)
+            // Orden aleatorio para "populares"
             $productos = $query->inRandomOrder()->limit($limit)->get();
             
             return response()->json([
@@ -222,9 +226,10 @@ class ProductoController extends Controller
     public function ofertas(Request $request)
     {
         try {
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
                 ->enOferta()
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'genero', 'variantes'])
                 ->conStock();
             
             // NUEVO: Filtrar por género en ofertas también
@@ -261,9 +266,10 @@ class ProductoController extends Controller
                 'q' => 'required|string|min:2'
             ]);
             
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
                 ->buscar($request->q)
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'genero', 'variantes'])
                 ->conStock();
             
             // NUEVO: Filtrar por género en búsqueda
@@ -296,12 +302,13 @@ class ProductoController extends Controller
     public function porTalla(Request $request, $talla)
     {
         try {
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
                 ->whereHas('variantes', function($q) use ($talla) {
                     $q->where('talla', $talla)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'genero', 'variantes']);
             
             // NUEVO: Filtrar por género
             if ($request->has('genero_id')) {
@@ -333,12 +340,13 @@ class ProductoController extends Controller
     public function porColor(Request $request, $color)
     {
         try {
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
                 ->whereHas('variantes', function($q) use ($color) {
                     $q->where('color', $color)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'genero', 'variantes']);
             
             // NUEVO: Filtrar por género
             if ($request->has('genero_id')) {
@@ -375,9 +383,10 @@ class ProductoController extends Controller
                 'max' => 'required|numeric|min:0|gt:min',
             ]);
             
+            // SE QUITÓ 'promocion'
             $query = Producto::activos()
                 ->whereBetween('precio', [$request->min, $request->max])
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'genero', 'variantes'])
                 ->conStock();
             
             // NUEVO: Filtrar por género
