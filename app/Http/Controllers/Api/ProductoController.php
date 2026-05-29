@@ -18,8 +18,7 @@ class ProductoController extends Controller
     public function index(Request $request)
     {
         try {
-            // Usamos where('estado', 1) directamente para evitar scopes rotos
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->with(['categoria', 'genero', 'variantes']);
 
             // Filtros
@@ -84,7 +83,7 @@ class ProductoController extends Controller
      */
     public function show($id)
     {
-        $producto = Producto::where('estado', 1)
+        $producto = Producto::where('estado_producto', 1)
             ->with(['categoria', 'genero', 'variantes'])
             ->find($id);
 
@@ -131,7 +130,7 @@ class ProductoController extends Controller
     public function recomendados(Request $request)
     {
         try {
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->with(['categoria', 'genero', 'variantes']);
 
             if ($request->has('genero_id')) {
@@ -164,7 +163,7 @@ class ProductoController extends Controller
     public function populares(Request $request)
     {
         try {
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->with(['categoria', 'genero', 'variantes']);
 
             if ($request->has('genero_id')) {
@@ -198,7 +197,7 @@ class ProductoController extends Controller
     public function ofertas(Request $request)
     {
         try {
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->whereNotNull('precio_oferta')
                 ->where('precio_oferta', '>', 0)
                 ->with(['categoria', 'genero', 'variantes']);
@@ -232,7 +231,7 @@ class ProductoController extends Controller
                 'q' => 'required|string|min:2'
             ]);
 
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->where('nombre_producto', 'LIKE', '%' . $request->q . '%')
                 ->with(['categoria', 'genero', 'variantes']);
 
@@ -266,7 +265,7 @@ class ProductoController extends Controller
                 'max' => 'required|numeric|min:0|gt:min',
             ]);
 
-            $query = Producto::where('estado', 1)
+            $query = Producto::where('estado_producto', 1)
                 ->whereBetween('precio_venta', [$request->min, $request->max])
                 ->with(['categoria', 'genero', 'variantes']);
 
