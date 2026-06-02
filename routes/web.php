@@ -103,13 +103,35 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::resource('cupones', CuponController::class)->except(['show']);
         Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');
 
-        // ── SUB-GRUPO DE REPORTES CONECTADO AL EXCEL
-        Route::prefix('reportes')->name('reportes.')->group(function () {
+        Route::prefix('reportes')->name('reportes.')->controller(\App\Http\Controllers\Admin\ReporteController::class)->group(function () {
 
-            Route::get('/', [ReporteController::class, 'index'])->name('index');
-            Route::get('/pedidos', [ReporteController::class, 'exportPedidos'])->name('pedidos');
-            Route::get('/productos', [ReporteController::class, 'exportProductos'])->name('productos');
-            Route::get('/clientes', [ReporteController::class, 'exportClientes'])->name('clientes');
+            // Vista principal
+            Route::get('/',                   'index')->name('index');
+
+            // ── Descarga de reportes ──────────────────────────────────────────────────
+            // Reporte 1: Estado de pedidos (sin filtros extra)
+            Route::get('/pedidos',            'exportPedidos')->name('pedidos');
+
+            // Reporte 2: Top productos
+            Route::get('/productos',          'exportProductos')->name('productos');
+
+            // Reporte 3: Top clientes
+            Route::get('/clientes',           'exportClientes')->name('clientes');
+
+            // Reporte 4: Ventas por categoría
+            Route::get('/categoria',          'exportCategoria')->name('categoria');
+
+            // Reporte 5: Ventas por período
+            Route::get('/periodo',            'exportPeriodo')->name('periodo');
+
+            // Reporte 6: Stock crítico
+            Route::get('/stock',              'exportStock')->name('stock');
+
+            // Reporte 7: Cupones  (sin filtros)
+            Route::get('/cupones',            'exportCupones')->name('cupones');
+
+            // Reporte 8: Pedidos detallado
+            Route::get('/pedidos-detallado',  'exportPedidosDetallado')->name('pedidos-detallado');
         });
     });
 
