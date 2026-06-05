@@ -9,7 +9,9 @@ RUN npm run build
 # Etapa 2: Servidor Apache con PHP 8.2 (Bookworm = Debian estable)
 FROM php:8.2-apache-bookworm
 
-RUN apt-get update && apt-get install -y \
+RUN echo 'Acquire::http::Pipeline-Depth 0;\nAcquire::http::No-Cache true;\nAcquire::BrokenProxy true;' \
+    > /etc/apt/apt.conf.d/99fixbadproxy \
+    && apt-get update && apt-get install -y \
         git unzip zip libzip-dev curl \
     && docker-php-ext-install pdo pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
