@@ -1,0 +1,21 @@
+.git
+.gitignore
+README.md
+Docker-compose.yml
+.env
+.env.backup
+
+# Carpetas pesadas de dependencias locales
+node_modules
+vendor
+
+# Caché y archivos temporales de Laravel
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+
+# Assets locales compilados (tu Dockerfile los compilará de nuevo)
+public/build
+public/storage
