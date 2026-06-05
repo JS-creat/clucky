@@ -1,40 +1,37 @@
-FROM php:8.2-apache
-
-# Instalar dependencias del sistema + Node
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    libzip-dev \
-    curl \
-    && docker-php-ext-install pdo pdo_mysql zip \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-# Activar mod_rewrite
-RUN a2enmod rewrite
-
-# Copiar proyecto
-COPY . /var/www/html
-
-WORKDIR /var/www/html
-
-# Instalar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Instalar dependencias Laravel
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# Instalar frontend (Vite)
+# Etapa 1: Compilación de assets con Node
+FROM node:20-alpine AS node-builder
+WORKDIR /app
+COPY package*.json ./
 RUN npm install
+COPY . .
 RUN npm run build
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Etapa 2: Servidor Apache con PHP 8.2 (Bookworm = Debian estable)
+FROM php:8.2-apache-bookworm
 
-# Apache apunta a public
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+RUN apt-get update && apt-get install -y \
+        git unzip zip libzip-dev curl \
+    && docker-php-ext-install pdo pdo_mysql zip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+        /etc/apache2/sites-available/*.conf \
+        /etc/apache2/apache2.conf \
+        /etc/apache2/conf-available/*.conf
+
+WORKDIR /var/www/html
+COPY . .
+COPY --from=node-builder /app/public/build ./public/build
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN env COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80
-
 CMD ["apache2-foreground"]
