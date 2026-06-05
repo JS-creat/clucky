@@ -1,40 +1,57 @@
-FROM php:8.2-apache
-
-# Instalar dependencias del sistema + Node
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    libzip-dev \
-    curl \
-    && docker-php-ext-install pdo pdo_mysql zip \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-# Activar mod_rewrite
-RUN a2enmod rewrite
-
-# Copiar proyecto
-COPY . /var/www/html
-
-WORKDIR /var/www/html
-
-# Instalar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Instalar dependencias Laravel
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# Instalar frontend (Vite)
+# Estructura multi-etapa: Compilación de Assets con Node
+FROM node:20-alpine AS node-builder
+WORKDIR /app
+COPY package*.json ./
 RUN npm install
+COPY . .
 RUN npm run build
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Etapa final: Servidor Apache con PHP 8.2
+FROM php:8.2-apache
 
-# Apache apunta a public
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+# Cambiar repositorios a espejos globales estables para evitar el error 403
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list || true
 
+# Instalar dependencias del sistema esenciales para Laravel
+RUN apt-get update -y || true \
+    && apt-get install -y --allow-unauthenticated \
+        git \
+        unzip \
+        zip \
+        libzip-dev \
+        curl \
+    && docker-php-ext-install pdo pdo_mysql zip
+
+# Habilitar el módulo rewrite de Apache (Obligatorio para Laravel)
+RUN a2enmod rewrite
+
+# Cambiar la raíz de Apache para que apunte a la carpeta /public de Laravel
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Configurar el directorio de trabajo
+WORKDIR /var/www/html
+
+# Copiar el proyecto desde el repositorio
+COPY . .
+
+# Copiar los assets ya compilados desde la etapa de Node
+COPY --from=node-builder /app/public/build ./public/build
+
+# Instalar Composer de forma global y ejecutar dependencias de PHP
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN env COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+
+# Crear directorios clave y asegurar permisos correctos (Evita Error 500)
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
+
+# Exponer el puerto de Apache
 EXPOSE 80
 
+# Comando para iniciar Apache en primer plano
 CMD ["apache2-foreground"]
