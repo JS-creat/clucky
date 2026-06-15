@@ -1,39 +1,48 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
-        @csrf
+@extends('layouts.app')
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+@section('title', 'Restablecer contraseña - B-EDEN')
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+@section('content')
+<div class="flex justify-center items-center py-20 px-4">
+    <div class="w-full max-w-xl">
+        <div class="bg-white p-10 md:p-12 rounded shadow">
+            <h2 class="text-lg font-semibold mb-6">Crea tu nueva contraseña</h2>
+
+            @if ($errors->any())
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm font-medium">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('password.store') }}">
+                @csrf
+
+                <input type="hidden" name="token" value="{{ $token }}">
+
+                <div class="mb-4">
+                    <label class="block text-xs text-gray-500 mb-1 font-medium">Correo electrónico</label>
+                    <input type="email" name="correo"
+                        value="{{ old('correo', request()->query('email')) }}"
+                        required readonly
+                        class="w-full border px-4 py-2 bg-gray-50 text-gray-400 rounded outline-none cursor-not-allowed">
+                </div>
+
+                <div class="mb-4">
+                    <input type="password" name="contrasena" placeholder="Nueva contraseña"
+                        class="w-full border px-4 py-2 rounded" required autofocus autocomplete="new-password">
+                </div>
+
+                <div class="mb-6">
+                    <input type="password" name="contrasena_confirmation" placeholder="Confirmar nueva contraseña"
+                        class="w-full border px-4 py-2 rounded" required autocomplete="new-password">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-black text-white py-2 rounded font-medium hover:bg-gray-800 transition cursor-pointer">
+                    Restablecer contraseña
+                </button>
+            </form>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    </div>
+</div>
+@endsection

@@ -25,7 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
+            return redirect()->route('password.request')
+                ->withErrors(['correo' => 'Por favor espera 1 minuto antes de solicitar otro enlace.']);
+        });
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(
