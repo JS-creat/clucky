@@ -52,10 +52,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])->name('usuario.actualizar');
 
-    Route::get('/perfil',        [PerfilController::class, 'index'])->name('perfil.index');
-    Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
-    Route::put('/perfil',        [PerfilController::class, 'update'])->name('perfil.update');
-
     //Mercado pago
     Route::post('/pago/crear',    [PagoController::class, 'crearPreferencia'])->name('pago.crear');
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
