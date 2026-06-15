@@ -21,6 +21,11 @@ jobs:
             npm install
             npm run build
             php artisan migrate --force
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan view:clear
+            php artisan route:clear
             php artisan config:cache
             php artisan view:cache
+            php artisan route:cache
             chown -R bedenb:bedenb /home/bedenb/htdocs/www.bedenb.com
