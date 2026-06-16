@@ -9,10 +9,10 @@ use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Illuminate\Support\Facades\DB;
 
-class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths
+class VentasPorPeriodoExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths
 {
     public function __construct(
-        private int $limite = 10,
+        private string $agrupacion = 'mes',  // 'dia' | 'semana' | 'mes'
         private ?string $desde = null,
         private ?string $hasta = null
     ) {}
@@ -21,23 +21,23 @@ class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithSt
     {
         $estadosValidos = ['Pagado', 'Confirmado', 'En camino', 'Listo para recoger', 'Entregado'];
 
-        $query = DB::table('detalle_pedido as dp')
-            ->join('producto_variante as pv', 'dp.id_variante', '=', 'pv.id_variante')
-            ->join('producto as p', 'pv.id_producto', '=', 'p.id_producto')
-            ->join('pedido as ped', 'dp.id_pedido', '=', 'ped.id_pedido')
-            ->leftJoin('categoria as cat', 'p.id_categoria', '=', 'cat.id_categoria')
+        $periodoExpr = match ($this->agrupacion) {
+            'dia'    => "DATE(ped.fecha_pedido)",
+            'semana' => "DATE(DATE_SUB(ped.fecha_pedido, INTERVAL WEEKDAY(ped.fecha_pedido) DAY))",
+            default  => "DATE_FORMAT(ped.fecha_pedido, '%Y-%m')",
+        };
+
+        $query = DB::table('pedido as ped')
             ->whereIn('ped.estado_pedido', $estadosValidos)
             ->select(
-                'p.id_producto',
-                'p.nombre_producto',
-                'cat.nombre_categoria as categoria',
-                DB::raw('SUM(dp.cantidad) as unidades_vendidas'),
-                DB::raw('SUM(dp.subtotal) as dinero_generado'),
-                DB::raw('ROUND(AVG(dp.precio_unitario), 2) as precio_promedio')
+                DB::raw("$periodoExpr as periodo"),
+                DB::raw('COUNT(ped.id_pedido) as total_pedidos'),
+                DB::raw('SUM(ped.total_pedido) as ingresos_totales'),
+                DB::raw('ROUND(AVG(ped.total_pedido), 2) as ticket_promedio'),
+                DB::raw('COUNT(DISTINCT ped.id_usuario) as clientes_unicos')
             )
-            ->groupBy('p.id_producto', 'p.nombre_producto', 'cat.nombre_categoria')
-            ->orderBy('unidades_vendidas', 'desc')
-            ->limit($this->limite);
+            ->groupBy(DB::raw($periodoExpr))
+            ->orderBy(DB::raw($periodoExpr), 'asc');
 
         if ($this->desde) {
             $query->where('ped.fecha_pedido', '>=', $this->desde . ' 00:00:00');
@@ -51,12 +51,18 @@ class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithSt
 
     public function headings(): array
     {
-        return ['ID Producto', 'Nombre del Producto', 'Categoría', 'Unidades Vendidas', 'Total Ventas (S/.)', 'Precio Promedio (S/.)'];
+        $label = match ($this->agrupacion) {
+            'dia'    => 'Día',
+            'semana' => 'Semana (inicio)',
+            default  => 'Mes (YYYY-MM)',
+        };
+
+        return [$label, 'Total Pedidos', 'Ingresos Totales (S/.)', 'Ticket Promedio (S/.)', 'Clientes Únicos'];
     }
 
     public function columnWidths(): array
     {
-        return ['A' => 12, 'B' => 35, 'C' => 20, 'D' => 20, 'E' => 20, 'F' => 22];
+        return ['A' => 18, 'B' => 16, 'C' => 24, 'D' => 24, 'E' => 18];
     }
 
     public function styles(Worksheet $sheet)

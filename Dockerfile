@@ -6,13 +6,16 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Etapa 2: Servidor Apache con PHP 8.2 (Bookworm = Debian estable)
-FROM php:8.2-apache-bookworm
+# Etapa 2: Usar imagen con extensiones ya compiladas
+FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-        git unzip zip libzip-dev curl \
-    && docker-php-ext-install pdo pdo_mysql zip \
-    && rm -rf /var/lib/apt/lists/*
+        libpng-dev libjpeg-dev libfreetype6-dev \
+        libzip-dev libonig-dev libxml2-dev \
+        zip unzip curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring gd zip opcache bcmath \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN a2enmod rewrite
 
@@ -23,15 +26,23 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
         /etc/apache2/conf-available/*.conf
 
 WORKDIR /var/www/html
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-scripts --no-autoloader
+
 COPY . .
 COPY --from=node-builder /app/public/build ./public/build
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN env COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-scripts \
+    && php artisan package:discover --ansi || true
+
 
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80
+
 CMD ["apache2-foreground"]
+

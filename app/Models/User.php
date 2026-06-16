@@ -95,6 +95,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->correo;
     }
 
+    public function getEmailForPasswordReset()
+    {
+        return $this->correo;
+    }
+
     // ============ ACCESORES ============
 
     public function getNombreCompletoAttribute()

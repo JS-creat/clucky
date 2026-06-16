@@ -9,10 +9,9 @@ use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Illuminate\Support\Facades\DB;
 
-class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths
+class VentasPorCategoriaExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths
 {
     public function __construct(
-        private int $limite = 10,
         private ?string $desde = null,
         private ?string $hasta = null
     ) {}
@@ -28,16 +27,14 @@ class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithSt
             ->leftJoin('categoria as cat', 'p.id_categoria', '=', 'cat.id_categoria')
             ->whereIn('ped.estado_pedido', $estadosValidos)
             ->select(
-                'p.id_producto',
-                'p.nombre_producto',
-                'cat.nombre_categoria as categoria',
+                DB::raw('COALESCE(cat.nombre_categoria, "Sin categoría") as categoria'),
+                DB::raw('COUNT(DISTINCT p.id_producto) as productos_distintos'),
                 DB::raw('SUM(dp.cantidad) as unidades_vendidas'),
-                DB::raw('SUM(dp.subtotal) as dinero_generado'),
-                DB::raw('ROUND(AVG(dp.precio_unitario), 2) as precio_promedio')
+                DB::raw('SUM(dp.subtotal) as ingresos_totales'),
+                DB::raw('ROUND(SUM(dp.subtotal) * 100.0 / SUM(SUM(dp.subtotal)) OVER(), 2) as porcentaje_ingresos')
             )
-            ->groupBy('p.id_producto', 'p.nombre_producto', 'cat.nombre_categoria')
-            ->orderBy('unidades_vendidas', 'desc')
-            ->limit($this->limite);
+            ->groupBy('cat.nombre_categoria')
+            ->orderBy('ingresos_totales', 'desc');
 
         if ($this->desde) {
             $query->where('ped.fecha_pedido', '>=', $this->desde . ' 00:00:00');
@@ -51,12 +48,12 @@ class ProductosMasVendidosExport implements FromCollection, WithHeadings, WithSt
 
     public function headings(): array
     {
-        return ['ID Producto', 'Nombre del Producto', 'Categoría', 'Unidades Vendidas', 'Total Ventas (S/.)', 'Precio Promedio (S/.)'];
+        return ['Categoría', 'Productos Distintos', 'Unidades Vendidas', 'Ingresos Totales (S/.)', '% de Ingresos'];
     }
 
     public function columnWidths(): array
     {
-        return ['A' => 12, 'B' => 35, 'C' => 20, 'D' => 20, 'E' => 20, 'F' => 22];
+        return ['A' => 25, 'B' => 22, 'C' => 22, 'D' => 25, 'E' => 18];
     }
 
     public function styles(Worksheet $sheet)

@@ -17,66 +17,65 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes']);
-        
-        // Filtros
-        if ($request->has('categoria')) {
-            $query->where('id_categoria', $request->categoria);
+        try {
+            $query = Producto::where('estado_producto', 1)
+                ->with(['categoria', 'genero', 'variantes']);
+
+            // Filtros
+            if ($request->has('categoria')) {
+                $query->where('id_categoria', $request->categoria);
+            }
+
+            if ($request->has('genero')) {
+                $query->where('id_genero', $request->genero);
+            }
+
+            if ($request->has('talla') && !empty($request->talla)) {
+                $query->whereHas('variantes', function($q) use ($request) {
+                    $q->where('talla', $request->talla)->where('stock', '>', 0);
+                });
+            }
+
+            if ($request->has('color') && !empty($request->color)) {
+                $query->whereHas('variantes', function($q) use ($request) {
+                    $q->where('color', $request->color)->where('stock', '>', 0);
+                });
+            }
+
+            // Corregido: Se usa precio_venta que es el campo real en tu BD
+            if ($request->has('precio_min') && $request->has('precio_max')) {
+                $query->whereBetween('precio_venta', [$request->precio_min, $request->precio_max]);
+            }
+
+            // Filtro de búsqueda básico y seguro
+            if ($request->has('busqueda') && !empty($request->busqueda)) {
+                $query->where('nombre_producto', 'LIKE', '%' . $request->busqueda . '%');
+            }
+
+            // Ordenamiento - Adaptado a tus columnas reales
+            $orden = $request->get('orden', 'created_at');
+            $direccion = $request->get('direccion', 'desc');
+
+            $ordenPermitido = ['created_at', 'nombre_producto', 'precio_venta', 'id_producto'];
+            if (!in_array($orden, $ordenPermitido)) {
+                $orden = 'created_at';
+            }
+
+            $query->orderBy($orden, $direccion);
+
+            $productos = $query->paginate($request->get('limit', 10));
+
+            return response()->json([
+                'success' => true,
+                'data' => ProductoResource::collection($productos),
+                'current_page' => $productos->currentPage(),
+                'last_page' => $productos->lastPage(),
+                'total' => $productos->total(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en index: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error al listar productos'], 500);
         }
-        
-        if ($request->has('genero')) {
-            $query->where('id_genero', $request->genero);
-        }
-        
-        if ($request->has('talla') && !empty($request->talla)) {
-            $query->whereHas('variantes', function($q) use ($request) {
-                $q->where('talla', $request->talla)
-                  ->where('stock', '>', 0);
-            });
-        }
-        
-        if ($request->has('color') && !empty($request->color)) {
-            $query->whereHas('variantes', function($q) use ($request) {
-                $q->where('color', $request->color)
-                  ->where('stock', '>', 0);
-            });
-        }
-        
-        if ($request->has('precio_min') && $request->has('precio_max')) {
-            $query->whereBetween('precio', [$request->precio_min, $request->precio_max]);
-        }
-        
-        if ($request->has('busqueda') && !empty($request->busqueda)) {
-            $query->buscar($request->busqueda);
-        }
-        
-        // Solo productos con stock
-        if ($request->boolean('con_stock', true)) {
-            $query->conStock();
-        }
-        
-        // Ordenamiento
-        $orden = $request->get('orden', 'created_at');
-        $direccion = $request->get('direccion', 'desc');
-        
-        $ordenPermitido = ['created_at', 'nombre_producto', 'precio', 'id_producto'];
-        if (!in_array($orden, $ordenPermitido)) {
-            $orden = 'created_at';
-        }
-        
-        $query->orderBy($orden, $direccion);
-        
-        // Paginación
-        $productos = $query->paginate($request->get('limit', 10));
-        
-        return response()->json([
-            'success' => true,
-            'data' => ProductoResource::collection($productos),
-            'current_page' => $productos->currentPage(),
-            'last_page' => $productos->lastPage(),
-            'total' => $productos->total(),
-        ]);
     }
 
     /**
@@ -84,17 +83,17 @@ class ProductoController extends Controller
      */
     public function show($id)
     {
-        $producto = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes'])
+        $producto = Producto::where('estado_producto', 1)
+            ->with(['categoria', 'genero', 'variantes'])
             ->find($id);
-        
+
         if (!$producto) {
             return response()->json([
                 'success' => false,
                 'message' => 'Producto no encontrado'
             ], 404);
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => new ProductoResource($producto)
@@ -107,18 +106,18 @@ class ProductoController extends Controller
     public function variantes($id)
     {
         $producto = Producto::find($id);
-        
+
         if (!$producto) {
             return response()->json([
                 'success' => false,
                 'message' => 'Producto no encontrado'
             ], 404);
         }
-        
+
         $variantes = $producto->variantes()
             ->where('stock', '>', 0)
             ->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => VarianteResource::collection($variantes)
@@ -126,92 +125,68 @@ class ProductoController extends Controller
     }
 
     /**
-     * Obtener productos recomendados - AHORA CON FILTROS
+     * Obtener productos recomendados
      */
     public function recomendados(Request $request)
     {
         try {
-            $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género (hombre/mujer)
+            $query = Producto::where('estado_producto', 1)
+                ->with(['categoria', 'genero', 'variantes']);
+
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
             }
-            
-            // NUEVO: Filtrar por oferta/promociones
-            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
-                $query->enOferta();
-            }
-            
-            // NUEVO: Filtrar por categoría si es necesario
+
             if ($request->has('categoria_id')) {
                 $query->where('id_categoria', $request->categoria_id);
             }
-            
-            // Límite de resultados
+
             $limit = $request->get('limit', 10);
-            
-            // Orden aleatorio para "recomendados"
             $productos = $query->inRandomOrder()->limit($limit)->get();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => ProductoResource::collection($productos)
             ]);
         } catch (\Exception $e) {
             Log::error('Error en recomendados: ' . $e->getMessage());
-            Log::error('Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-            
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cargar productos recomendados: ' . $e->getMessage()
+                'message' => 'Error al cargar recomendados: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Obtener productos populares - AHORA CON FILTROS
+     * Obtener productos populares
      */
     public function populares(Request $request)
     {
         try {
-            $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género (hombre/mujer)
+            $query = Producto::where('estado_producto', 1)
+                ->with(['categoria', 'genero', 'variantes']);
+
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
             }
-            
-            // NUEVO: Filtrar por oferta/promociones
-            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
-                $query->enOferta();
-            }
-            
-            // NUEVO: Filtrar por categoría si es necesario
+
             if ($request->has('categoria_id')) {
                 $query->where('id_categoria', $request->categoria_id);
             }
-            
-            // Límite de resultados
+
             $limit = $request->get('limit', 10);
-            
-            // Orden aleatorio para "populares" (podrías cambiar por más vendidos después)
-            $productos = $query->inRandomOrder()->limit($limit)->get();
-            
+            // Ordenamos por id_producto descendente para mostrar novedades como populares
+            $productos = $query->orderBy('id_producto', 'desc')->limit($limit)->get();
+
             return response()->json([
                 'success' => true,
                 'data' => ProductoResource::collection($productos)
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Error en populares: ' . $e->getMessage());
-            Log::error('Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-            
             return response()->json([
                 'success' => false,
-                'message' => 'Error al cargar productos populares: ' . $e->getMessage()
+                'message' => 'Error al cargar populares: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -222,18 +197,17 @@ class ProductoController extends Controller
     public function ofertas(Request $request)
     {
         try {
-            $query = Producto::activos()
-                ->enOferta()
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock();
-            
-            // NUEVO: Filtrar por género en ofertas también
+            $query = Producto::where('estado_producto', 1)
+                ->whereNotNull('precio_oferta')
+                ->where('precio_oferta', '>', 0)
+                ->with(['categoria', 'genero', 'variantes']);
+
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
             }
-            
+
             $productos = $query->paginate($request->get('limit', 10));
-            
+
             return response()->json([
                 'success' => true,
                 'data' => ProductoResource::collection($productos),
@@ -243,11 +217,7 @@ class ProductoController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error en ofertas: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar productos en oferta'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al cargar ofertas'], 500);
         }
     }
 
@@ -260,19 +230,17 @@ class ProductoController extends Controller
             $request->validate([
                 'q' => 'required|string|min:2'
             ]);
-            
-            $query = Producto::activos()
-                ->buscar($request->q)
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock();
-            
-            // NUEVO: Filtrar por género en búsqueda
+
+            $query = Producto::where('estado_producto', 1)
+                ->where('nombre_producto', 'LIKE', '%' . $request->q . '%')
+                ->with(['categoria', 'genero', 'variantes']);
+
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
             }
-            
+
             $productos = $query->paginate($request->get('limit', 10));
-            
+
             return response()->json([
                 'success' => true,
                 'data' => ProductoResource::collection($productos),
@@ -282,85 +250,7 @@ class ProductoController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error en buscar: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error en la búsqueda'
-            ], 500);
-        }
-    }
-
-    /**
-     * Filtrar productos por talla
-     */
-    public function porTalla(Request $request, $talla)
-    {
-        try {
-            $query = Producto::activos()
-                ->whereHas('variantes', function($q) use ($talla) {
-                    $q->where('talla', $talla)
-                      ->where('stock', '>', 0);
-                })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
-            
-            $productos = $query->paginate($request->get('limit', 10));
-            
-            return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
-                'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error en porTalla: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al filtrar por talla'
-            ], 500);
-        }
-    }
-
-    /**
-     * Filtrar productos por color
-     */
-    public function porColor(Request $request, $color)
-    {
-        try {
-            $query = Producto::activos()
-                ->whereHas('variantes', function($q) use ($color) {
-                    $q->where('color', $color)
-                      ->where('stock', '>', 0);
-                })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
-            
-            $productos = $query->paginate($request->get('limit', 10));
-            
-            return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
-                'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error en porColor: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al filtrar por color'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error en la búsqueda'], 500);
         }
     }
 
@@ -374,19 +264,17 @@ class ProductoController extends Controller
                 'min' => 'required|numeric|min:0',
                 'max' => 'required|numeric|min:0|gt:min',
             ]);
-            
-            $query = Producto::activos()
-                ->whereBetween('precio', [$request->min, $request->max])
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
-                ->conStock();
-            
-            // NUEVO: Filtrar por género
+
+            $query = Producto::where('estado_producto', 1)
+                ->whereBetween('precio_venta', [$request->min, $request->max])
+                ->with(['categoria', 'genero', 'variantes']);
+
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
             }
-            
+
             $productos = $query->paginate($request->get('limit', 10));
-            
+
             return response()->json([
                 'success' => true,
                 'data' => ProductoResource::collection($productos),
@@ -396,11 +284,7 @@ class ProductoController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error en porRangoPrecio: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al filtrar por rango de precio'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error al filtrar por rango de precio'], 500);
         }
     }
 }
