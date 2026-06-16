@@ -30,7 +30,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'id_tipo_documento',
         'id_rol',
         'email_verified_at',
-        'remember_token'
+        'remember_token',
+        'reactivation_email_sent_at'
     ];
 
     protected $hidden = [
