@@ -192,19 +192,25 @@ class ProductoController extends Controller
         $tieneOfertaAhora = !is_null($request->precio_oferta) && $request->precio_oferta > 0;
 
         if ($tieneOfertaAhora) {
-            if (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta) {
-                try {
-                    $categoriaNombre = $producto->categoria->nombre ?? '';
-
-                    $this->pusherBeams->enviarOferta(
-                        $producto->nombre_producto,
-                        $request->precio_oferta,
-                        $categoriaNombre
-                    );
-                } catch (\Exception $e) {
-                }
-            }
+    if (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta) {
+        try {
+            $categoriaNombre = $producto->categoria->nombre ?? '';
+            $this->pusherBeams->enviarOferta(
+                $producto->nombre_producto,
+                $request->precio_oferta,
+                $categoriaNombre
+            );
+        } catch (\Exception $e) {
         }
+
+        // Enviar correo a todos los usuarios
+        $usuarios = \App\Models\User::whereNotNull('email_verified_at')->get();
+        foreach ($usuarios as $usuario) {
+            \Illuminate\Support\Facades\Mail::to($usuario->correo)
+                ->send(new \App\Mail\PromocionMail($producto));
+        }
+    }
+}
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto actualizado correctamente');
     }
