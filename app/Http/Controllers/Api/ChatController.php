@@ -7,13 +7,10 @@ use App\Events\MessageSentEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
-    // Configuración de Ollama
-    protected $ollamaUrl = 'http://localhost:11434'; // Cambia si tu servidor está en otra IP
-    protected $model = 'phi3:mini'; // Modelo que estás usando
-
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -28,47 +25,45 @@ class ChatController extends Controller
         $userName = $user ? $user->nombres : 'usuario';
 
         try {
-            // Preparar los mensajes para Ollama
-            $messages = [
-                [
-                    "role" => "system",
-                    "content" => "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda (como 'hola', 'buenas'), vendemos ropa, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos y pantalones, y puedes mencionar promociones como pantalones 2x1. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas."
-                ],
-                [
-                    "role" => "user",
-                    "content" => $userMessage
-                ]
-            ];
+            // El "System Prompt" que ya tenías configurado con tus reglas de B-EDEN
+            $systemInstruction = "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda respondes el saludo. Vendemos ropa de varon y mujer, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos, pantalones y otros que puedes ver en el catálogo. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas.";
 
-            // Llamar a Ollama
-            $response = Http::timeout(30) // Timeout de 30 segundos
-                ->post("{$this->ollamaUrl}/api/chat", [
-                    'model' => $this->model,
-                    'messages' => $messages,
-                    'stream' => false,
-                    'options' => [
-                        'temperature' => 0.7,
-                        'max_tokens' => 500
+            $apiKey = env('GEMINI_API_KEY');
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+
+            // Llamar a Gemini (API en la nube, ultra rápida)
+            $response = Http::timeout(15)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $userMessage]
+                        ]
                     ]
-                ]);
+                ],
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction]
+                    ]
+                ]
+            ]);
 
-            // Verificar si la petición fue exitosa
+
             if ($response->successful()) {
-                $ollamaResponse = $response->json();
-                $aiMessage = $ollamaResponse['message']['content'] ?? 'Lo siento, no pude procesar tu solicitud.';
+                $geminiResponse = $response->json();
+                $aiMessage = $geminiResponse['candidates'][0]['content']['parts'][0]['text'] ?? 'Lo siento, no pude procesar tu solicitud.';
             } else {
-                // Fallback si Ollama no responde
+                // Fallback si la API falla
                 $aiMessage = "Lo siento, el servicio de asistente no está disponible en este momento. Por favor, contacta al 992387342 para atención personalizada.";
-                \Log::error('Error al llamar a Ollama: ' . $response->body());
+                Log::error('Error al llamar a Gemini: ' . $response->body());
             }
 
         } catch (\Exception $e) {
-            // Manejar errores de conexión
+            // Manejar errores de conexión de red
             $aiMessage = "Lo siento, no puedo conectarme al asistente. Por favor, contacta al 992387342 para atención personalizada.";
-            \Log::error('Excepción al llamar a Ollama: ' . $e->getMessage());
+            Log::error('Excepción al llamar a Gemini: ' . $e->getMessage());
         }
 
-        // Transmitir la respuesta
+        // Transmitir la respuesta por Websockets exactamente como lo tenías
         broadcast(new MessageSentEvent(
             $userId,
             $aiMessage
@@ -77,27 +72,17 @@ class ChatController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Respuesta enviada',
-            'ai_response' => $aiMessage // Opcional: incluir la respuesta en el JSON
+            'ai_response' => $aiMessage
         ]);
     }
 
-    // Método adicional para verificar el estado de Ollama
+
     public function checkOllamaStatus()
     {
-        try {
-            $response = Http::timeout(5)->get("{$this->ollamaUrl}/api/tags");
-
-            if ($response->successful()) {
-                return response()->json([
-                    'status' => 'online',
-                    'models' => $response->json()['models'] ?? []
-                ]);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'offline',
-                'error' => $e->getMessage()
-            ], 503);
-        }
+        $apiKey = env('GEMINI_API_KEY');
+        return response()->json([
+            'status' => !empty($apiKey) ? 'online' : 'offline',
+            'provider' => 'Google Gemini Cloud'
+        ]);
     }
 }
