@@ -29,7 +29,7 @@ class ChatController extends Controller
             $systemInstruction = "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda respondes el saludo. Vendemos ropa de varon y mujer, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos, pantalones y otros que puedes ver en el catálogo. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas.";
 
             $apiKey = env('GEMINI_API_KEY');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+            $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
 
             // Llamar a Gemini (API en la nube, ultra rápida)
             $response = Http::timeout(15)->post($url, [
