@@ -25,13 +25,13 @@ class ChatController extends Controller
         $userName = $user ? $user->nombres : 'usuario';
 
         try {
-            // El "System Prompt" que ya tenías configurado con tus reglas de B-EDEN
+
             $systemInstruction = "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda respondes el saludo. Vendemos ropa de varon y mujer, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos, pantalones y otros que puedes ver en el catálogo. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas.";
 
             $apiKey = env('GEMINI_API_KEY');
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $apiKey;
 
-            // Llamar a Gemini (API en la nube, ultra rápida)
+
             $response = Http::timeout(15)->post($url, [
                 'contents' => [
                     [
@@ -52,26 +52,26 @@ class ChatController extends Controller
                 $geminiResponse = $response->json();
                 $aiMessage = $geminiResponse['candidates'][0]['content']['parts'][0]['text'] ?? 'Lo siento, no pude procesar tu solicitud.';
             } else {
-                // Fallback si la API falla
+
                 $aiMessage = "Lo siento, el servicio de asistente no está disponible en este momento. Por favor, contacta al 992387342 para atención personalizada.";
                 Log::error('Error al llamar a Gemini: ' . $response->body());
             }
-
         } catch (\Exception $e) {
-            // Manejar errores de conexión de red
-            $aiMessage = "Lo siento, no puedo conectarme al asistente. Por favor, contacta al 992387342 para atención personalizada.";
+
+            $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
             Log::error('Excepción al llamar a Gemini: ' . $e->getMessage());
         }
 
-        // Transmitir la respuesta por Websockets exactamente como lo tenías
+        // Transmitir por Websockets (si usas el evento)
         broadcast(new MessageSentEvent(
             $userId,
             $aiMessage
         ));
 
+
         return response()->json([
             'success' => true,
-            'message' => 'Respuesta enviada',
+            'message' => $aiMessage,
             'ai_response' => $aiMessage
         ]);
     }
