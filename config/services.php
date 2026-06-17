@@ -43,4 +43,7 @@ return [
     'mercadopago' => [
         'access_token' => env('MP_ACCESS_TOKEN'),
     ],
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
 ];

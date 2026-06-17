@@ -25,12 +25,10 @@ class ChatController extends Controller
         $userName = $user ? $user->nombres : 'usuario';
 
         try {
-
             $systemInstruction = "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda respondes el saludo. Vendemos ropa de varon y mujer, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos, pantalones y otros que puedes ver en el catálogo. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas.";
 
-            $apiKey = env('GEMINI_API_KEY');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $apiKey;
-
+            $apiKey = config('services.gemini.key');
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . trim($apiKey);
 
             $response = Http::timeout(15)->post($url, [
                 'contents' => [
@@ -47,18 +45,17 @@ class ChatController extends Controller
                 ]
             ]);
 
-
             if ($response->successful()) {
                 $geminiResponse = $response->json();
                 $aiMessage = $geminiResponse['candidates'][0]['content']['parts'][0]['text'] ?? 'Lo siento, no pude procesar tu solicitud.';
             } else {
-
-                $aiMessage = "Lo siento, el servicio de asistente no está disponible en este momento. Por favor, contacta al 992387342 para atención personalizada.";
+                //Si Google responde con error (403 o 503)
+                $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
                 Log::error('Error al llamar a Gemini: ' . $response->body());
             }
         } catch (\Exception $e) {
-
-            $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
+            // Si hay un problema de red o timeout total
+            $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
             Log::error('Excepción al llamar a Gemini: ' . $e->getMessage());
         }
 
@@ -68,7 +65,6 @@ class ChatController extends Controller
             $aiMessage
         ));
 
-
         return response()->json([
             'success' => true,
             'message' => $aiMessage,
@@ -76,10 +72,9 @@ class ChatController extends Controller
         ]);
     }
 
-
     public function checkOllamaStatus()
     {
-        $apiKey = env('GEMINI_API_KEY');
+        $apiKey = config('services.gemini.key');
         return response()->json([
             'status' => !empty($apiKey) ? 'online' : 'offline',
             'provider' => 'Google Gemini Cloud'
