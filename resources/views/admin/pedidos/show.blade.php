@@ -184,7 +184,7 @@
                             <x-heroicon-o-building-storefront class="w-10 h-10 text-indigo-600" />
                             <div>
                                 <p class="text-xl font-black text-indigo-900 leading-tight">Retiro en Tienda</p>
-                                <p class="text-indigo-600 text-sm font-medium mt-1 uppercase tracking-wider">El cliente gestionará el recojo en el local físico.</p>
+                                <p class="text-indigo-600 text-sm font-medium mt-1 uppercase tracking-wider">El cliente gentionará el recojo en el local físico.</p>
                             </div>
                         </div>
                     @endif
@@ -197,86 +197,96 @@
 
                 {{-- ACTUALIZAR ESTADO --}}
                 <div class="bg-white rounded-[2.5rem] p-8 border border-gray-900 shadow-sm relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-4">
-                    <x-heroicon-s-cog-6-tooth class="w-12 h-12 text-gray-50" />
+                    <div class="absolute top-0 right-0 p-4">
+                        <x-heroicon-s-cog-6-tooth class="w-12 h-12 text-gray-50" />
+                    </div>
+
+                    <h3 class="text-lg font-black mb-6 uppercase tracking-tight relative z-10 text-gray-900">Actualizar Estado</h3>
+
+                    @if(in_array($pedido->estado_pedido, ['Entregado', 'Anulado']))
+                        {{-- ESTADO FINAL no se puede cambiar --}}
+                        @php
+                            $esFinal = $pedido->estado_pedido === 'Entregado';
+                        @endphp
+                        <div class="rounded-2xl p-5 flex items-center gap-4 {{ $esFinal ? 'bg-emerald-50 border border-emerald-100' : 'bg-rose-50 border border-rose-100' }}">
+                            @if($esFinal)
+                                <x-heroicon-s-check-badge class="w-8 h-8 text-emerald-500 flex-shrink-0" />
+                                <div>
+                                    <p class="font-black text-emerald-800 text-sm uppercase tracking-widest">Pedido completado</p>
+                                    <p class="text-emerald-600 text-xs font-medium mt-0.5">Este pedido ya fue entregado y no puede modificarse.</p>
+                                </div>
+                            @else
+                                <x-heroicon-s-x-circle class="w-8 h-8 text-rose-400 flex-shrink-0" />
+                                <div>
+                                    <p class="font-black text-rose-800 text-sm uppercase tracking-widest">Pedido anulado</p>
+                                    <p class="text-rose-500 text-xs font-medium mt-0.5">Este pedido fue anulado y no puede modificarse.</p>
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        {{-- FORMULARIO  --}}
+                        <form action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}" method="POST" class="space-y-4 relative z-10">
+                            @csrf @method('PUT')
+
+                            <select name="estado_pedido" id="estado_pedido"
+                                class="w-full bg-gray-50 border-gray-200 rounded-xl py-4 px-5 font-bold text-gray-700 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer text-sm">
+                                <option value="Pendiente"          {{ $pedido->estado_pedido == 'Pendiente'          ? 'selected' : '' }}>Pendiente</option>
+                                <option value="Confirmado"         {{ $pedido->estado_pedido == 'Confirmado'         ? 'selected' : '' }}>Confirmado</option>
+                                <option value="En camino"          {{ $pedido->estado_pedido == 'En camino'          ? 'selected' : '' }}>En camino</option>
+                                <option value="Listo para recoger" {{ $pedido->estado_pedido == 'Listo para recoger' ? 'selected' : '' }}>Listo para recoger</option>
+                                <option value="Entregado"          {{ $pedido->estado_pedido == 'Entregado'          ? 'selected' : '' }}>Entregado</option>
+                                <option value="Anulado"            {{ $pedido->estado_pedido == 'Anulado'            ? 'selected' : '' }}>Anulado</option>
+                            </select>
+
+                            <div id="campo_fecha_estimada"
+                                class="{{ in_array($pedido->estado_pedido, ['En camino', 'Listo para recoger']) ? '' : 'hidden' }} space-y-1">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
+                                    Fecha Estimada de Entrega
+                                </label>
+                                <input type="date" name="fecha_entrega_estimada"
+                                    value="{{ $pedido->fecha_entrega_estimada ? \Carbon\Carbon::parse($pedido->fecha_entrega_estimada)->format('Y-m-d') : '' }}"
+                                    class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 transition-all">
+                            </div>
+
+                            <button type="submit"
+                                class="w-full bg-gray-900 hover:bg-black text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] text-xs uppercase tracking-widest">
+                                Actualizar Registro
+                            </button>
+                        </form>
+                    @endif
                 </div>
 
-                <h3 class="text-lg font-black mb-6 uppercase tracking-tight relative z-10 text-gray-900">Actualizar Estado</h3>
-
-                @if(in_array($pedido->estado_pedido, ['Entregado', 'Anulado']))
-                    {{-- ESTADO FINAL no se puede cambiar --}}
-                    @php
-                    $esFinal = $pedido->estado_pedido === 'Entregado';
-                    @endphp
-                    <div class="rounded-2xl p-5 flex items-center gap-4 {{ $esFinal ? 'bg-emerald-50 border border-emerald-100' : 'bg-rose-50 border border-rose-100' }}">
-                        @if($esFinal)
-                            <x-heroicon-s-check-badge class="w-8 h-8 text-emerald-500 flex-shrink-0" />
-                            <div>
-                                <p class="font-black text-emerald-800 text-sm uppercase tracking-widest">Pedido completado</p>
-                                <p class="text-emerald-600 text-xs font-medium mt-0.5">Este pedido ya fue entregado y no puede modificarse.</p>
-                            </div>
-                        @else
-                            <x-heroicon-s-x-circle class="w-8 h-8 text-rose-400 flex-shrink-0" />
-                            <div>
-                                <p class="font-black text-rose-800 text-sm uppercase tracking-widest">Pedido anulado</p>
-                                <p class="text-rose-500 text-xs font-medium mt-0.5">Este pedido fue anulado y no puede modificarse.</p>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    {{-- FORMULARIO  --}}
-                    <form action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}" method="POST" class="space-y-4 relative z-10">
-                        @csrf @method('PUT')
-
-                        <select name="estado_pedido" id="estado_pedido"
-                            class="w-full bg-gray-50 border-gray-200 rounded-xl py-4 px-5 font-bold text-gray-700 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer text-sm">
-                            <option value="Pendiente"          {{ $pedido->estado_pedido == 'Pendiente'          ? 'selected' : '' }}>Pendiente</option>
-                            <option value="Confirmado"         {{ $pedido->estado_pedido == 'Confirmado'         ? 'selected' : '' }}>Confirmado</option>
-                            <option value="En camino"          {{ $pedido->estado_pedido == 'En camino'          ? 'selected' : '' }}>En camino</option>
-                            <option value="Listo para recoger" {{ $pedido->estado_pedido == 'Listo para recoger' ? 'selected' : '' }}>Listo para recoger</option>
-                            <option value="Entregado"          {{ $pedido->estado_pedido == 'Entregado'          ? 'selected' : '' }}>Entregado</option>
-                            <option value="Anulado"            {{ $pedido->estado_pedido == 'Anulado'            ? 'selected' : '' }}>Anulado</option>
-                        </select>
-
-                        <div id="campo_fecha_estimada"
-                            class="{{ in_array($pedido->estado_pedido, ['En camino', 'Listo para recoger']) ? '' : 'hidden' }} space-y-1">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
-                                Fecha Estimada de Entrega
-                            </label>
-                            <input type="date" name="fecha_entrega_estimada"
-                                value="{{ $pedido->fecha_entrega_estimada ? \Carbon\Carbon::parse($pedido->fecha_entrega_estimada)->format('Y-m-d') : '' }}"
-                                class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 text-sm focus:ring-2 focus:ring-indigo-500 transition-all">
-                        </div>
-
-                        <button type="submit"
-                            class="w-full bg-gray-900 hover:bg-black text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] text-xs uppercase tracking-widest">
-                            Actualizar Registro
-                        </button>
-                    </form>
-                @endif
-            </div>
-
-                {{-- CLIENTE --}}
+                {{-- CLIENTE (CORREGIDO CONTRA ERRORES POR USUARIOS ELIMINADOS) --}}
                 <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
                     <h3 class="font-black text-gray-900 mb-6 uppercase text-sm tracking-widest">Información del Cliente</h3>
                     <div class="space-y-5">
                         <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
-                            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase">
-                                {{ substr($pedido->usuario->nombres, 0, 1) }}{{ substr($pedido->usuario->apellidos, 0, 1) }}
-                            </div>
-                            <div class="overflow-hidden">
-                                <p class="font-black text-gray-900 truncate leading-tight">{{ $pedido->usuario->nombres }} {{ $pedido->usuario->apellidos }}</p>
-                                <p class="text-[11px] text-gray-400 font-bold uppercase truncate mt-1">{{ $pedido->usuario->correo }}</p>
-                            </div>
+                            @if($pedido->usuario)
+                                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase flex-shrink-0">
+                                    {{ substr($pedido->usuario->nombres, 0, 1) }}{{ substr($pedido->usuario->apellidos, 0, 1) }}
+                                </div>
+                                <div class="overflow-hidden">
+                                    <p class="font-black text-gray-900 truncate leading-tight">{{ $pedido->usuario->nombres }} {{ $pedido->usuario->apellidos }}</p>
+                                    <p class="text-[11px] text-gray-400 font-bold uppercase truncate mt-1">{{ $pedido->usuario->correo }}</p>
+                                </div>
+                            @else
+                                <div class="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 text-xs font-black uppercase flex-shrink-0">
+                                    ?
+                                </div>
+                                <div class="overflow-hidden">
+                                    <p class="font-black text-rose-600 leading-tight italic">Usuario Eliminado</p>
+                                    <p class="text-[11px] text-gray-400 font-bold uppercase truncate mt-1">Sin registros activos</p>
+                                </div>
+                            @endif
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-4 bg-gray-50 rounded-2xl">
                                 <span class="text-[9px] font-black text-gray-400 uppercase block mb-1">Teléfono</span>
-                                <span class="text-sm font-black text-gray-700">{{ $pedido->usuario->telefono ?? 'N/A' }}</span>
+                                <span class="text-sm font-black text-gray-700">{{ $pedido->usuario?->telefono ?? 'N/A' }}</span>
                             </div>
                             <div class="p-4 bg-gray-50 rounded-2xl">
-                                <span class="text-[9px] font-black text-gray-400 uppercase block mb-1">DNI / RUC</span>
-                                <span class="text-sm font-black text-gray-700">{{ $pedido->usuario->numero_documento ?? 'N/A' }}</span>
+                                <span class="text-[9px] font-black text-gray-400 permissions uppercase block mb-1">DNI / RUC</span>
+                                <span class="text-sm font-black text-gray-700">{{ $pedido->usuario?->numero_documento ?? 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
