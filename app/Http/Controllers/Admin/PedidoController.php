@@ -8,11 +8,23 @@ use Illuminate\Http\Request;
 
 class PedidoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pedidos = Pedido::with('usuario')
-            ->orderByDesc('created_at')
-            ->paginate(15);
+        $query = Pedido::with('usuario')->orderByDesc('created_at');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('numero_pedido', 'like', "%{$search}%")
+                    ->orWhere('estado_pedido', 'like', "%{$search}%")
+                    ->orWhereHas('usuario', function ($q2) use ($search) {
+                        $q2->where('nombres', 'like', "%{$search}%")
+                            ->orWhere('apellidos', 'like', "%{$search}%")
+                            ->orWhere('correo', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $pedidos = $query->paginate(15)->withQueryString();
 
         return view('admin.pedidos.index', compact('pedidos'));
     }
