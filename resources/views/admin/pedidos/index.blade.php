@@ -40,14 +40,18 @@
                         </span>
                     </td>
 
-                    {{-- Cliente --}}
+                    {{-- Cliente (CORREGIDO PARA EVITAR ERRORES 500) --}}
                     <td class="px-8 py-8">
                         <div class="flex flex-col">
                             <span class="text-base font-bold text-gray-800 leading-tight">
-                                {{ $pedido->usuario->nombres }} {{ $pedido->usuario->apellidos }}
+                                @if($pedido->usuario)
+                                    {{ $pedido->usuario->nombres }} {{ $pedido->usuario->apellidos }}
+                                @else
+                                    <span class="text-rose-600 italic font-medium">Usuario Eliminado</span>
+                                @endif
                             </span>
                             <span class="text-xs text-gray-400 font-medium italic mt-1 leading-none">
-                                {{ $pedido->usuario->correo }}
+                                {{ $pedido->usuario?->correo ?? 'Sin correo registrado' }}
                             </span>
                         </div>
                     </td>
