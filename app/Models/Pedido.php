@@ -32,6 +32,7 @@ class Pedido extends Model
         'costo_envio',
         'nombre_agencia',
         'direccion',
+        'motivo_anulacion',
     ];
 
     // ── Relaciones ──────────────────────────────────
