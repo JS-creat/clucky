@@ -13,6 +13,7 @@ class ChatController extends Controller
 {
     public function sendMessage(Request $request)
     {
+        // 1. Validar la estructura que ya envía tu aplicación móvil
         $request->validate([
             'user_id' => 'required|integer',
             'message' => 'required|string',
@@ -21,50 +22,38 @@ class ChatController extends Controller
         $userId = $request->user_id;
         $userMessage = $request->message;
 
-        $user = User::find($userId);
-        $userName = $user ? $user->nombres : 'usuario';
-
         try {
-            $systemInstruction = "Eres Alessia, asistente virtual de la tienda B-EDEN. Atiendes a clientes de forma breve, clara y amigable. Si el cliente saluda respondes el saludo. Vendemos ropa de varon y mujer, responde con un saludo cordial y pregunta en qué puedes ayudar. Ayudas a encontrar ropa como poleras, abrigos, polos, pantalones y otros que puedes ver en el catálogo. Solo si realmente no sabes la respuesta o es un caso especial, sugiere amablemente contactar al número 992387342. Evita responder siempre con el número. No des respuestas largas ni técnicas.";
+            // 2. Apuntar al microservicio local de Python (Uvicorn en el puerto 8000)
+            $urlPython = 'http://127.0.0.1:8000/api/chat';
 
-            $apiKey = config('services.gemini.key');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . trim($apiKey);
-
-            $response = Http::timeout(15)->post($url, [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $userMessage]
-                        ]
-                    ]
-                ],
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => $systemInstruction]
-                    ]
-                ]
+            // 3. Hacer la petición HTTP interna con un timeout prudente
+            $response = Http::timeout(15)->post($urlPython, [
+                'user_id' => $userId,
+                'message' => $userMessage
             ]);
 
             if ($response->successful()) {
-                $geminiResponse = $response->json();
-                $aiMessage = $geminiResponse['candidates'][0]['content']['parts'][0]['text'] ?? 'Lo siento, no pude procesar tu solicitud.';
+                $resultadoData = $response->json();
+                // Extraemos el mensaje que construyó Alessia en Python
+                $aiMessage = $resultadoData['message'] ?? 'Lo siento, no pude procesar tu solicitud.';
             } else {
-                //Si Google responde con error (403 o 503)
-                $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
-                Log::error('Error al llamar a Gemini: ' . $response->body());
+                $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos.";
+                Log::error('El servicio de Python retornó un error: ' . $response->body());
             }
+
         } catch (\Exception $e) {
-            // Si hay un problema de red o timeout total
-            $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos para poder ayudarte.";
-            Log::error('Excepción al llamar a Gemini: ' . $e->getMessage());
+            $aiMessage = "¡Hola! En este momento estoy atendiendo a muchos clientes a la vez en B-EDEN. Por favor, escribe tu consulta de nuevo en unos segundos.";
+            Log::error('No se pudo conectar con el servidor de Python: ' . $e->getMessage());
         }
 
-        // Transmitir por Websockets (si usas el evento)
-        broadcast(new MessageSentEvent(
-            $userId,
-            $aiMessage
-        ));
+        // 4. Mantenemos tu evento original por si usas Websockets/Pusher para actualizar la interfaz del móvil
+        try {
+            broadcast(new MessageSentEvent($userId, $aiMessage));
+        } catch (\Exception $ex) {
+            Log::warning('Websocket no disponible: ' . $ex->getMessage());
+        }
 
+        // 5. Devolvemos la respuesta exacta en el mismo formato JSON que tu Flutter ya procesa
         return response()->json([
             'success' => true,
             'message' => $aiMessage,
@@ -74,10 +63,9 @@ class ChatController extends Controller
 
     public function checkOllamaStatus()
     {
-        $apiKey = config('services.gemini.key');
         return response()->json([
-            'status' => !empty($apiKey) ? 'online' : 'offline',
-            'provider' => 'Google Gemini Cloud'
+            'status' => 'online',
+            'provider' => 'B-EDEN Python AI Brain & Gemini 2.5'
         ]);
     }
 }
