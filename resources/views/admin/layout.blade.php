@@ -15,16 +15,16 @@
 
 <body class="bg-gray-50 min-h-screen text-gray-900 overflow-x-hidden">
 
-    <div x-data="{ open: true }" class="flex min-h-screen relative">
+    <div x-data="{ open: localStorage.getItem('sidebarOpen') === null ? true : localStorage.getItem('sidebarOpen') === 'true' }" class="flex min-h-screen relative">
 
-        <aside :class="open ? 'w-72' : 'w-24'"
+        <aside :class="open ? 'w-64' : 'w-24'"
             class="bg-black text-gray-400 transition-all duration-300 flex flex-col shadow-2xl z-40">
 
             <div class="flex items-center justify-between p-6 border-b border-gray-800/50">
                 <span x-show="open" x-transition.opacity class="text-xl font-black text-white tracking-tighter">
                     B-EDEN
                 </span>
-                <button @click="open = !open" class="p-2 rounded-xl bg-gray-800 text-white hover:bg-black transition-colors">
+                <button @click="open = !open; localStorage.setItem('sidebarOpen', open);" class="p-2 rounded-xl bg-gray-800 text-white hover:bg-black transition-colors">
                     <x-heroicon-o-bars-3-bottom-left class="w-6 h-6" />
                 </button>
             </div>

@@ -15,7 +15,6 @@ return new class extends Migration
 
         DB::statement("ALTER TABLE pedido MODIFY COLUMN estado_pedido ENUM(
         'Pendiente',
-        'Pagado',
         'Confirmado',
         'En camino',
         'Listo para recoger',
