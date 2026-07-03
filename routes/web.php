@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
 use App\Http\Controllers\PedidoUsuarioController;
 use App\Http\Controllers\Admin\ReporteController;
+use App\Http\Controllers\Admin\MovimientoStockController;
 
 // ── PÚBLICAS
 
@@ -98,6 +99,9 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::patch('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
         Route::resource('cupones', CuponController::class)->except(['show']);
         Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');
+
+        //Movimientos
+        Route::get('/movimientos-stock', [MovimientoStockController::class, 'index'])->name('movimientos.index');
 
         Route::prefix('reportes')->name('reportes.')->controller(\App\Http\Controllers\Admin\ReporteController::class)->group(function () {
 

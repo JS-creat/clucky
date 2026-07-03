@@ -88,12 +88,21 @@ class ProductoController extends Controller
         }
 
         foreach ($request->variantes as $v) {
-            $producto->variantes()->create([
+            $variante = $producto->variantes()->create([
                 'talla' => $v['talla'],
                 'color' => $v['color'] ?? null,
                 'stock' => $v['stock'],
                 'sku' => $v['sku'] ?? strtoupper(substr($producto->nombre_producto, 0, 3)) . '-' . uniqid(),
             ]);
+
+            if ($v['stock'] > 0) {
+                $variante->movimientos()->create([
+                    'tipo' => 'entrada',
+                    'cantidad' => $v['stock'],
+                    'motivo' => 'creacion',
+                    'id_usuario' => auth()->id(),
+                ]);
+            }
         }
 
         try {
@@ -178,6 +187,13 @@ class ProductoController extends Controller
 
         $idsEnviados = [];
         foreach ($request->variantes as $v) {
+            $stockAnterior = null;
+
+            if (!empty($v['id_variante'])) {
+                $existente = ProductoVariante::find($v['id_variante']);
+                $stockAnterior = $existente?->stock;
+            }
+
             $variante = $producto->variantes()->updateOrCreate(
                 ['id_variante' => $v['id_variante'] ?? null],
                 [
@@ -187,6 +203,31 @@ class ProductoController extends Controller
                     'sku'   => $v['sku'],
                 ]
             );
+
+            if ($stockAnterior === null) {
+                // Es una variante nueva, agregada durante la edición
+                if ($v['stock'] > 0) {
+                    $variante->movimientos()->create([
+                        'tipo' => 'entrada',
+                        'cantidad' => $v['stock'],
+                        'motivo' => 'creacion',
+                        'id_usuario' => auth()->id(),
+                    ]);
+                }
+            } else {
+                // Es una variante existente, revisamos si el stock cambió
+                $diferencia = $v['stock'] - $stockAnterior;
+
+                if ($diferencia !== 0) {
+                    $variante->movimientos()->create([
+                        'tipo' => $diferencia > 0 ? 'entrada' : 'salida',
+                        'cantidad' => abs($diferencia),
+                        'motivo' => 'ajuste_manual',
+                        'id_usuario' => auth()->id(),
+                    ]);
+                }
+            }
+
             $idsEnviados[] = $variante->id_variante;
         }
 
