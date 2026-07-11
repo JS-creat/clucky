@@ -8,7 +8,7 @@ class ProductoVariante extends Model
 {
     protected $table = 'producto_variante';
     protected $primaryKey = 'id_variante';
-    
+
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -34,6 +34,11 @@ class ProductoVariante extends Model
     public function detallesCarrito()
     {
         return $this->hasMany(DetalleCarrito::class, 'id_variante', 'id_variante');
+    }
+
+    public function movimientos()
+    {
+        return $this->hasMany(MovimientoStock:: class, 'id_variante', 'id_variante');
     }
 
     public function getDisponibleAttribute()
