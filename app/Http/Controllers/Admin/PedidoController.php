@@ -8,6 +8,7 @@ use App\Mail\PedidoAnulado;
 use App\Http\Controllers\Controller;
 use App\Models\Pedido;
 use Illuminate\Http\Request;
+use App\Models\ProductoVariante;
 
 class PedidoController extends Controller
 {
@@ -64,6 +65,26 @@ class PedidoController extends Controller
             $request->validate([
                 'motivo_anulacion' => 'required|string|max:500',
             ]);
+
+            \DB::transaction(function () use ($pedido) {
+                $pedido->load('detalles.variante');
+
+                foreach ($pedido->detalles as $detalle) {
+                    if ($detalle->variante) {
+                        $cantidad = $detalle->amount ?? $detalle->cantidad;
+
+                        $detalle->variante->increment('stock', $cantidad);
+
+                        $detalle->variante->movimientos()->create([
+                            'tipo'       => 'entrada',
+                            'cantidad'   => $cantidad,
+                            'motivo'     => 'anulacion',
+                            'id_pedido'  => $pedido->id_pedido,
+                            'id_usuario' => auth()->id(),
+                        ]);
+                    }
+                }
+            });
         }
 
         $data = ['estado_pedido' => $request->estado_pedido];

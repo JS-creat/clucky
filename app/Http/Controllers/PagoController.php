@@ -32,31 +32,69 @@ class PagoController extends Controller
                 $pedido = Pedido::with('detalles.variante')->find($orderId);
 
                 if ($pedido) {
-                    // Si el usuario refresca la página de éxito, esto evita que se vuelva a descontar stock
                     if ($pedido->payment_id === $paymentId) {
                         return view('pagos.exito', compact('pedido'));
                     }
 
-                    DB::transaction(function () use ($pedido, $paymentId) {
+                    try {
+                        DB::transaction(function () use ($pedido, $paymentId) {
 
-                        $pedido->update([
-                            'payment_id'    => $paymentId,
-                            'estado_pedido' => 'Confirmado',
-                        ]);
+                            $sinStock = [];
 
-                        // Descontar el stock de las variantes
-                        foreach ($pedido->detalles as $detalle) {
-                            if ($detalle->variante) {
-                                $detalle->variante->decrement('stock', $detalle->amount ?? $detalle->cantidad);
+                            foreach ($pedido->detalles as $detalle) {
+                                if ($detalle->variante) {
+                                    $variante = ProductoVariante::where('id_variante', $detalle->variante->id_variante)
+                                        ->lockForUpdate()
+                                        ->first();
+
+                                    $cantidad = $detalle->amount ?? $detalle->cantidad;
+
+                                    if ($variante->stock < $cantidad) {
+                                        $sinStock[] = $variante->talla . ' / ' . ($variante->color ?? '');
+                                        continue;
+                                    }
+
+                                    $variante->decrement('stock', $cantidad);
+
+                                    $variante->movimientos()->create([
+                                        'tipo'       => 'salida',
+                                        'cantidad'   => $cantidad,
+                                        'motivo'     => 'venta',
+                                        'id_pedido'  => $pedido->id_pedido,
+                                        'id_usuario' => $pedido->id_usuario,
+                                    ]);
+                                }
                             }
+
+                            if (!empty($sinStock)) {
+                                throw new \Exception('SIN_STOCK: ' . implode(', ', $sinStock));
+                            }
+
+                            $pedido->update([
+                                'payment_id'    => $paymentId,
+                                'estado_pedido' => 'Confirmado',
+                            ]);
+
+                            $carrito = Carrito::where('id_usuario', $pedido->id_usuario)->first();
+                            if ($carrito) {
+                                $carrito->detalles()->delete();
+                            }
+                        });
+                    } catch (\Exception $e) {
+                        if (str_starts_with($e->getMessage(), 'SIN_STOCK:')) {
+                            // El pago se cobró pero no había stock: anulamos y dejamos rastro claro
+                            $pedido->update([
+                                'payment_id'       => $paymentId,
+                                'estado_pedido'    => 'Anulado',
+                                'motivo_anulacion' => str_replace('SIN_STOCK: ', 'Sin stock disponible al confirmar el pago: ', $e->getMessage()),
+                            ]);
+
+                            return redirect()->route('pago.fallo')
+                                ->with('error', 'Tu pago fue recibido pero el producto ya no tenía stock disponible. Nos pondremos en contacto contigo para el reembolso.');
                         }
 
-                        // Vaciar el carrito del usuario
-                        $carrito = Carrito::where('id_usuario', $pedido->id_usuario)->first();
-                        if ($carrito) {
-                            $carrito->detalles()->delete();
-                        }
-                    });
+                        throw $e; // Si fue otro tipo de error, lo dejamos subir al catch de afuera
+                    }
                 }
 
                 return view('pagos.exito', compact('pedido'));
