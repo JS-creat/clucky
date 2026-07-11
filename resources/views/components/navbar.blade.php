@@ -100,15 +100,6 @@
                         {{ session('carrito') ? count(session('carrito')) : 0 }}
                     </span>
                 </a>
-
-                {{-- PANEL ADMIN --}}
-                @auth
-                    @if(auth()->user()->id_rol == 1)
-                        <a href="{{ route('admin.dashboard') }}" class="hidden sm:block text-xs font-bold text-gray-900 border border-gray-900 px-3 py-1.5 rounded-full hover:bg-gray-900 hover:text-white transition-all duration-200">
-                            Admin
-                        </a>
-                    @endif
-                @endauth
             </div>
         </div>
     </div>
