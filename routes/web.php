@@ -30,6 +30,10 @@ Route::get('/producto/{id}', function ($id) {
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
 
+Route::view('/quienes-somos', 'legal.quienes-somos')->name('quienes-somos');
+Route::view('/terminos-y-condiciones', 'legal.terminos')->name('terminos');
+Route::view('/politica-privacidad', 'legal.privacidad')->name('politica-privacidad');
+
 // CARRITO
 Route::get('/carrito',                   [CarritoController::class, 'index'])->name('carrito.index');
 Route::post('/carrito/add/{id}',         [CarritoController::class, 'add'])->name('carrito.add');
