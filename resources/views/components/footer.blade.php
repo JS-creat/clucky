@@ -1,5 +1,5 @@
 <footer class="bg-black text-white py-10 sm:py-12">
-    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
+    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
         {{-- Contáctanos --}}
         <div class="w-full">
@@ -8,7 +8,7 @@
                 <p>
                     <a href="https://wa.me/51964374401" target="_blank" rel="noopener noreferrer"
                         class="text-gray-400 hover:text-white transition-colors duration-200">
-                        Teléfono: +51 964 374 401
+                        Teléfono: +51 960 247 195
                     </a>
                 </p>
                 <p class="text-gray-400 text-xs sm:text-sm">9:00 am a 8:00 pm de lunes a viernes</p>
@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        {{-- Acerca de nosotros + redes --}}
+        {{-- Acerca de nosotros --}}
         <div class="w-full">
             <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Acerca de nosotros</h3>
             <div class="space-y-2 text-xs sm:text-sm">
@@ -31,12 +31,19 @@
                 <p><a href="{{ route('terminos') }}"
                         class="text-gray-400 hover:text-white transition-colors duration-200">Términos y condiciones</a>
                 </p>
+                <p><a href="{{ route('politica-privacidad') }}"
+                    class="text-gray-400 hover:text-white transition-colors duration-200">Política de privacidad</a></p>
             </div>
 
+        </div>
+
+        {{-- Redes --}}
+        <div class="w-full">
+            <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Redes</h3>
             {{-- Redes sociales --}}
             <div class="flex space-x-4 mt-5">
                 {{-- Facebook --}}
-                <a href="https://www.facebook.com/Lucibet" target="_blank" rel="noopener noreferrer"
+                <a href="https://www.facebook.com/Lucibet?mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer"
                     class="text-gray-400 hover:text-white transition-colors duration-200" title="Facebook">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd"
@@ -46,7 +53,7 @@
                 </a>
 
                 {{-- Instagram --}}
-                <a href="https://www.instagram.com/cluckyropa/" target="_blank" rel="noopener noreferrer"
+                <a href="https://www.instagram.com/b.eden_premium?igsh=MW9kYmVreGtuMmtpMw==" target="_blank" rel="noopener noreferrer"
                     class="text-gray-400 hover:text-white transition-colors duration-200" title="Instagram">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd"
@@ -56,7 +63,7 @@
                 </a>
 
                 {{-- TikTok --}}
-                <a href="https://www.tiktok.com/@c.luckyropa?_r=1&_t=ZS-94HEIxgqXIL" target="_blank"
+                <a href="https://www.tiktok.com/@b.eden.premium?_r=1&_t=ZS-97doBA5305J" target="_blank"
                     rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200"
                     title="TikTok">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

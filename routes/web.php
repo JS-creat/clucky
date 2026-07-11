@@ -31,6 +31,7 @@ Route::get('/producto/{id}', function ($id) {
 
 Route::view('/quienes-somos', 'legal.quienes-somos')->name('quienes-somos');
 Route::view('/terminos-y-condiciones', 'legal.terminos')->name('terminos');
+Route::view('/politica-privacidad', 'legal.privacidad')->name('politica-privacidad');
 
 // CARRITO
 Route::get('/carrito',                   [CarritoController::class, 'index'])->name('carrito.index');
