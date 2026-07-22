@@ -12,17 +12,17 @@ class DashboardController extends Controller
     {
         //principal
         $totalVentas = DB::table('pedido')
-            ->where('estado_pedido', 'Confirmado')
+            ->whereNotIn('estado_pedido', ['Pendiente', 'Cancelado'])
             ->sum('total_pedido') ?? 0;
 
         $ventasMesActual = DB::table('pedido')
-            ->where('estado_pedido', 'Confirmado')
+            ->whereNotIn('estado_pedido', ['Pendiente', 'Cancelado'])
             ->whereMonth('fecha_pedido', now()->month)
             ->whereYear('fecha_pedido', now()->year)
             ->sum('total_pedido') ?? 0;
 
         $ventasMesAnterior = DB::table('pedido')
-            ->where('estado_pedido', 'Confirmado')
+            ->whereNotIn('estado_pedido', ['Pendiente', 'Cancelado'])
             ->whereMonth('fecha_pedido', now()->subMonth()->month)
             ->whereYear('fecha_pedido', now()->subMonth()->year)
             ->sum('total_pedido') ?? 0;
@@ -55,7 +55,7 @@ class DashboardController extends Controller
         // ─── Ventas últimos 30 días
         $ventasRaw = DB::table('pedido')
             ->selectRaw('DATE(fecha_pedido) as dia, SUM(total_pedido) as total, COUNT(*) as cantidad')
-            ->where('estado_pedido', 'Confirmado')
+            ->whereNotIn('estado_pedido', ['Pendiente', 'Cancelado'])
             ->whereBetween('fecha_pedido', [now()->subDays(29)->startOfDay(), now()->endOfDay()])
             ->groupBy('dia')
             ->orderBy('dia')
@@ -85,7 +85,7 @@ class DashboardController extends Controller
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
             ->join('producto as pr',          'pr.id_producto', '=', 'pv.id_producto')
             ->join('categoria as c',          'c.id_categoria', '=', 'pr.id_categoria')
-            ->where('p.estado_pedido', 'Confirmado')
+            ->whereNotIn('p.estado_pedido', ['Pendiente', 'Cancelado'])
             ->selectRaw('c.nombre_categoria, SUM(dp.subtotal) as total')
             ->groupBy('c.id_categoria', 'c.nombre_categoria')
             ->orderByDesc('total')
@@ -97,7 +97,7 @@ class DashboardController extends Controller
             ->join('pedido as p',            'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
             ->join('producto as pr',          'pr.id_producto', '=', 'pv.id_producto')
-            ->where('p.estado_pedido', 'Confirmado')
+            ->whereNotIn('p.estado_pedido', ['Pendiente', 'Cancelado'])
             ->selectRaw('pr.nombre_producto, pr.imagen, SUM(dp.cantidad) as unidades, SUM(dp.subtotal) as ingresos')
             ->groupBy('pr.id_producto', 'pr.nombre_producto', 'pr.imagen')
             ->orderByDesc('unidades')
