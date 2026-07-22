@@ -5,13 +5,14 @@ use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\ImageController;
-use App\Http\Controllers\Api\FavoritoController; 
+use App\Http\Controllers\Api\FavoritoController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\CheckoutApiController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\Api\CuponApiController;
 use Illuminate\Http\Request;
 
 Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
@@ -41,7 +42,7 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
     Route::post('/confirmar', [CheckoutApiController::class, 'confirmar']);
-    Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']); 
+    Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']);
 });
 
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
@@ -51,11 +52,11 @@ Route::get('/imagen/{filename}', [ImageController::class, 'show'])
 
 Route::get('/banner/{filename}', function ($filename) {
     $path = public_path('banners/' . $filename);
-    
+
     if (!file_exists($path)) {
         return response()->json(['error' => 'Imagen no encontrada'], 404);
     }
-    
+
     return response()->file($path);
 })->where('filename', '.*');
 
@@ -65,7 +66,7 @@ Route::prefix('productos')->group(function () {
     Route::get('/populares', [ProductoController::class, 'populares']);
     Route::get('/ofertas', [ProductoController::class, 'ofertas']);
     Route::get('/buscar', [ProductoController::class, 'buscar']);
-    
+
     Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
     Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
 });
@@ -104,4 +105,16 @@ Route::get('/health', function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
     Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('cupones/disponibles', [CuponApiController::class, 'disponibles'])
+        ->name('api.cupones.disponibles');
+
+    Route::post('cupones/validar', [CuponApiController::class, 'validar'])
+        ->name('api.cupones.validar');
+
+    Route::post('cupones/aplicar', [CuponApiController::class, 'aplicar'])
+        ->name('api.cupones.aplicar');
 });
