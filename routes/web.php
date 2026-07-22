@@ -137,6 +137,10 @@ Route::middleware(['auth', 'verified', 'role:1'])
             // Reporte 8: Pedidos detallado
             Route::get('/pedidos-detallado',  'exportPedidosDetallado')->name('pedidos-detallado');
         });
+
+        //Cupones
+        Route::resource('cupones', CuponController::class)->except(['show', 'create', 'edit']);
+        Route::patch('cupones/{cupon}/toggle', [CuponController::class, 'toggle'])->name('cupones.toggle');
     });
 
 // ── PERFIL
