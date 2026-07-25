@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class Cupon extends Model
 {
-    // ============================================
+
     // CONFIGURACIÓN
-    // ============================================
+
 
     protected $table = 'cupones';
     protected $primaryKey = 'id_cupon';
@@ -47,16 +47,13 @@ class Cupon extends Model
         'uso_maximo_por_usuario' => 'integer',
     ];
 
-    // ============================================
     // CONSTANTES
-    // ============================================
 
     public const TIPO_PORCENTAJE = 'porcentaje';
     public const TIPO_MONTO_FIJO = 'monto_fijo';
 
-    // ============================================
     // SCOPES (FILTROS REUTILIZABLES)
-    // ============================================
+
 
     public function scopeActivos($query)
     {
@@ -83,9 +80,7 @@ class Cupon extends Model
         return $query->whereRaw('LOWER(codigo_cupon) = ?', [strtolower($codigo)]);
     }
 
-    // ============================================
     // RELACIONES
-    // ============================================
 
     public function usuariosAsignados(): BelongsToMany
     {
@@ -105,9 +100,7 @@ class Cupon extends Model
         return $this->hasMany(CuponUso::class, 'id_cupon', 'id_cupon');
     }
 
-    // ============================================
     // ACCESSORS (atributos computados)
-    // ============================================
 
     public function getVencidoAttribute(): bool
     {
@@ -144,9 +137,7 @@ class Cupon extends Model
         return $this->usuariosAsignados()->exists();
     }
 
-    // ============================================
     // MÉTODOS DE NEGOCIO
-    // ============================================
 
     public function calcularDescuento(float $montoCompra): float
     {
@@ -181,18 +172,14 @@ class Cupon extends Model
             if (!$usuario) {
                 $errores[] = 'Este cupón requiere inicio de sesión.';
             } else {
-                $asignado = $this->usuariosAsignados()
-                    ->where('usuarios.id_usuario', $usuario->id_usuario)
-                    ->exists();
+                $asignacion = $this->usuariosAsignados()
+                    ->where('usuario.id_usuario', $usuario->id_usuario)
+                    ->first();
 
-                if (!$asignado) {
+                if (!$asignacion) {
                     $errores[] = 'Este cupón no está disponible para tu cuenta.';
-                }
-
-                if ($this->uso_maximo_por_usuario && $asignado) {
-                    $usos = $this->usuariosAsignados()
-                        ->where('usuarios.id_usuario', $usuario->id_usuario)
-                        ->first()?->pivot?->usos_realizados ?? 0;
+                } elseif ($this->uso_maximo_por_usuario) {
+                    $usos = $asignacion->pivot->usos_realizados ?? 0;
 
                     if ($usos >= $this->uso_maximo_por_usuario) {
                         $errores[] = 'Has alcanzado el límite de usos de este cupón.';
@@ -219,23 +206,25 @@ class Cupon extends Model
 
     public function registrarUso(User $usuario, float $montoCarrito, float $montoDescuento): bool
     {
-        $verificacion = $this->puedeUsar($usuario);
-        if (!$verificacion['valido']) {
-            return false;
-        }
-
         return DB::transaction(function () use ($usuario, $montoCarrito, $montoDescuento) {
-            $this->increment('usos_actuales');
+            $cupon = self::where('id_cupon', $this->id_cupon)->lockForUpdate()->first();
 
-            if ($this->es_privado) {
-                $this->usuariosAsignados()->updateExistingPivot(
+            $verificacion = $cupon->puedeUsar($usuario);
+            if (!$verificacion['valido']) {
+                return false;
+            }
+
+            $cupon->increment('usos_actuales');
+
+            if ($cupon->es_privado) {
+                $cupon->usuariosAsignados()->updateExistingPivot(
                     $usuario->id_usuario,
                     ['usos_realizados' => DB::raw('usos_realizados + 1')]
                 );
             }
 
             CuponUso::create([
-                'id_cupon' => $this->id_cupon,
+                'id_cupon' => $cupon->id_cupon,
                 'id_usuario' => $usuario->id_usuario,
                 'monto_descuento' => $montoDescuento,
                 'monto_carrito' => $montoCarrito,
@@ -262,9 +251,7 @@ class Cupon extends Model
         }
     }
 
-    // ============================================
     // MÉTODOS ESTÁTICOS (HELPERS)
-    // ============================================
 
     public static function buscarPorCodigo(string $codigo): ?self
     {
@@ -277,7 +264,7 @@ class Cupon extends Model
             ->where(function ($query) use ($usuario) {
                 $query->whereDoesntHave('usuariosAsignados')
                     ->orWhereHas('usuariosAsignados', function ($q) use ($usuario) {
-                        $q->where('usuarios.id_usuario', $usuario->id_usuario);
+                        $q->where('usuario.id_usuario', $usuario->id_usuario);
                     });
             })
             ->get()
