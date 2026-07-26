@@ -6,7 +6,6 @@ use App\Models\Carrito;
 use App\Models\Departamento;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
-use App\Models\ProductoVariante;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -197,15 +196,16 @@ class CheckoutController extends Controller
                     "pending" => route('pago.pendiente'),
                 ],
                 "auto_return"        => "approved",
-                "external_reference" => (string) $pedido->id_pedido, // Siempre mandamos el ID correcto
+                "external_reference" => (string) $pedido->id_pedido,
             ]);
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
-            dd([
+            \Log::error('Error creando preferencia MercadoPago', [
                 'mensaje'   => $e->getMessage(),
                 'respuesta' => $e->getApiResponse()->getContent(),
             ]);
-        }
 
+            return back()->with('error', 'No se pudo iniciar el pago. Intenta nuevamente.');
+        }
         return redirect($preference->init_point);
     }
 

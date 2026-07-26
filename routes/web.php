@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\UbicacionController;
@@ -20,6 +19,7 @@ use App\Http\Controllers\Admin\CuponController;
 use App\Http\Controllers\PedidoUsuarioController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\MovimientoStockController;
+use App\Http\Controllers\MercadoPagoWebhookController;
 
 // ── PÚBLICAS
 
@@ -62,6 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
     Route::get('/pago/fallo',     [PagoController::class, 'fallo'])->name('pago.fallo');
     Route::get('/pago/pendiente', [PagoController::class, 'pendiente'])->name('pago.pendiente');
+    Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('webhooks.mercadopago');
 });
 
 // ── ADMINISTRADOR
