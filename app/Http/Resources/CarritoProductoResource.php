@@ -1,5 +1,4 @@
 <?php
-// app/Http/Resources/CarritoProductoResource.php
 
 namespace App\Http\Resources;
 
