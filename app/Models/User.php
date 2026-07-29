@@ -19,6 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    public const ROL_CLIENTE = 2;
 
     protected $fillable = [
         'nombres',
@@ -31,7 +32,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'id_rol',
         'email_verified_at',
         'remember_token',
-        'reactivation_email_sent_at'
+        'reactivation_email_sent_at',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -83,7 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getAuthIdentifierName()
     {
-        return 'id_usuario'; // Laravel usa 'id' por defecto, pero tu PK es 'id_usuario'
+        return 'id_usuario';
     }
 
     public function getEmailForVerification()

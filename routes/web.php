@@ -20,6 +20,7 @@ use App\Http\Controllers\PedidoUsuarioController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\MovimientoStockController;
 use App\Http\Controllers\MercadoPagoWebhookController;
+use App\Http\Controllers\Auth\GoogleController;
 
 // ── PÚBLICAS
 
@@ -29,6 +30,10 @@ Route::get('/producto/{id}', function ($id) {
     $producto = Producto::with('variantes')->findOrFail($id);
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
+
+//Google
+Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
 Route::view('/quienes-somos', 'legal.quienes-somos')->name('quienes-somos');
 Route::view('/terminos-y-condiciones', 'legal.terminos')->name('terminos');

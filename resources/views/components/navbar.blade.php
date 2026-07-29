@@ -1,4 +1,8 @@
 {{-- resources/views/components/navbar.blade.php --}}
+@php
+    $ocultarBusqueda = request()->is('login', 'register', 'password/*', 'auth/*');
+@endphp
+
 <nav class="border-b sticky top-0 bg-white z-50"
     x-data="{
         searchOpen: false,
@@ -21,11 +25,12 @@
             {{-- LOGO --}}
             <div class="flex-shrink-0 flex items-center">
                 <a href="{{ url('/') }}">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo C'Lucky" class="h-14 w-auto">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo B-EDEN" class="h-14 w-auto">
                 </a>
             </div>
 
-            {{-- BUSCADOR DESKTOP --}}
+            {{-- BUSCADOR DESKTOP (oculto en login/register) --}}
+            @if(!$ocultarBusqueda)
             <div class="hidden sm:flex flex-1 max-w-lg items-center">
                 <div class="relative w-full">
                     <input
@@ -61,11 +66,13 @@
                     </button>
                 </div>
             </div>
+            @endif
 
             {{-- ICONOS DERECHA --}}
             <div class="flex items-center space-x-4">
 
-                {{-- LUPA MÓVIL --}}
+                {{-- LUPA MÓVIL (oculta en login/register) --}}
+                @if(!$ocultarBusqueda)
                 <button @click="searchOpen = !searchOpen" class="sm:hidden hover:scale-110 transition" aria-label="Buscar">
                     <svg x-show="!searchOpen" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -74,17 +81,25 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+                @endif
 
-                {{-- USUARIO --}}
+                {{-- USUARIO: Saludo + Icono/Avatar --}}
                 @auth
-                    <a href="{{ route('perfil.index') }}" class="hover:scale-110 transition">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
+                    <a href="{{ route('perfil.index') }}" class="flex items-center gap-2 hover:scale-105 transition group" title="Mi perfil">
+                        @if(Auth::user()->avatar)
+                            <img src="{{ Auth::user()->avatar }}" alt="Avatar" class="h-7 w-7 rounded-full object-cover border border-gray-200">
+                        @else
+                            <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        @endif
+                        <span class="hidden sm:inline text-sm font-medium text-gray-700 group-hover:text-black">
+                            ¡Hola, {{ Auth::user()->nombres }}!
+                        </span>
                     </a>
                 @endauth
                 @guest
-                    <a href="{{ route('login') }}" class="hover:scale-110 transition">
+                    <a href="{{ route('login') }}" class="hover:scale-110 transition" title="Iniciar sesión">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
@@ -92,7 +107,7 @@
                 @endguest
 
                 {{-- CARRITO --}}
-                <a href="{{ route('carrito.index') }}" class="hover:scale-110 transition relative">
+                <a href="{{ route('carrito.index') }}" class="hover:scale-110 transition relative" title="Carrito">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0m-4 8h16l-1.244 6.323A2 2 0 0114.805 23H9.195a2 2 0 01-1.951-1.677L6 11z"/>
                     </svg>
@@ -104,7 +119,8 @@
         </div>
     </div>
 
-    {{-- BUSCADOR MÓVIL --}}
+    {{-- BUSCADOR MÓVIL DESPLEGABLE (oculto en login/register) --}}
+    @if(!$ocultarBusqueda)
     <div
         x-show="searchOpen"
         x-cloak
@@ -146,5 +162,6 @@
             </button>
         </div>
     </div>
+    @endif
 
 </nav>
