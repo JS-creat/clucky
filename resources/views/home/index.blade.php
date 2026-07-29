@@ -3,7 +3,7 @@
 @section('title', 'B-EDEN - Premium Clothing')
 
 @section('categorias')
-    {{-- BARRA DE CATEGORÍAS STICKY --}}
+    {{-- BARRA DE CATEGORÍAS --}}
     <div class="sticky top-16 bg-white border-b z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-8">
             <div
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    {{-- ===== CARRUSEL REDISEÑADO ===== --}}
+    {{-- ===== CARRUSEL ===== --}}
     @if(isset($banners) && $banners->count() > 0)
         <section class="w-full bg-gray-50 py-3 sm:py-6">
             <div x-data="{
@@ -67,7 +67,6 @@
                     goTo(i) { this.current = i; this.stopAutoplay(); this.startAutoplay(); }
                 }" @mouseenter="stopAutoplay()" @mouseleave="startAutoplay()" class="relative max-w-7xl mx-auto px-3 sm:px-8">
                 {{-- CONTENEDOR DEL SLIDE --}}
-                {{-- Móvil: 4/3 para tener altura visible | sm+: 21/7 proporción cine wide --}}
                 <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-white [aspect-ratio:4/3] sm:[aspect-ratio:21/7]"
                     style="min-height: 220px;">
 

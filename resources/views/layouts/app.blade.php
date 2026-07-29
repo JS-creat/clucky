@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es" class="min-h-screen">
 
 <head>
     <meta charset="UTF-8">
@@ -9,21 +9,22 @@
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 </head>
 
-<body class="bg-white text-gray-900 h-full">
-    <div class="flex flex-col h-full">
+<body class="bg-white text-gray-900 min-h-screen">
+    <div class="flex flex-col min-h-screen">
+
+        {{-- Navbar sticky --}}
         <div class="sticky top-0 z-50">
-            <!--Navbar-->
             <x-navbar />
-
             @yield('categorias')
-        </main>
+        </div>
 
-        <main class="flex-1">
+
+        <main class="flex-1 flex flex-col">
             @yield('content')
         </main>
 
-        <!-- FOOTER -->
         <x-footer />
+
     </div>
 </body>
 
