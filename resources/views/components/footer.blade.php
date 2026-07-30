@@ -6,7 +6,7 @@
             <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Contáctanos</h3>
             <div class="space-y-2 text-sm">
                 <p>
-                    <a href="https://wa.me/51964374401" target="_blank" rel="noopener noreferrer"
+                    <a href="#" target="_blank" rel="noopener noreferrer"
                         class="text-gray-400 hover:text-white transition-colors duration-200">
                         Teléfono: +51 960 247 195
                     </a>

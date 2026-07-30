@@ -41,12 +41,14 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs sm:text-sm text-yellow-800 font-bold leading-tight">
-                    MODO DE PRUEBA / SITIO EN DESARROLLO
+                <p class="text-xs sm:text-sm text-amber-950 font-bold leading-tight">
+                    SITIO EN DESARROLLO / ¡MUY PRONTO!
                 </p>
-                <p class="text-[11px] sm:text-xs text-yellow-700 leading-normal mt-1">
-                    Este sitio es un proyecto académico/formativo. Las imágenes y productos son referenciales.
-                    Ninguna compra tiene validez y no debes ingresar datos reales ni de pago.
+                <p class="text-[11px] sm:text-xs text-amber-900 leading-normal mt-1"></p>
+                    Estamos haciendo pruebas finales. Todo el catálogo, imágenes y precios actuales son
+                    <strong>únicamente referenciales</strong>. Por favor,
+                    <strong>no ingreses datos reales ni intentes realizar pagos</strong>
+                    por ahora. ¡Síguenos en redes para enterarte de más y ver nuestro productos!
                 </p>
             </div>
         </div>
