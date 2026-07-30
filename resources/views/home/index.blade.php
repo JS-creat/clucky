@@ -48,7 +48,7 @@
                     Estamos haciendo pruebas finales. Todo el catálogo, imágenes y precios actuales son
                     <strong>únicamente referenciales</strong>. Por favor,
                     <strong>no ingreses datos reales ni intentes realizar pagos</strong>
-                    por ahora. ¡Síguenos en redes para enterarte de más y ver nuestro productos!
+                    por ahora. ¡Síguenos en redes para enterarte de más y ver nuestros productos!
                 </p>
             </div>
         </div>
