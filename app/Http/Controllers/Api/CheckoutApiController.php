@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Agencia;
 use App\Models\Carrito;
+use App\Models\Cupon;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
 use App\Models\ProductoVariante;
@@ -25,6 +26,8 @@ class CheckoutApiController extends Controller
             'telefono'          => 'required|string|max:20',
             'id_tipo_entrega'   => 'required|integer|in:1,2',
             'id_distrito'       => 'nullable|integer|exists:distrito,id_distrito',
+            // 🟢 NUEVO: código de cupón opcional
+            'codigo_cupon'      => 'nullable|string|max:50',
         ]);
 
         if ((int) $request->id_tipo_entrega === 2 && empty($request->id_distrito)) {
@@ -77,7 +80,48 @@ class CheckoutApiController extends Controller
             $tiempoEstimado = $agencia->tiempo_estimado ?? '3-5 días hábiles';
         }
 
-        $total = $subtotal + $costoEnvio;
+        // 🟢 NUEVO: validar y calcular el descuento del cupón AQUÍ, en el
+        // backend — nunca confiamos en un monto de descuento que venga
+        // calculado desde la app móvil, porque alguien podría manipular
+        // la petición y pagar menos de lo debido. El backend es la única
+        // fuente de verdad para el monto final.
+        $cupon = null;
+        $montoDescuento = 0;
+        $codigoCuponNormalizado = null;
+
+        if (!empty($request->codigo_cupon)) {
+            $codigoCuponNormalizado = strtoupper(trim($request->codigo_cupon));
+            $cupon = Cupon::vigentes()->porCodigo($codigoCuponNormalizado)->first();
+
+            if (!$cupon) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El cupón ingresado no es válido o ya no está vigente.',
+                ], 422);
+            }
+
+            $verificacion = $cupon->puedeUsar($usuario);
+            if (!$verificacion['valido']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $verificacion['errores'][0],
+                ], 422);
+            }
+
+            if ($subtotal < $cupon->monto_compra_minima) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El monto mínimo de compra para este cupón es S/ '
+                        . number_format($cupon->monto_compra_minima, 2),
+                ], 422);
+            }
+
+            $montoDescuento = $cupon->calcularDescuento($subtotal);
+        }
+
+        // El descuento se aplica sobre el subtotal, el envío se cobra
+        // completo (no está sujeto a descuento de cupón).
+        $total = max(0, $subtotal - $montoDescuento) + $costoEnvio;
 
         DB::beginTransaction();
 
@@ -99,6 +143,8 @@ class CheckoutApiController extends Controller
                     : null,
                 'nombre_agencia' => $nombreAgencia,
                 'direccion_agencia' => $direccionAgencia,
+                // 🟢 NUEVO: se guarda qué cupón (si hubo) se usó en el pedido
+                'id_cupon' => $cupon?->id_cupon,
             ]);
 
             foreach ($carrito->detalles as $detalle) {
@@ -121,6 +167,16 @@ class CheckoutApiController extends Controller
                     ->decrement('stock', $detalle->cantidad);
             }
 
+            // 🟢 NUEVO: registrar el uso del cupón dentro de la misma
+            // transacción del pedido. Si algo falla más adelante, el
+            // rollback también deshace el uso del cupón.
+            if ($cupon) {
+                $registrado = $cupon->registrarUso($usuario, $subtotal, $montoDescuento);
+                if (!$registrado) {
+                    throw new \Exception('No se pudo aplicar el cupón. Intenta nuevamente.');
+                }
+            }
+
             $carrito->detalles()->delete();
 
             DB::commit();
@@ -136,6 +192,9 @@ class CheckoutApiController extends Controller
                     'nombre_agencia' => $nombreAgencia,
                     'direccion_agencia' => $direccionAgencia,
                     'tiempo_estimado' => $tiempoEstimado,
+                    // 🟢 NUEVO: info del cupón aplicado, si hubo
+                    'codigo_cupon' => $codigoCuponNormalizado,
+                    'monto_descuento' => $montoDescuento,
                     'total_pedido' => $pedido->total_pedido,
                     'estado_pedido' => $pedido->estado_pedido,
                 ],

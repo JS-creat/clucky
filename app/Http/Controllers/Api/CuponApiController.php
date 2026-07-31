@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Cupon;
 use App\Models\User;
+use App\Http\Resources\CuponResource;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -21,22 +22,12 @@ class CuponApiController extends Controller
 
         $cupones = Cupon::disponiblesPara($usuario);
 
+        // 🟢 Antes: ->map(fn ($cupon) => [...]) armado a mano dentro del
+        // controller. Ahora: CuponResource centraliza esa transformación,
+        // reutilizable en cualquier otro endpoint que devuelva cupones.
         return response()->json([
             'success' => true,
-            'data' => $cupones->map(function ($cupon) {
-                return [
-                    'id' => $cupon->id_cupon,
-                    'codigo' => $cupon->codigo_cupon,
-                    'descripcion' => $cupon->descripcion,
-                    'tipo_descuento' => $cupon->tipo_descuento,
-                    'valor_descuento' => (float) $cupon->valor_descuento,
-                    'descuento_formateado' => $cupon->descuento_formateado,
-                    'monto_compra_minima' => (float) $cupon->monto_compra_minima,
-                    'fecha_vencimiento' => $cupon->fecha_vencimiento->format('Y-m-d'),
-                    'dias_restantes' => $cupon->dias_restantes,
-                    'es_privado' => $cupon->es_privado,
-                ];
-            }),
+            'data' => CuponResource::collection($cupones),
             'total' => $cupones->count(),
         ]);
     }
@@ -90,12 +81,12 @@ class CuponApiController extends Controller
             'success' => true,
             'message' => 'Cupón válido',
             'data' => [
-                'cupon_id' => $cupon->id_cupon,
-                'codigo' => $cupon->codigo_cupon,
-                'tipo_descuento' => $cupon->tipo_descuento,
-                'valor_descuento' => (float) $cupon->valor_descuento,
-                'descuento_formateado' => $cupon->descuento_formateado,
-                'monto_compra_minima' => (float) $cupon->monto_compra_minima,
+                // 🟢 CuponResource ya trae los campos "base" del cupón
+                // (código, descuento_formateado, etc.), y le agregamos
+                // los campos calculados propios de esta validación
+                // puntual (monto_carrito, descuento_aplicado, etc.) con
+                // ->additional(), sin duplicar la transformación base.
+                ...(new CuponResource($cupon))->resolve(),
                 'monto_carrito' => $montoCarrito,
                 'descuento_aplicado' => $descuento,
                 'total_con_descuento' => round($montoCarrito - $descuento, 2),
