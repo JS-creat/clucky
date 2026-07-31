@@ -22,15 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'register',
             'login',
+            'webhooks/mercadopago',
         ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
-            return redirect()->route('password.request')
-                ->withErrors(['correo' => 'Por favor espera 1 minuto antes de solicitar otro enlace.']);
-        });
-    })
-    ->withMiddleware(function (Middleware $middleware) {
+
         $middleware->trustProxies(
             at: '*',
             headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
@@ -39,5 +33,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
                 \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
         );
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
+            return redirect()->route('password.request')
+                ->withErrors(['correo' => 'Por favor espera 1 minuto antes de solicitar otro enlace.']);
+        });
     })
     ->create();

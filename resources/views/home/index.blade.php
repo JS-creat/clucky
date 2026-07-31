@@ -3,7 +3,7 @@
 @section('title', 'B-EDEN - Premium Clothing')
 
 @section('categorias')
-    {{-- BARRA DE CATEGORÍAS STICKY --}}
+    {{-- BARRA DE CATEGORÍAS --}}
     <div class="sticky top-16 bg-white border-b z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-8">
             <div
@@ -41,18 +41,20 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs sm:text-sm text-yellow-800 font-bold leading-tight">
-                    MODO DE PRUEBA / SITIO EN DESARROLLO
+                <p class="text-xs sm:text-sm text-amber-950 font-bold leading-tight">
+                    SITIO EN DESARROLLO / ¡MUY PRONTO!
                 </p>
-                <p class="text-[11px] sm:text-xs text-yellow-700 leading-normal mt-1">
-                    Este sitio es un proyecto académico/formativo. Las imágenes y productos son referenciales.
-                    Ninguna compra tiene validez y no debes ingresar datos reales ni de pago.
+                <p class="text-[11px] sm:text-xs text-amber-900 leading-normal mt-1"></p>
+                    Estamos haciendo pruebas finales. Todo el catálogo, imágenes y precios actuales son
+                    <strong>únicamente referenciales</strong>. Por favor,
+                    <strong>no ingreses datos reales ni intentes realizar pagos</strong>
+                    por ahora. ¡Síguenos en redes para enterarte de más y ver nuestros productos!
                 </p>
             </div>
         </div>
     </div>
 
-    {{-- ===== CARRUSEL REDISEÑADO ===== --}}
+    {{-- ===== CARRUSEL ===== --}}
     @if(isset($banners) && $banners->count() > 0)
         <section class="w-full bg-gray-50 py-3 sm:py-6">
             <div x-data="{
@@ -67,7 +69,6 @@
                     goTo(i) { this.current = i; this.stopAutoplay(); this.startAutoplay(); }
                 }" @mouseenter="stopAutoplay()" @mouseleave="startAutoplay()" class="relative max-w-7xl mx-auto px-3 sm:px-8">
                 {{-- CONTENEDOR DEL SLIDE --}}
-                {{-- Móvil: 4/3 para tener altura visible | sm+: 21/7 proporción cine wide --}}
                 <div class="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-white [aspect-ratio:4/3] sm:[aspect-ratio:21/7]"
                     style="min-height: 220px;">
 

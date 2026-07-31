@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\UbicacionController;
@@ -20,6 +19,8 @@ use App\Http\Controllers\Admin\CuponController;
 use App\Http\Controllers\PedidoUsuarioController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\MovimientoStockController;
+use App\Http\Controllers\MercadoPagoWebhookController;
+use App\Http\Controllers\Auth\GoogleController;
 
 // ── PÚBLICAS
 
@@ -29,6 +30,10 @@ Route::get('/producto/{id}', function ($id) {
     $producto = Producto::with('variantes')->findOrFail($id);
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
+
+//Google
+Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
 Route::view('/quienes-somos', 'legal.quienes-somos')->name('quienes-somos');
 Route::view('/terminos-y-condiciones', 'legal.terminos')->name('terminos');
@@ -62,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
     Route::get('/pago/fallo',     [PagoController::class, 'fallo'])->name('pago.fallo');
     Route::get('/pago/pendiente', [PagoController::class, 'pendiente'])->name('pago.pendiente');
+    Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('webhooks.mercadopago');
 });
 
 // ── ADMINISTRADOR
