@@ -41,10 +41,19 @@ Route::view('/politica-privacidad', 'legal.privacidad')->name('politica-privacid
 
 // CARRITO
 Route::get('/carrito',                   [CarritoController::class, 'index'])->name('carrito.index');
-Route::post('/carrito/add/{id}',         [CarritoController::class, 'add'])->name('carrito.add');
-Route::get('/carrito/aumentar/{id}',     [CarritoController::class, 'aumentar'])->name('carrito.aumentar');
-Route::get('/carrito/disminuir/{id}',    [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
-Route::get('/carrito/eliminar/{id}',     [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
+Route::middleware('throttle:60,1')->group(function () {
+    Route::post('/carrito/add/{id}', [CarritoController::class, 'add'])
+        ->name('carrito.add');
+
+    Route::post('/carrito/aumentar/{id_variante}', [CarritoController::class, 'aumentar'])
+        ->name('carrito.aumentar')->whereNumber('id_variante');
+
+    Route::post('/carrito/disminuir/{id_variante}', [CarritoController::class, 'disminuir'])
+        ->name('carrito.disminuir')->whereNumber('id_variante');
+
+    Route::delete('/carrito/eliminar/{id_variante}', [CarritoController::class, 'eliminar'])
+        ->name('carrito.eliminar')->whereNumber('id_variante');
+});
 
 // UBICACIÓN
 Route::prefix('ubicacion')->name('ubicacion.')->group(function () {

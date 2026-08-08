@@ -1,89 +1,37 @@
-<!DOCTYPE html>
-<html lang="es">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $producto->nombre_producto }} – C'Lucky</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['DM Sans', 'sans-serif'],
-                        display: ['Playfair Display', 'serif'],
-                    },
-                    colors: {
-                        gold: '#C9A84C',
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        #view-principal { transition: opacity 0.25s ease-in-out; }
+@section('title', $producto->nombre_producto . ' – B-EDEN')
 
-        .thumbnail-btn { transition: all 0.2s ease; }
-        .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
+@section('content')
 
-        /* Scrollbar galería */
-        .scroll-gallery::-webkit-scrollbar { height: 3px; }
-        .scroll-gallery::-webkit-scrollbar-track { background: #f1f1f1; }
-        .scroll-gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 99px; }
-    </style>
-</head>
+<style>
+    #view-principal { transition: opacity 0.25s ease-in-out; }
 
-<body class="bg-stone-50 font-sans text-gray-900 antialiased">
+    .thumbnail-btn { transition: all 0.2s ease; }
+    .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
 
+    /* Scrollbar galería */
+    .scroll-gallery::-webkit-scrollbar { height: 3px; }
+    .scroll-gallery::-webkit-scrollbar-track { background: #f1f1f1; }
+    .scroll-gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 99px; }
+</style>
 
-{{-- NAVBAR  --}}
-<nav class="border-b sticky top-0 bg-white z-50">
-    <div class="max-w-full mx-auto px-4 sm:px-8">
-        <div class="flex justify-between h-20 items-center">
-            <div class="flex-shrink-0 flex items-center">
-                <a href="{{ url('/') }}">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Logo C'Lucky"
-                        class="h-14 w-auto transition-transform hover:scale-105">
-                </a>
-            </div>
-
-            <div class="flex items-center space-x-5">
-                <button class="hover:scale-110 transition text-gray-600 hover:text-gray-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </button>
-                <a href="{{ route('login') }}" class="hover:scale-110 transition text-gray-600 hover:text-gray-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                </a>
-                <a href="{{ route('carrito.index') }}" class="hover:scale-110 transition relative text-gray-600 hover:text-gray-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0m-4 8h16l-1.244 6.323A2 2 0 0114.805 23H9.195a2 2 0 01-1.951-1.677L6 11z"/>
-                    </svg>
-                    <span class="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                        {{ session('carrito') ? count(session('carrito')) : 0 }}
-                    </span>
-                </a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-
-{{--CONTENIDO PRINCIPAL--}}
-<main class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
     <div class="flex flex-col lg:flex-row gap-10 items-start">
 
 
-        {{-- GALERÍA  --}}
-        <div class="w-full lg:w-[58%] space-y-3">
+        {{-- GALERÍA --}}
+        {{--
+            Antes: lg:w-[58%] sin tope de altura → en laptop la imagen (aspect 4:5)
+            crecía más alto que la pantalla visible.
+            Ahora: columna más angosta + max-h-[65vh] en el contenedor de imagen,
+            así el navegador respeta el alto disponible del viewport y ajusta
+            el ancho proporcionalmente (gracias a aspect-ratio + max-height juntos).
+        --}}
+        <div class="w-full lg:w-1/2 xl:w-[44%] lg:max-w-[520px] mx-auto lg:mx-0 space-y-3">
 
             {{-- Imagen principal --}}
-            <div class="aspect-[4/5] bg-white overflow-hidden rounded-2xl border border-gray-100 shadow-sm group relative">
+            <div class="aspect-[4/5] lg:max-h-[65vh] mx-auto bg-white overflow-hidden rounded-2xl border border-gray-100 shadow-sm group relative">
                 <img id="view-principal"
                      src="{{ asset('productos/' . $producto->imagen) }}"
                      class="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
@@ -98,7 +46,7 @@
                 @endif
             </div>
 
-            <div class="flex gap-2.5 overflow-x-auto pb-1 scroll-gallery">
+            <div class="flex gap-2.5 overflow-x-auto pb-1 scroll-gallery justify-center lg:justify-start">
                 <button type="button"
                         onclick="cambiarImagen(this, '{{ asset('productos/' . $producto->imagen) }}')"
                         class="thumbnail-btn thumbnail-active w-[72px] h-[82px] flex-shrink-0 rounded-xl border-2 overflow-hidden bg-white p-1">
@@ -118,13 +66,13 @@
         </div>
 
 
-        {{-- INFO PRODUCTO  --}}
-        <div class="w-full lg:w-[42%] lg:sticky lg:top-28 space-y-0">
+        {{-- INFO PRODUCTO --}}
+        <div class="w-full lg:w-1/2 xl:w-[56%] lg:sticky lg:top-28 space-y-0">
 
             {{-- Marca + Nombre --}}
             <div class="pb-5 border-b border-gray-100">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-2">{{ $producto->marca }}</p>
-                <h1 class="font-display text-3xl font-semibold leading-snug text-gray-900">
+                <h1 class="font-display text-2xl sm:text-3xl font-semibold leading-snug text-gray-900">
                     {{ $producto->nombre_producto }}
                 </h1>
                 <p id="sku-text" class="text-xs text-gray-400 mt-3 tracking-wider">SKU: Selecciona color y talla</p>
@@ -345,5 +293,4 @@
     });
 </script>
 
-</body>
-</html>
+@endsection
