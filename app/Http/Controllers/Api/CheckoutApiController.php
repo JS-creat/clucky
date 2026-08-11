@@ -8,15 +8,24 @@ use App\Models\Carrito;
 use App\Models\Cupon;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
-use App\Models\ProductoVariante;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Preference\PreferenceClient;
 
 class CheckoutApiController extends Controller
 {
     /**
-     * Confirmar pedido y crear la orden
+     * Confirmar pedido: crea (o reutiliza) el pedido como "Pendiente" y
+     * genera la preferencia de pago de Mercado Pago.
+     *
+     * 🟢 FIX: antes este método descontaba el stock y vaciaba el carrito
+     * de una, ANTES de que existiera ningún pago real — al revés de cómo
+     * lo hace la web. Ahora sigue el mismo patrón seguro: el pedido queda
+     * "Pendiente" sin tocar stock ni carrito. El descuento real de stock,
+     * el registro del cupón, y el vaciado del carrito ocurren recién en
+     * PagoService::confirmarPago(), cuando Mercado Pago confirma el pago.
      */
     public function confirmar(Request $request)
     {
@@ -26,7 +35,6 @@ class CheckoutApiController extends Controller
             'telefono'          => 'required|string|max:20',
             'id_tipo_entrega'   => 'required|integer|in:1,2',
             'id_distrito'       => 'nullable|integer|exists:distrito,id_distrito',
-            // 🟢 NUEVO: código de cupón opcional
             'codigo_cupon'      => 'nullable|string|max:50',
         ]);
 
@@ -48,6 +56,16 @@ class CheckoutApiController extends Controller
                 'success' => false,
                 'message' => 'Tu carrito está vacío.',
             ], 422);
+        }
+
+        // Validar stock (solo verificar, NO descontar todavía)
+        foreach ($carrito->detalles as $detalle) {
+            if ($detalle->cantidad > $detalle->variante->stock) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "El producto {$detalle->variante->producto->nombre_producto} no tiene suficiente stock disponible.",
+                ], 422);
+            }
         }
 
         $subtotal = 0;
@@ -80,11 +98,7 @@ class CheckoutApiController extends Controller
             $tiempoEstimado = $agencia->tiempo_estimado ?? '3-5 días hábiles';
         }
 
-        // 🟢 NUEVO: validar y calcular el descuento del cupón AQUÍ, en el
-        // backend — nunca confiamos en un monto de descuento que venga
-        // calculado desde la app móvil, porque alguien podría manipular
-        // la petición y pagar menos de lo debido. El backend es la única
-        // fuente de verdad para el monto final.
+        // Validar y calcular descuento del cupón (sin registrar el uso todavía)
         $cupon = null;
         $montoDescuento = 0;
         $codigoCuponNormalizado = null;
@@ -119,89 +133,144 @@ class CheckoutApiController extends Controller
             $montoDescuento = $cupon->calcularDescuento($subtotal);
         }
 
-        // El descuento se aplica sobre el subtotal, el envío se cobra
-        // completo (no está sujeto a descuento de cupón).
         $total = max(0, $subtotal - $montoDescuento) + $costoEnvio;
 
-        DB::beginTransaction();
-
         try {
-            $usuario->update([
-                'id_tipo_documento' => $request->id_tipo_documento,
-                'numero_documento'  => $request->numero_documento,
-                'telefono'          => $request->telefono,
-            ]);
+            $pedido = null;
 
-            $pedido = Pedido::create([
-                'numero_pedido'   => $this->generarNumeroPedido(),
-                'total_pedido'    => $total,
-                'estado_pedido'   => 'Pendiente',
-                'id_usuario'      => $usuario->id_usuario,
-                'id_tipo_entrega' => $request->id_tipo_entrega,
-                'id_distrito'     => (int) $request->id_tipo_entrega === 2
-                    ? $request->id_distrito
-                    : null,
-                'nombre_agencia' => $nombreAgencia,
-                'direccion_agencia' => $direccionAgencia,
-                // 🟢 NUEVO: se guarda qué cupón (si hubo) se usó en el pedido
-                'id_cupon' => $cupon?->id_cupon,
-            ]);
-
-            foreach ($carrito->detalles as $detalle) {
-                $producto = $detalle->variante->producto;
-                $precio   = $producto->precio_oferta ?? $producto->precio;
-
-                if ($detalle->variante->stock < $detalle->cantidad) {
-                    throw new \Exception("Stock insuficiente para {$producto->nombre_producto}");
-                }
-
-                DetallePedido::create([
-                    'id_pedido'       => $pedido->id_pedido,
-                    'id_variante'     => $detalle->id_variante,
-                    'cantidad'        => $detalle->cantidad,
-                    'precio_unitario' => $precio,
-                    'subtotal'        => $precio * $detalle->cantidad,
+            DB::transaction(function () use (
+                $usuario, $carrito, $request, $total, $cupon,
+                $nombreAgencia, $direccionAgencia, &$pedido
+            ) {
+                $usuario->update([
+                    'id_tipo_documento' => $request->id_tipo_documento,
+                    'numero_documento'  => $request->numero_documento,
+                    'telefono'          => $request->telefono,
                 ]);
 
-                ProductoVariante::where('id_variante', $detalle->id_variante)
-                    ->decrement('stock', $detalle->cantidad);
-            }
+                // 🟢 Igual que la web: si el usuario ya tenía un pedido
+                // "Pendiente" sin pagar (por ejemplo, cerró la app antes de
+                // completar el pago la vez anterior), lo reutilizamos en
+                // vez de crear uno nuevo cada vez.
+                $pedidoExistente = Pedido::where('id_usuario', $usuario->id_usuario)
+                    ->where('estado_pedido', 'Pendiente')
+                    ->first();
 
-            // 🟢 NUEVO: registrar el uso del cupón dentro de la misma
-            // transacción del pedido. Si algo falla más adelante, el
-            // rollback también deshace el uso del cupón.
-            if ($cupon) {
-                $registrado = $cupon->registrarUso($usuario, $subtotal, $montoDescuento);
-                if (!$registrado) {
-                    throw new \Exception('No se pudo aplicar el cupón. Intenta nuevamente.');
+                $datosPedido = [
+                    'total_pedido'      => $total,
+                    'id_tipo_entrega'   => $request->id_tipo_entrega,
+                    'id_distrito'       => (int) $request->id_tipo_entrega === 2
+                        ? $request->id_distrito
+                        : null,
+                    'nombre_agencia'    => $nombreAgencia,
+                    'direccion_agencia' => $direccionAgencia,
+                    'id_cupon'          => $cupon?->id_cupon,
+                ];
+
+                if ($pedidoExistente) {
+                    $pedidoExistente->update($datosPedido);
+                    DetallePedido::where('id_pedido', $pedidoExistente->id_pedido)->delete();
+                    $pedido = $pedidoExistente;
+                } else {
+                    $pedido = Pedido::create(array_merge($datosPedido, [
+                        'numero_pedido' => $this->generarNumeroPedido(),
+                        'estado_pedido' => 'Pendiente',
+                        'id_usuario'    => $usuario->id_usuario,
+                    ]));
                 }
+
+                foreach ($carrito->detalles as $detalle) {
+                    $producto = $detalle->variante->producto;
+                    $precio   = $producto->precio_oferta ?? $producto->precio;
+
+                    DetallePedido::create([
+                        'id_pedido'       => $pedido->id_pedido,
+                        'id_variante'     => $detalle->id_variante,
+                        'cantidad'        => $detalle->cantidad,
+                        'precio_unitario' => $precio,
+                        'subtotal'        => $precio * $detalle->cantidad,
+                    ]);
+                }
+            });
+
+            // Armar ítems para Mercado Pago (mismo formato que la web)
+            $pedido->load('detalles.variante.producto', 'cupon');
+            $items = [];
+
+            foreach ($pedido->detalles as $detalle) {
+                $producto = $detalle->variante->producto;
+                $items[] = [
+                    'title'       => $producto->nombre_producto . ' (' . $detalle->variante->color . ' - Talla ' . $detalle->variante->talla . ')',
+                    'quantity'    => (int) $detalle->cantidad,
+                    'unit_price'  => (float) $detalle->precio_unitario,
+                    'currency_id' => 'PEN',
+                ];
             }
 
-            $carrito->detalles()->delete();
+            if ($costoEnvio > 0) {
+                $items[] = [
+                    'title'       => 'Costo de envío',
+                    'quantity'    => 1,
+                    'unit_price'  => (float) $costoEnvio,
+                    'currency_id' => 'PEN',
+                ];
+            }
 
-            DB::commit();
+            if ($montoDescuento > 0) {
+                $items[] = [
+                    'title'       => 'Descuento (' . ($pedido->cupon?->codigo_cupon ?? $codigoCuponNormalizado) . ')',
+                    'quantity'    => 1,
+                    'unit_price'  => -1 * (float) $montoDescuento,
+                    'currency_id' => 'PEN',
+                ];
+            }
+
+            MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
+            $client = new PreferenceClient();
+
+            $preference = $client->create([
+                'items' => $items,
+                'payer' => [
+                    'name'  => $usuario->nombres,
+                    'email' => $usuario->correo,
+                ],
+                // 🟢 Rutas PÚBLICAS específicas para móvil (el WebView no
+                // comparte la sesión web con cookies). Verifican el pago
+                // directamente contra la API de Mercado Pago, no confían
+                // en nada que venga del cliente.
+                'back_urls' => [
+                    'success' => route('api.pago.movil.exito'),
+                    'failure' => route('api.pago.movil.fallo'),
+                    'pending' => route('api.pago.movil.pendiente'),
+                ],
+                'auto_return'        => 'approved',
+                'external_reference' => (string) $pedido->id_pedido,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pedido realizado con éxito.',
                 'data' => [
-                    'id_pedido' => $pedido->id_pedido,
-                    'numero_pedido' => $pedido->numero_pedido,
-                    'subtotal' => $subtotal,
-                    'costo_envio' => $costoEnvio,
-                    'nombre_agencia' => $nombreAgencia,
-                    'direccion_agencia' => $direccionAgencia,
-                    'tiempo_estimado' => $tiempoEstimado,
-                    // 🟢 NUEVO: info del cupón aplicado, si hubo
-                    'codigo_cupon' => $codigoCuponNormalizado,
+                    'id_pedido'       => $pedido->id_pedido,
+                    'numero_pedido'   => $pedido->numero_pedido,
+                    'subtotal'        => $subtotal,
+                    'costo_envio'     => $costoEnvio,
                     'monto_descuento' => $montoDescuento,
-                    'total_pedido' => $pedido->total_pedido,
-                    'estado_pedido' => $pedido->estado_pedido,
+                    'codigo_cupon'    => $codigoCuponNormalizado,
+                    'total_pedido'    => $total,
+                    'init_point'      => $preference->init_point,
                 ],
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
+            \Log::error('Error creando preferencia MercadoPago (móvil)', [
+                'mensaje'   => $e->getMessage(),
+                'respuesta' => $e->getApiResponse()->getContent(),
+            ]);
 
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo iniciar el pago. Intenta nuevamente.',
+            ], 500);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -210,8 +279,7 @@ class CheckoutApiController extends Controller
     }
 
     /**
-     * Calcular costo de envío sin crear pedido
-     * Útil para mostrar al usuario antes de confirmar
+     * Calcular costo de envío sin crear pedido (sin cambios respecto a antes)
      */
     public function calcularEnvio(Request $request)
     {
@@ -221,7 +289,6 @@ class CheckoutApiController extends Controller
 
         $usuario = Auth::user();
 
-        // Obtener carrito del usuario
         $carrito = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', $usuario->id_usuario)
             ->first();
@@ -233,7 +300,6 @@ class CheckoutApiController extends Controller
             ], 422);
         }
 
-        // Calcular subtotal
         $subtotal = 0;
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
@@ -241,7 +307,6 @@ class CheckoutApiController extends Controller
             $subtotal += $precio * $detalle->cantidad;
         }
 
-        // Buscar agencia en el distrito
         $agencia = Agencia::where('id_distrito', $request->id_distrito)
             ->where('estado', 1)
             ->first();
@@ -271,10 +336,6 @@ class CheckoutApiController extends Controller
         ]);
     }
 
-    /**
-     * Generar número de pedido único
-     * Formato: CLK-YYYYMMDD-XXX
-     */
     private function generarNumeroPedido(): string
     {
         $fecha       = now()->format('Ymd');

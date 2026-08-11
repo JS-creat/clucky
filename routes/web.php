@@ -76,9 +76,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
     Route::get('/pago/fallo',     [PagoController::class, 'fallo'])->name('pago.fallo');
     Route::get('/pago/pendiente', [PagoController::class, 'pendiente'])->name('pago.pendiente');
-    Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
-    ->name('webhooks.mercadopago');
 });
+
+//webhook
+Route::post('/webhooks/mercadopago', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('webhooks.mercadopago');
 
 // ── ADMINISTRADOR
 
