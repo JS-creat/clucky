@@ -194,7 +194,7 @@ class CheckoutApiController extends Controller
             });
 
             // Armar ítems para Mercado Pago (mismo formato que la web)
-            $pedido->load('detalles.variante.producto', 'cupon');
+            $pedido->load('detalles.variante.producto');
             $items = [];
 
             foreach ($pedido->detalles as $detalle) {
@@ -218,7 +218,7 @@ class CheckoutApiController extends Controller
 
             if ($montoDescuento > 0) {
                 $items[] = [
-                    'title'       => 'Descuento (' . ($pedido->cupon?->codigo_cupon ?? $codigoCuponNormalizado) . ')',
+                    'title'       => 'Descuento (' . ($cupon?->codigo_cupon ?? $codigoCuponNormalizado) . ')',
                     'quantity'    => 1,
                     'unit_price'  => -1 * (float) $montoDescuento,
                     'currency_id' => 'PEN',
