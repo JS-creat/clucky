@@ -13,6 +13,7 @@ use App\Models\Genero;
 use App\Models\Categoria;
 use Illuminate\Support\Facades\File;
 use App\Services\PusherBeamsService;
+use Illuminate\Support\Str;
 
 class ProductoController extends Controller
 {
@@ -47,11 +48,15 @@ class ProductoController extends Controller
         $request->validate([
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
-            'imagen' => 'required|image|mimes:jpg,jpeg,png,webp',
+            'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
+            'imagen' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'galeria.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'id_genero' => 'nullable|exists:genero,id_genero',
+            'id_categoria' => 'nullable|exists:categoria,id_categoria',
             'variantes' => 'required|array|min:1',
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
-            'variantes.*.sku' => 'nullable|string|max:50|distinct|unique:producto_variante,sku',
+            'variantes.*.sku' => 'nullable|string|max:50',
         ]);
 
         $combinaciones = collect($request->variantes)->map(function ($v) {
@@ -88,11 +93,18 @@ class ProductoController extends Controller
         }
 
         foreach ($request->variantes as $v) {
+            $skuFinal = !empty($v['sku']) ? $v['sku'] : 'PROD-' . strtoupper(Str::random(6));
+
+            // Garantizar SKU único
+            while (ProductoVariante::where('sku', $skuFinal)->exists()) {
+                $skuFinal = 'PROD-' . strtoupper(Str::random(6));
+            }
+
             $variante = $producto->variantes()->create([
                 'talla' => $v['talla'],
                 'color' => $v['color'] ?? null,
                 'stock' => $v['stock'],
-                'sku' => $v['sku'] ?? strtoupper(substr($producto->nombre_producto, 0, 3)) . '-' . uniqid(),
+                'sku' => $skuFinal,
             ]);
 
             if ($v['stock'] > 0) {
@@ -112,7 +124,6 @@ class ProductoController extends Controller
                 $categoriaNombre
             );
         } catch (\Exception $e) {
-            // Silencioso - no interrumpimos el flujo
         }
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto creado exitosamente.');
@@ -121,7 +132,6 @@ class ProductoController extends Controller
     public function edit($id)
     {
         $producto = Producto::with('variantes')->findOrFail($id);
-
         $generos = Genero::all();
         $categorias = Categoria::all();
 
@@ -141,24 +151,17 @@ class ProductoController extends Controller
             'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'galeria.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'id_genero' => 'nullable|exists:genero,id_genero',
+            'id_categoria' => 'nullable|exists:categoria,id_categoria',
             'variantes' => 'required|array|min:1',
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
-            'variantes.*.sku' => 'required|string|max:50|distinct',
+            'variantes.*.sku' => 'nullable|string|max:50',
         ]);
 
         $combinaciones = collect($request->variantes)->map(fn($v) => strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? '')));
         if ($combinaciones->duplicates()->isNotEmpty()) {
             return back()->withErrors(['variantes' => 'Hay combinaciones de Talla y Color duplicadas.'])->withInput();
-        }
-
-        foreach ($request->variantes as $index => $v) {
-            $exists = ProductoVariante::where('sku', $v['sku'])
-                ->where('id_producto', '!=', $producto->id_producto)
-                ->exists();
-            if ($exists) {
-                return back()->withErrors(["variantes.$index.sku" => "El SKU '{$v['sku']}' ya está en uso."])->withInput();
-            }
         }
 
         $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_genero', 'id_categoria']);
@@ -194,18 +197,19 @@ class ProductoController extends Controller
                 $stockAnterior = $existente?->stock;
             }
 
+            $skuFinal = !empty($v['sku']) ? $v['sku'] : 'PROD-' . strtoupper(Str::random(6));
+
             $variante = $producto->variantes()->updateOrCreate(
                 ['id_variante' => $v['id_variante'] ?? null],
                 [
                     'talla' => $v['talla'],
                     'color' => $v['color'] ?? null,
                     'stock' => $v['stock'],
-                    'sku'   => $v['sku'],
+                    'sku'   => $skuFinal,
                 ]
             );
 
             if ($stockAnterior === null) {
-                // Es una variante nueva, agregada durante la edición
                 if ($v['stock'] > 0) {
                     $variante->movimientos()->create([
                         'tipo' => 'entrada',
@@ -215,7 +219,6 @@ class ProductoController extends Controller
                     ]);
                 }
             } else {
-                // Es una variante existente, revisamos si el stock cambió
                 $diferencia = $v['stock'] - $stockAnterior;
 
                 if ($diferencia !== 0) {
@@ -247,7 +250,6 @@ class ProductoController extends Controller
                 } catch (\Exception $e) {
                 }
 
-                // Enviar correo a todos los usuarios
                 $usuarios = User::whereNotNull('email_verified_at')->get();
 
                 foreach ($usuarios as $usuario) {
@@ -290,6 +292,8 @@ class ProductoController extends Controller
 
     private function actualizarEstadoCategoria($id_categoria)
     {
+        if (!$id_categoria) return;
+        
         $categoria = Categoria::find($id_categoria);
         if ($categoria) {
             $tieneStock = $categoria->productos()

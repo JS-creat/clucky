@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
 @section('content')
-    <div x-data="editProductoForm(@js(old('variantes') ?? $producto->variantes ?? []))">
+    <div x-data="editProductoForm(@js(old('variantes') ?? $producto->variantes ?? []), '{{ $producto->id_producto }}')">
 
         {{-- Header --}}
         <div class="flex items-center gap-4 mb-12">
@@ -16,7 +16,7 @@
 
         {{-- Errores de Validación --}}
         @if ($errors->any())
-            <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start animate-pulse">
+            <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start">
                 <x-heroicon-s-x-circle class="w-6 h-6 text-rose-500 flex-shrink-0" />
                 <div>
                     <h3 class="font-bold text-rose-800 text-sm">Hay errores que debes corregir:</h3>
@@ -49,27 +49,65 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nombre</label>
-                            <input name="nombre_producto" value="{{ old('nombre_producto', $producto->nombre_producto) }}"
-                                required
+                            <input name="nombre_producto" value="{{ old('nombre_producto', $producto->nombre_producto) }}" required
                                 class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Marca</label>
                             <input name="marca" value="{{ old('marca', $producto->marca) }}"
                                 class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio (S/)</label>
-                            <input name="precio" type="number" step="0.01" value="{{ old('precio', $producto->precio) }}"
-                                required
+                            <input name="precio" type="number" step="0.01" value="{{ old('precio', $producto->precio) }}" required
                                 class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio Oferta</label>
-                            <input name="precio_oferta" type="number" step="0.01"
-                                value="{{ old('precio_oferta', $producto->precio_oferta) }}"
+                            <input name="precio_oferta" type="number" step="0.01" value="{{ old('precio_oferta', $producto->precio_oferta) }}"
                                 class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-rose-500 focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Género</label>
+                            <select name="id_genero" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="">Seleccionar Género</option>
+                                @foreach($generos as $g)
+                                    <option value="{{ $g->id_genero }}" {{ old('id_genero', $producto->id_genero) == $g->id_genero ? 'selected' : '' }}>
+                                        {{ $g->nombre_genero }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Categoría</label>
+                            <select name="id_categoria" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="">Seleccionar Categoría</option>
+                                @foreach($categorias as $c)
+                                    <option value="{{ $c->id_categoria }}" {{ old('id_categoria', $producto->id_categoria) == $c->id_categoria ? 'selected' : '' }}>
+                                        {{ $c->nombre_categoria }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción</label>
+                        <textarea name="descripcion" rows="4"
+                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-medium text-sm focus:ring-2 focus:ring-indigo-500 outline-none">{{ old('descripcion', $producto->descripcion) }}</textarea>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
+                        <select name="estado_producto" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="1" {{ old('estado_producto', $producto->estado_producto) == 1 ? 'selected' : '' }}>Activo</option>
+                            <option value="0" {{ old('estado_producto', $producto->estado_producto) == 0 ? 'selected' : '' }}>Inactivo</option>
+                        </select>
                     </div>
                 </div>
 
@@ -82,40 +120,23 @@
                             </div>
                             <h2 class="text-xl font-bold text-gray-800">Variantes de Stock</h2>
                         </div>
-                        <button type="button" @click="addVariante"
-                            class="flex items-center gap-2 text-xs font-black text-indigo-600 hover:underline">
+                        <button type="button" @click="addVariante" class="flex items-center gap-2 text-xs font-black text-indigo-600 hover:underline">
                             <x-heroicon-o-plus-circle class="w-5 h-5" />
                             Añadir Variante
                         </button>
                     </div>
 
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
-                        <select name="estado_producto"
-                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-
-                            <option value="1" {{ $producto->estado_producto ? 'selected' : '' }}>
-                                Activo
-                            </option>
-
-                            <option value="0" {{ !$producto->estado_producto ? 'selected' : '' }}>
-                                Inactivo
-                            </option>
-                        </select>
-                    </div>
-
                     <div class="space-y-4">
                         <template x-for="(variante, index) in variantes" :key="variante.uid">
-                            <div class="relative grid grid-cols-1 md:grid-cols-5 gap-3 p-5 rounded-3xl transition-all border-2"
+                            <div class="relative grid grid-cols-1 md:grid-cols-4 gap-3 p-5 rounded-3xl transition-all border-2"
                                 :class="isDuplicated(index) ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-transparent'">
 
-                                <input type="hidden" :name="`variantes[${index}][id_variante]`"
-                                    x-model="variante.id_variante">
+                                <input type="hidden" :name="`variantes[${index}][id_variante]`" x-model="variante.id_variante">
+                                <input type="hidden" :name="`variantes[${index}][sku]`" x-model="variante.sku">
 
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Talla</label>
-                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla"
-                                        required
+                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla" required
                                         class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
                                         :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
                                 </div>
@@ -129,17 +150,8 @@
 
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Stock</label>
-                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock"
-                                        required
-                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm"
-                                        min="0">
-                                </div>
-
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">SKU</label>
-                                    <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku" required
-                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-[10px] shadow-sm outline-none"
-                                        :class="isDuplicated(index) ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-transparent focus:border-indigo-500 bg-white'">
+                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock" required min="0"
+                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm">
                                 </div>
 
                                 <div class="flex items-center justify-center pt-5">
@@ -150,8 +162,7 @@
                                 </div>
 
                                 <template x-if="isDuplicated(index)">
-                                    <div
-                                        class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
+                                    <div class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
                                         <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
                                         <span>Talla y Color repetidos</span>
                                     </div>
@@ -167,85 +178,68 @@
                 {{-- Imagen Principal --}}
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
                     <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Imagen Principal</label>
-                    <div
-                        class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
-
+                    <div class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
                         <template x-if="imgPrincipalPreview">
                             <img :src="imgPrincipalPreview" class="w-full h-full object-cover">
                         </template>
-
                         <template x-if="!imgPrincipalPreview">
                             @if($producto->imagen)
-                                <img src="{{ asset('productos/' . $producto->imagen) }}"
-                                    class="w-full h-full object-cover group-hover:opacity-50 transition-all">
+                                <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-cover group-hover:opacity-50 transition-all">
                             @endif
                         </template>
-
-                        <div
-                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
                             <x-heroicon-o-camera class="w-10 h-10 text-white" />
                         </div>
-
-                        <input type="file" name="imagen" @change="previewPrincipal"
-                            class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <input type="file" name="imagen" @change="previewPrincipal" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
                     </div>
-                    <p class="text-[9px] text-gray-400 text-center font-bold uppercase">Click para cambiar imagen</p>
                 </div>
 
-                {{-- Galería de Imágenes --}}
+                {{-- Galería con Fotos Existentes y Nuevas Previsualizaciones --}}
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
                     <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Galería</label>
-
-                    <div class="grid grid-cols-3 gap-2">
-
-                        {{-- Fotos actuales en la DB --}}
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        {{-- Imágenes que ya existen en el producto --}}
                         @forelse($producto->galeria ?? [] as $img)
-                            <div class="relative aspect-square rounded-xl overflow-hidden group border border-gray-50">
+                            <div class="relative aspect-square rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
                                 <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
-                                <label
-                                    class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center">
+                                <label class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center p-1">
                                     <input type="checkbox" name="galeria_eliminar[]" value="{{ $img }}" class="hidden peer">
                                     <x-heroicon-o-trash class="w-5 h-5 mb-1" />
-                                    <span class="text-[7px] font-black uppercase peer-checked:hidden">Eliminar</span>
-                                    <span class="hidden peer-checked:block text-[7px] font-black uppercase">¡Marcado!</span>
+                                    <span class="text-[8px] font-black uppercase peer-checked:hidden">Eliminar</span>
+                                    <span class="hidden peer-checked:block text-[8px] font-black uppercase">¡Marcado!</span>
                                 </label>
                             </div>
                         @empty
-                            <div class="col-span-3 py-6 border-2 border-dashed border-gray-200 rounded-2xl text-center">
-                                <span class="text-[9px] font-bold text-gray-300 uppercase">Sin fotos previas</span>
-                            </div>
                         @endforelse
 
-                        {{-- Previa Nuevas Fotos --}}
-                        <template x-for="url in galeriaPreviews">
-                            <div class="relative aspect-square rounded-xl overflow-hidden border-2 border-indigo-500">
-                                <img :src="url" class="w-full h-full object-cover">
-                                <div class="absolute top-1 right-1">
-                                    <span class="bg-indigo-600 text-white text-[7px] px-1 rounded font-bold">NUEVA</span>
-                                </div>
+                        {{-- Nuevas fotos agregadas dinámicamente --}}
+                        <template x-for="(item, index) in galeriaFiles" :key="item.id">
+                            <div class="relative aspect-square rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-sm">
+                                <img :src="item.url" class="w-full h-full object-cover">
+                                <button type="button" @click="removeGaleriaFile(index)"
+                                    class="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-80 hover:opacity-100 transition-all shadow-md">
+                                    <x-heroicon-o-x-mark class="w-4 h-4" />
+                                </button>
                             </div>
                         </template>
                     </div>
 
-                    {{-- Input para añadir más --}}
-                    <div
-                        class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all text-center">
+                    {{-- Añadir más fotos --}}
+                    <div class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 transition-all text-center">
                         <x-heroicon-o-plus class="w-6 h-6 text-gray-400 mx-auto mb-1" />
                         <span class="text-[10px] font-black text-gray-400 uppercase">Añadir nuevas fotos</span>
-                        <input type="file" name="galeria[]" multiple @change="previewGaleria"
-                            class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <input type="file" x-ref="galeriaInput" multiple @change="addGaleriaFiles" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
                     </div>
                 </div>
 
-                {{-- Botones de Accion --}}
                 <div class="flex flex-col gap-4">
                     <button type="submit" :disabled="hasErrors()"
                         :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
                         class="w-full py-5 text-white font-black rounded-3xl shadow-xl transition-all active:scale-95">
                         <span x-text="hasErrors() ? 'Corrige los errores' : 'Guardar Cambios'"></span>
                     </button>
-                    <a href="{{ route('admin.productos.index') }}"
-                        class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition-all">
+                    <a href="{{ route('admin.productos.index') }}" class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition-all">
                         Descartar Cambios
                     </a>
                 </div>
@@ -253,11 +247,11 @@
         </form>
 
         <script>
-            function editProductoForm(initialVariantes = []) {
+            function editProductoForm(initialVariantes = [], productoId = '') {
                 return {
                     variantes: [],
                     imgPrincipalPreview: null,
-                    galeriaPreviews: [],
+                    galeriaFiles: [],
 
                     init() {
                         if (Array.isArray(initialVariantes) && initialVariantes.length > 0) {
@@ -267,32 +261,50 @@
                                 talla: v.talla ?? '',
                                 color: v.color ?? '',
                                 stock: v.stock ?? 0,
-                                sku: v.sku ?? ''
+                                sku: v.sku && v.sku.trim() !== '' ? v.sku : this.generarSkuCorto(productoId)
                             }));
                         } else {
                             this.addVariante();
                         }
                     },
-
-                    // funcion para ver la imagen principal antes de subirla
-
+                    generarSkuCorto(id = '') {
+                        const idProd = id ? id : 'NEW';
+                        const randomHash = Math.random().toString(36).substring(2, 6).toUpperCase();
+                        return `PROD-${idProd}-${randomHash}`;
+                    },
                     previewPrincipal(event) {
                         const file = event.target.files[0];
                         if (file) this.imgPrincipalPreview = URL.createObjectURL(file);
                     },
-
-
-                    // función para ver las fotos nuevas de la galeria
-
-                    previewGaleria(event) {
-                        const files = event.target.files;
-                        this.galeriaPreviews = [];
-                        Array.from(files).forEach(file => {
-                            this.galeriaPreviews.push(URL.createObjectURL(file));
+                    addGaleriaFiles(event) {
+                        const files = Array.from(event.target.files);
+                        files.forEach(file => {
+                            this.galeriaFiles.push({
+                                id: crypto.randomUUID(),
+                                file: file,
+                                url: URL.createObjectURL(file)
+                            });
                         });
+                        this.syncGaleriaInput();
+                    },
+                    removeGaleriaFile(index) {
+                        this.galeriaFiles.splice(index, 1);
+                        this.syncGaleriaInput();
+                    },
+                    syncGaleriaInput() {
+                        const dt = new DataTransfer();
+                        this.galeriaFiles.forEach(item => dt.items.add(item.file));
+                        this.$refs.galeriaInput.files = dt.files;
                     },
                     addVariante() {
-                        this.variantes.push({ uid: crypto.randomUUID(), id_variante: null, talla: '', color: '', stock: 0, sku: '' });
+                        this.variantes.push({
+                            uid: crypto.randomUUID(),
+                            id_variante: null,
+                            talla: '',
+                            color: '',
+                            stock: 0,
+                            sku: this.generarSkuCorto(productoId)
+                        });
                     },
                     removeVariante(index) {
                         if (this.variantes.length > 1) this.variantes.splice(index, 1);
