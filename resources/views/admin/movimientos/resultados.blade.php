@@ -1,4 +1,4 @@
-{{-- Tabla (desktop) --}}
+{{-- Tabla para Pantallas Grandes (Desktop) --}}
 <div class="hidden md:block bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -64,7 +64,7 @@
     </div>
 </div>
 
-{{-- Tarjetas (mobile) --}}
+{{-- Vista en Tarjetas para Móviles --}}
 <div class="md:hidden space-y-3">
     @forelse($movimientos as $mov)
         <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
