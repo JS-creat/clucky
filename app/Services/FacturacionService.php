@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Pedido;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -40,6 +41,7 @@ class FacturacionService
                 'data'    => $response->json(),
             ];
         } catch (\Exception $e) {
+            Log::error('Error enviando boleta a APIs Perú: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -73,7 +75,13 @@ class FacturacionService
      */
     private function buildPayload($pedido, array $cliente, string $tipoDoc = '03'): array
     {
-        $pedido->loadMissing('detalles');
+        // 🛡️ SOLUCIÓN AL ERROR 500: Si $pedido viene como array u objeto plano, cargamos el modelo Eloquent real
+        if (!$pedido instanceof Pedido) {
+            $idPedido = is_array($pedido) ? ($pedido['id_pedido'] ?? $pedido['id'] ?? null) : ($pedido->id_pedido ?? $pedido->id ?? null);
+            $pedido = Pedido::with('detalles')->findOrFail($idPedido);
+        } else {
+            $pedido->loadMissing('detalles');
+        }
 
         $details = [];
         foreach ($pedido->detalles as $detalle) {
@@ -130,7 +138,7 @@ class FacturacionService
                 'numDoc'    => (string) $cliente['num_doc'],
                 'rznSocial' => (string) $cliente['nombre'],
                 'address'   => [
-                    'direccion' => $pedido->direccion_envio ?? 'LIMA, PERÚ',
+                    'direccion' => $pedido->direccion ?? $agencia?->direccion ?? 'CONCEPCION, JUNIN',
                 ]
             ],
             'company' => [
