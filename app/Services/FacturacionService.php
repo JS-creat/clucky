@@ -99,7 +99,7 @@ class FacturacionService
             return [];
         }
 
-        $pedido->loadMissing('detalles');
+        $pedido->loadMissing('detalles.variante.producto');
 
         $details = [];
         foreach ($pedido->detalles as $detalle) {
@@ -117,7 +117,7 @@ class FacturacionService
             $details[] = [
                 'codProducto'       => (string) ($detalle->id_variante ?? 'PROD1'),
                 'unidad'            => 'NIU',
-                'descripcion'       => 'Producto ID ' . ($detalle->id_variante ?? '1'),
+                'descripcion'       => $detalle->variante?->producto?->nombre ?? ('Producto ID ' . ($detalle->id_variante ?? '1')),
                 'cantidad'          => $cantidad,
                 'mtoValorUnitario'  => $valorUnitario,
                 'mtoPrecioUnitario' => $precioUnitario,

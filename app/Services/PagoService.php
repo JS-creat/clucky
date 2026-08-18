@@ -129,7 +129,7 @@ class PagoService
                 'nombre'   => $usuario?->name ?? trim(($payment->payer->first_name ?? 'CLIENTE') . ' ' . ($payment->payer->last_name ?? 'GENERAL'))
             ];
 
-            $respuestaFactura = $this->facturacionService->emitirBoleta($datosPago, $cliente);
+            $respuestaFactura = $this->facturacionService->emitirBoleta($pedido, $cliente);
 
             if ($respuestaFactura['success']) {
                 $pdfUrl = $respuestaFactura['data']['links']['pdf'] ?? null;
