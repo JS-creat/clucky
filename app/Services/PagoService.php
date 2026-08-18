@@ -6,12 +6,19 @@ use App\Models\Pedido;
 use App\Models\Carrito;
 use App\Models\Cupon;
 use App\Models\ProductoVariante;
+use App\Services\FacturacionService; // 1. IMPORTAR EL SERVICIO
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Payment\PaymentClient;
 
 class PagoService
 {
+    // 2. INYECTAR EL SERVICIO EN EL CONSTRUCTOR
+    public function __construct(
+        protected FacturacionService $facturacionService
+    ) {}
+
     /**
      * Verifica un pago contra Mercado Pago y confirma el pedido si corresponde.
      * La llaman: PagoController (web, cuando el cliente regresa), el
@@ -27,7 +34,7 @@ class PagoService
             return null;
         }
 
-        $pedido = Pedido::with('detalles.variante')->find($payment->external_reference);
+        $pedido = Pedido::with(['detalles.variante', 'usuario'])->find($payment->external_reference);
 
         if (!$pedido) {
             return null;
@@ -76,16 +83,9 @@ class PagoService
                     'estado_pedido' => 'Confirmado',
                 ]);
 
-                // 🟢 NUEVO: registrar el uso del cupón AQUÍ, recién cuando
-                // el pago está confirmado de verdad — no al crear el
-                // pedido. Si el usuario nunca completa el pago, el cupón
-                // nunca se "gasta". El descuento se recalcula sobre el
-                // subtotal real guardado en los detalles del pedido (no
-                // se necesita una columna nueva para guardarlo aparte).
+                // 🟢 Registrar el uso del cupón
                 if ($pedido->id_cupon) {
                     $cupon = Cupon::find($pedido->id_cupon);
-                    // No asumimos que Pedido tenga una relación `usuario()`
-                    // definida; buscamos directo por el ID guardado.
                     $usuarioPedido = \App\Models\User::where('id_usuario', $pedido->id_usuario)->first();
 
                     if ($cupon && $usuarioPedido) {
@@ -110,6 +110,39 @@ class PagoService
             }
 
             throw $e;
+        }
+
+        // 🟢 3. NUEVO: EMISIÓN DE BOLETA ELECTRÓNICA (Fuera de la transacción DB)
+        try {
+            $usuario = \App\Models\User::where('id_usuario', $pedido->id_usuario)->first();
+
+            $datosPago = [
+                'monto'       => $payment->transaction_amount,
+                'descripcion' => 'Pedido #' . $pedido->id_pedido,
+                'producto_id' => 'PEDIDO-' . $pedido->id_pedido,
+            ];
+
+            // Ajusta los campos según la estructura de tu tabla de usuarios/pedidos
+            $cliente = [
+                'tipo_doc' => strlen($usuario?->dni ?? '') === 11 ? '6' : '1', // '6' si es RUC, '1' si es DNI
+                'num_doc'  => $usuario?->dni ?? $payment->payer->identification->number ?? '00000000',
+                'nombre'   => $usuario?->name ?? trim(($payment->payer->first_name ?? 'CLIENTE') . ' ' . ($payment->payer->last_name ?? 'GENERAL'))
+            ];
+
+            $respuestaFactura = $this->facturacionService->emitirBoleta($datosPago, $cliente);
+
+            if ($respuestaFactura['success']) {
+                $pdfUrl = $respuestaFactura['data']['links']['pdf'] ?? null;
+                Log::info("Boleta emitida para el Pedido #{$pedido->id_pedido}. PDF: {$pdfUrl}");
+
+                // Si deseas guardar el PDF en la BD (opcional):
+                // $pedido->update(['pdf_boleta' => $pdfUrl]);
+            } else {
+                Log::error("Error emitiendo boleta para Pedido #{$pedido->id_pedido}", $respuestaFactura);
+            }
+        } catch (\Exception $e) {
+            // Evitamos que una falla en la API de SUNAT/APIs Perú interrumpa la confirmación del pago
+            Log::error("Excepción al emitir comprobante: " . $e->getMessage());
         }
 
         return $pedido->fresh();

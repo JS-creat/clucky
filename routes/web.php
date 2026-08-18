@@ -22,6 +22,8 @@ use App\Http\Controllers\Admin\MovimientoStockController;
 use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\Auth\GoogleController;
 
+use App\Services\PagoService;
+
 // ── PÚBLICAS
 
 Route::get('/', [HomeController::class, 'index'])->name('home');

@@ -6,13 +6,18 @@ use App\Models\Carrito;
 use App\Models\Departamento;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\TipoEntrega;
 use App\Models\TipoDocumento;
 use App\Models\Agencia;
+use App\Services\FacturacionService;
+use App\Mail\BoletaEmail;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 
@@ -35,7 +40,7 @@ class CheckoutController extends Controller
             Session::forget('carrito');
         }
 
-        $carrito        = Carrito::with('detalles.variante.producto')
+        $carrito = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', Auth::id())
             ->first();
 
@@ -53,8 +58,8 @@ class CheckoutController extends Controller
         ));
     }
 
+    // ── Confirmar: Crea o REUTILIZA el pedido y genera preferencia ──────────
 
-    // ── Confirmar: Crea o REUTILIZA el pedido y genera preferencia
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -74,14 +79,14 @@ class CheckoutController extends Controller
             return back()->with('error', 'Tu carrito está vacío.');
         }
 
-        // Validar stock antes de continuar
+        // Validar stock
         foreach ($carrito->detalles as $detalle) {
             if ($detalle->cantidad > $detalle->variante->stock) {
                 return back()->with('error', "El producto {$detalle->variante->producto->nombre_producto} no tiene suficiente stock disponible.");
             }
         }
 
-        // ── Calcular total ──────────────────────────────────────────────────
+        // Calcular total
         $total = 0;
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
@@ -92,8 +97,8 @@ class CheckoutController extends Controller
         $costoEnvio = (float) $request->costo_envio;
         $total     += $costoEnvio;
 
-        // ── Crear o REUTILIZAR pedido en BD ─────────────────────────────────
-        $pedido = null;
+        // Crear o reutilizar pedido en BD
+        $pedido  = null;
         $agencia = null;
 
         if ($request->id_tipo_entrega == 2 && $request->id_agencia) {
@@ -102,44 +107,32 @@ class CheckoutController extends Controller
 
         DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia) {
 
-            // 🌟 1. Buscamos si este cliente ya tiene una orden 'Pendiente' estancada
             $pedidoExistente = Pedido::where('id_usuario', Auth::id())
                 ->where('estado_pedido', 'Pendiente')
                 ->first();
 
+            $datosPedido = [
+                'total_pedido'    => $total,
+                'id_tipo_entrega' => $request->id_tipo_entrega,
+                'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
+                'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
+                'costo_envio'     => $request->costo_envio ?? 0,
+                'nombre_agencia'  => $agencia?->nombre_agencia,
+                'direccion'       => $agencia?->direccion,
+            ];
+
             if ($pedidoExistente) {
-                // 🌟 2. Si ya existía, sobreescribimos sus datos con los nuevos del formulario
-                $pedidoExistente->update([
-                    'total_pedido'    => $total,
-                    'id_tipo_entrega' => $request->id_tipo_entrega,
-                    'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
-                    'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
-                    'costo_envio'     => $request->costo_envio ?? 0,
-                    'nombre_agencia'  => $agencia?->nombre_agencia,
-                    'direccion'       => $agencia?->direccion,
-                ]);
-
-                // Limpiamos los productos viejos que tenía guardados ese pedido
+                $pedidoExistente->update($datosPedido);
                 DetallePedido::where('id_pedido', $pedidoExistente->id_pedido)->delete();
-
                 $pedido = $pedidoExistente;
             } else {
-                // 🌟 3. Si no tenía ningún pedido pendiente, lo creamos desde cero
-                $pedido = Pedido::create([
-                    'numero_pedido'   => $this->generarNumeroPedido(),
-                    'total_pedido'    => $total,
-                    'estado_pedido'   => 'Pendiente',
-                    'id_usuario'      => Auth::id(),
-                    'id_tipo_entrega' => $request->id_tipo_entrega,
-                    'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
-                    'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
-                    'costo_envio'     => $request->costo_envio ?? 0,
-                    'nombre_agencia'  => $agencia?->nombre_agencia,
-                    'direccion'       => $agencia?->direccion,
-                ]);
+                $pedido = Pedido::create(array_merge($datosPedido, [
+                    'numero_pedido' => $this->generarNumeroPedido(),
+                    'estado_pedido' => 'Pendiente',
+                    'id_usuario'    => Auth::id(),
+                ]));
             }
 
-            // 🌟 4. Registramos los productos actuales del carrito (aplica para el nuevo o el reciclado)
             foreach ($carrito->detalles as $detalle) {
                 $producto = $detalle->variante->producto;
                 $precio   = $producto->precio_oferta ?? $producto->precio;
@@ -154,7 +147,7 @@ class CheckoutController extends Controller
             }
         });
 
-        // ── Armar ítems para MP ─────────────────────────────────────────────
+        // Mercado Pago Payload
         $items = [];
         $pedido->load('detalles.variante.producto');
 
@@ -178,8 +171,6 @@ class CheckoutController extends Controller
             ];
         }
 
-        // ── Crear preferencia en MP ─────────────────────────────────────────
-        // Solución al error 500: Cambiado env() por config()
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
         $client = new PreferenceClient();
 
@@ -188,7 +179,7 @@ class CheckoutController extends Controller
                 "items"              => $items,
                 "payer"              => [
                     "name"  => Auth::user()->nombres,
-                    "email" => Auth::user()->correo,
+                    "email" => Auth::user()->correo ?? Auth::user()->email,
                 ],
                 "back_urls"          => [
                     "success" => route('pago.exito'),
@@ -199,16 +190,95 @@ class CheckoutController extends Controller
                 "external_reference" => (string) $pedido->id_pedido,
             ]);
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
-            \Log::error('Error creando preferencia MercadoPago', [
+            Log::error('Error creando preferencia MercadoPago', [
                 'mensaje'   => $e->getMessage(),
                 'respuesta' => $e->getApiResponse()->getContent(),
             ]);
 
             return back()->with('error', 'No se pudo iniciar el pago. Intenta nuevamente.');
         }
+
         return redirect($preference->init_point);
     }
 
+    // ── Pago Exitoso: Procesa boleta SUNAT y correo ──────────────────────────
+
+    public function pagoExito(Request $request, FacturacionService $facturacion)
+    {
+        $idPedido = $request->query('external_reference');
+        $pedido   = Pedido::with('detalles.variante.producto', 'usuario')->findOrFail($idPedido);
+
+        if ($pedido->estado_pedido !== 'Pagado') {
+            // 1. Cambiar estado y limpiar carrito
+            $pedido->update(['estado_pedido' => 'Pagado']);
+            Carrito::where('id_usuario', $pedido->id_usuario)->delete();
+
+            // 2. Preparar cliente para SUNAT
+            $usuario = $pedido->usuario ?? Auth::user();
+            $clienteData = [
+                'tipo_doc' => '1',
+                'num_doc'  => $usuario->dni ?? '00000000',
+                'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
+            ];
+
+            // 3. Emitir comprobante electrónico
+            $resFactura = $facturacion->emitirBoleta($pedido, $clienteData);
+
+            if ($resFactura['success'] && ($resFactura['data']['sunatResponse']['success'] ?? false)) {
+                $data = $resFactura['data'];
+
+                if (!empty($data['sunatResponse']['cdrZip'])) {
+                    Storage::put("comprobantes/CDR-B001-{$pedido->id_pedido}.zip", base64_decode($data['sunatResponse']['cdrZip']));
+                }
+
+                $pedido->update([
+                    'serie_boleta'       => 'B001',
+                    'correlativo_boleta' => $pedido->id_pedido,
+                ]);
+
+                // 4. Obtener PDF y enviar correo de forma segura
+                $correoDestino = $usuario->correo ?? $usuario->email ?? null;
+
+                if ($correoDestino) {
+                    $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
+
+                    if ($pdfContent) {
+                        try {
+                            Mail::to($correoDestino)->send(new BoletaEmail($pedido, $pdfContent));
+                        } catch (\Throwable $e) {
+                            Log::error("Error enviando correo de boleta pedido #{$pedido->id_pedido}: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        }
+
+        return view('carrito.exito', compact('pedido'));
+    }
+
+    // ── Descargar / Ver Boleta en PDF ────────────────────────────────────────
+
+    public function verBoleta($idPedido, FacturacionService $facturacion)
+    {
+        $pedido  = Pedido::with(['detalles.variante.producto', 'usuario'])->findOrFail($idPedido);
+        $usuario = $pedido->usuario ?? Auth::user();
+
+        $clienteData = [
+            'tipo_doc' => '1',
+            'num_doc'  => $usuario->dni ?? '00000000',
+            'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
+        ];
+
+        $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
+
+        if ($pdfContent) {
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="Boleta-B001-' . $pedido->id_pedido . '.pdf"');
+        }
+
+        return back()->with('error', 'No se pudo cargar el PDF de la boleta.');
+    }
 
     // ── Helper ───────────────────────────────────────────────────────────────
 
