@@ -24,7 +24,7 @@ class FacturacionService
     {
         $payload = $this->buildPayload($pedido, $cliente, '03');
 
-        if (empty($payload['details'])) {
+        if (empty($payload) || empty($payload['details'])) {
             return [
                 'success' => false,
                 'error'   => 'No se estructuraron detalles válidos para la boleta.'
@@ -54,6 +54,10 @@ class FacturacionService
         try {
             $payload = $this->buildPayload($pedido, $cliente, $tipoDoc);
 
+            if (empty($payload)) {
+                return null;
+            }
+
             $response = Http::withToken($this->token)
                 ->asJson()
                 ->post("{$this->apiUrl}/invoice/pdf", $payload);
@@ -73,15 +77,29 @@ class FacturacionService
     /**
      * Construye la estructura JSON unificada requerida por APIs Perú
      */
-    private function buildPayload($pedido, array $cliente, string $tipoDoc = '03'): array
+    private function buildPayload($pedidoInput, array $cliente, string $tipoDoc = '03'): array
     {
-        // 🛡️ SOLUCIÓN AL ERROR 500: Si $pedido viene como array u objeto plano, cargamos el modelo Eloquent real
-        if (!$pedido instanceof Pedido) {
-            $idPedido = is_array($pedido) ? ($pedido['id_pedido'] ?? $pedido['id'] ?? null) : ($pedido->id_pedido ?? $pedido->id ?? null);
-            $pedido = Pedido::with('detalles')->findOrFail($idPedido);
+        $pedido = null;
+
+        // Validar y resolver el modelo Pedido
+        if ($pedidoInput instanceof Pedido) {
+            $pedido = $pedidoInput;
         } else {
-            $pedido->loadMissing('detalles');
+            $idPedido = is_array($pedidoInput) 
+                ? ($pedidoInput['id_pedido'] ?? $pedidoInput['id'] ?? null) 
+                : ($pedidoInput->id_pedido ?? $pedidoInput->id ?? (is_scalar($pedidoInput) ? $pedidoInput : null));
+
+            if (!empty($idPedido)) {
+                $pedido = Pedido::find($idPedido);
+            }
         }
+
+        if (!$pedido) {
+            Log::error('FacturacionService: No se pudo resolver el registro del Pedido.', ['input' => $pedidoInput]);
+            return [];
+        }
+
+        $pedido->loadMissing('detalles');
 
         $details = [];
         foreach ($pedido->detalles as $detalle) {
@@ -135,10 +153,10 @@ class FacturacionService
             'tipoMoneda'    => 'PEN',
             'client' => [
                 'tipoDoc'   => (string) ($cliente['tipo_doc'] ?? '1'),
-                'numDoc'    => (string) $cliente['num_doc'],
-                'rznSocial' => (string) $cliente['nombre'],
+                'numDoc'    => (string) ($cliente['num_doc'] ?? '00000000'),
+                'rznSocial' => (string) ($cliente['nombre'] ?? 'CLIENTE GENERAL'),
                 'address'   => [
-                    'direccion' => $pedido->direccion ?? $agencia?->direccion ?? 'CONCEPCION, JUNIN',
+                    'direccion' => $pedido->direccion_envio ?? $pedido->direccion ?? 'CONCEPCION, JUNIN',
                 ]
             ],
             'company' => [
