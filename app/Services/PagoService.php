@@ -6,15 +6,16 @@ use App\Models\Pedido;
 use App\Models\Carrito;
 use App\Models\Cupon;
 use App\Models\ProductoVariante;
-use App\Services\FacturacionService; // 1. IMPORTAR EL SERVICIO
+use App\Services\FacturacionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BoletaEmail;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Payment\PaymentClient;
 
 class PagoService
 {
-    // 2. INYECTAR EL SERVICIO EN EL CONSTRUCTOR
     public function __construct(
         protected FacturacionService $facturacionService
     ) {}
@@ -112,37 +113,41 @@ class PagoService
             throw $e;
         }
 
-        // 🟢 3. NUEVO: EMISIÓN DE BOLETA ELECTRÓNICA (Fuera de la transacción DB)
+        // 🟢 3. EMISIÓN DE BOLETA ELECTRÓNICA + ENVÍO DE CORREO (Fuera de la transacción DB)
         try {
             $usuario = \App\Models\User::where('id_usuario', $pedido->id_usuario)->first();
 
-            $datosPago = [
-                'monto'       => $payment->transaction_amount,
-                'descripcion' => 'Pedido #' . $pedido->id_pedido,
-                'producto_id' => 'PEDIDO-' . $pedido->id_pedido,
-            ];
-
-            // Ajusta los campos según la estructura de tu tabla de usuarios/pedidos
             $cliente = [
                 'tipo_doc' => strlen($usuario?->dni ?? '') === 11 ? '6' : '1', // '6' si es RUC, '1' si es DNI
                 'num_doc'  => $usuario?->dni ?? $payment->payer->identification->number ?? '00000000',
                 'nombre'   => $usuario?->name ?? trim(($payment->payer->first_name ?? 'CLIENTE') . ' ' . ($payment->payer->last_name ?? 'GENERAL'))
             ];
 
+            // Emitimos la boleta ante SUNAT (registro/validación)
             $respuestaFactura = $this->facturacionService->emitirBoleta($pedido, $cliente);
 
             if ($respuestaFactura['success']) {
-                $pdfUrl = $respuestaFactura['data']['links']['pdf'] ?? null;
-                Log::info("Boleta emitida para el Pedido #{$pedido->id_pedido}. PDF: {$pdfUrl}");
+                Log::info("Boleta emitida para el Pedido #{$pedido->id_pedido}.");
 
-                // Si deseas guardar el PDF en la BD (opcional):
-                // $pedido->update(['pdf_boleta' => $pdfUrl]);
+                // Traemos el binario del PDF directamente desde APIs Perú
+                $pdfBinary = $this->facturacionService->obtenerPdf($pedido, $cliente);
+
+                if ($pdfBinary && $usuario?->correo) {
+                    Mail::to($usuario->correo)
+                        ->send(new BoletaEmail($pedido, $pdfBinary));
+
+                    Log::info("Correo de boleta enviado para el Pedido #{$pedido->id_pedido} a {$usuario->correo}.");
+                } else {
+                    Log::error("No se pudo enviar el correo de boleta para el Pedido #{$pedido->id_pedido}: " .
+                        (!$pdfBinary ? 'PDF vacío. ' : '') .
+                        (!$usuario?->correo ? 'Sin correo de usuario.' : '')
+                    );
+                }
             } else {
                 Log::error("Error emitiendo boleta para Pedido #{$pedido->id_pedido}", $respuestaFactura);
             }
         } catch (\Exception $e) {
-            // Evitamos que una falla en la API de SUNAT/APIs Perú interrumpa la confirmación del pago
-            Log::error("Excepción al emitir comprobante: " . $e->getMessage());
+            Log::error("Excepción al emitir/enviar comprobante: " . $e->getMessage());
         }
 
         return $pedido->fresh();
