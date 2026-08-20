@@ -1,326 +1,472 @@
 @extends('admin.layout')
 
 @section('content')
-    <div x-data="editProductoForm(@js(old('variantes') ?? $producto->variantes ?? []), '{{ $producto->id_producto }}')">
 
-        {{-- Header --}}
-        <div class="flex items-center gap-4 mb-12">
-            <a href="{{ route('admin.productos.index') }}"
-                class="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 transition-all shadow-sm">
-                <x-heroicon-o-arrow-left class="w-6 h-6" />
-            </a>
+<div
+    class="max-w-5xl mx-auto"
+    x-data="agenciaEditor({
+        departamento: @js(old('id_departamento', $departamentoActual?->id_departamento)),
+        provincia: @js(old('id_provincia', $provinciaActual?->id_provincia)),
+        distrito: @js(old('id_distrito', $agencia->id_distrito)),
+        provinciasIniciales: @js($provincias),
+        distritosIniciales: @js($distritos),
+        provinciasUrl: @js(route('admin.api.provincias', ['id' => '__ID__'])),
+        distritosUrl: @js(route('admin.api.distritos', ['id' => '__ID__']))
+    })"
+>
+
+    <div class="mb-8">
+        <a
+            href="{{ route('admin.agencias.index') }}"
+            class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600
+                   hover:text-indigo-800 transition-colors"
+        >
+            <x-heroicon-o-arrow-left class="w-5 h-5" />
+            Volver al listado
+        </a>
+    </div>
+
+    <div class="mb-8">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+            Editar Agencia
+        </h1>
+
+        <p class="text-gray-500 mt-2 text-base sm:text-lg font-medium">
+            Actualiza la información de la agencia y su ubicación.
+        </p>
+    </div>
+
+    <form
+        action="{{ route('admin.agencias.update', $agencia) }}"
+        method="POST"
+        class="bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm"
+    >
+
+        @csrf
+        @method('PUT')
+
+        <div class="space-y-8">
+
             <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Editar Producto</h1>
-            </div>
-        </div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                    Nombre de la agencia
+                </label>
 
-        {{-- Errores de Validación --}}
-        @if ($errors->any())
-            <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start">
-                <x-heroicon-s-x-circle class="w-6 h-6 text-rose-500 flex-shrink-0" />
-                <div>
-                    <h3 class="font-bold text-rose-800 text-sm">Hay errores que debes corregir:</h3>
-                    <ul class="text-rose-600 text-xs mt-1 list-disc pl-4 font-medium">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <input
+                    type="text"
+                    name="nombre_agencia"
+                    value="{{ old('nombre_agencia', $agencia->nombre_agencia) }}"
+                    maxlength="100"
+                    class="w-full px-6 py-5 bg-gray-50 border-2
+                           border-transparent rounded-2xl
+                           focus:bg-white focus:border-indigo-500
+                           focus:ring-4 focus:ring-indigo-100
+                           outline-none text-base sm:text-lg font-bold
+                           transition-all
+                           @error('nombre_agencia') border-rose-400 @enderror"
+                    placeholder="Ej: Shalom - Huancayo"
+                >
+
+                @error('nombre_agencia')
+                    <p class="mt-2 ml-1 text-sm font-semibold text-rose-500">
+                        {{ $message }}
+                    </p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                    Dirección exacta
+                </label>
+
+                <textarea
+                    name="direccion"
+                    rows="3"
+                    class="w-full px-6 py-5 bg-gray-50 border-2
+                           border-transparent rounded-2xl
+                           focus:bg-white focus:border-indigo-500
+                           focus:ring-4 focus:ring-indigo-100
+                           outline-none text-base sm:text-lg font-bold
+                           transition-all resize-none
+                           @error('direccion') border-rose-400 @enderror"
+                    placeholder="Ej: Av. Ferrocarril 123"
+                >{{ old('direccion', $agencia->direccion) }}</textarea>
+
+                @error('direccion')
+                    <p class="mt-2 ml-1 text-sm font-semibold text-rose-500">
+                        {{ $message }}
+                    </p>
+                @enderror
+            </div>
+
+            <div>
+
+                <div class="mb-5">
+                    <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest">
+                        Ubicación
+                    </h2>
+
+                    <p class="text-sm text-gray-400 mt-1">
+                        Selecciona el departamento, provincia y distrito.
+                    </p>
                 </div>
-            </div>
-        @endif
 
-        <form action="{{ route('admin.productos.update', $producto->id_producto) }}" method="POST"
-            enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            @csrf
-            @method('PUT')
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-            {{-- COLUMNA IZQUIERDA --}}
-            <div class="lg:col-span-2 space-y-8">
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                            Departamento
+                        </label>
 
-                {{-- Card de Información General --}}
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                            <x-heroicon-o-pencil-square class="w-5 h-5" />
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">Información del Producto</h2>
-                    </div>
+                        <select
+                            x-model="departamento"
+                            @change="cargarProvincias()"
+                            class="w-full px-5 py-4 bg-gray-50 border-2
+                                   border-transparent rounded-2xl
+                                   focus:bg-white focus:border-indigo-500
+                                   focus:ring-4 focus:ring-indigo-100
+                                   outline-none font-bold text-gray-700
+                                   transition-all"
+                        >
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nombre</label>
-                            <input name="nombre_producto" value="{{ old('nombre_producto', $producto->nombre_producto) }}" required
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
+                            <option value="">
+                                Seleccionar...
+                            </option>
 
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Marca</label>
-                            <input name="marca" value="{{ old('marca', $producto->marca) }}"
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
+                            @foreach($departamentos as $departamento)
 
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio (S/)</label>
-                            <input name="precio" type="number" step="0.01" value="{{ old('precio', $producto->precio) }}" required
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
+                                <option value="{{ $departamento->id_departamento }}">
+                                    {{ $departamento->nombre_departamento }}
+                                </option>
 
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio Oferta</label>
-                            <input name="precio_oferta" type="number" step="0.01" value="{{ old('precio_oferta', $producto->precio_oferta) }}"
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-rose-500 focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
+                            @endforeach
 
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Género</label>
-                            <select name="id_genero" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <option value="">Seleccionar Género</option>
-                                @foreach($generos as $g)
-                                    <option value="{{ $g->id_genero }}" {{ old('id_genero', $producto->id_genero) == $g->id_genero ? 'selected' : '' }}>
-                                        {{ $g->nombre_genero }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Categoría</label>
-                            <select name="id_categoria" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <option value="">Seleccionar Categoría</option>
-                                @foreach($categorias as $c)
-                                    <option value="{{ $c->id_categoria }}" {{ old('id_categoria', $producto->id_categoria) == $c->id_categoria ? 'selected' : '' }}>
-                                        {{ $c->nombre_categoria }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción</label>
-                        <textarea name="descripcion" rows="4"
-                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-medium text-sm focus:ring-2 focus:ring-indigo-500 outline-none">{{ old('descripcion', $producto->descripcion) }}</textarea>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
-                        <select name="estado_producto" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="1" {{ old('estado_producto', $producto->estado_producto) == 1 ? 'selected' : '' }}>Activo</option>
-                            <option value="0" {{ old('estado_producto', $producto->estado_producto) == 0 ? 'selected' : '' }}>Inactivo</option>
                         </select>
                     </div>
-                </div>
 
-                {{-- Card de Variantes --}}
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
-                                <x-heroicon-o-swatch class="w-5 h-5" />
-                            </div>
-                            <h2 class="text-xl font-bold text-gray-800">Variantes de Stock</h2>
-                        </div>
-                        <button type="button" @click="addVariante" class="flex items-center gap-2 text-xs font-black text-indigo-600 hover:underline">
-                            <x-heroicon-o-plus-circle class="w-5 h-5" />
-                            Añadir Variante
-                        </button>
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                            Provincia
+                        </label>
+
+                        <select
+                            x-model="provincia"
+                            @change="cargarDistritos()"
+                            :disabled="!departamento || cargandoProvincias"
+                            class="w-full px-5 py-4 bg-gray-50 border-2
+                                   border-transparent rounded-2xl
+                                   focus:bg-white focus:border-indigo-500
+                                   focus:ring-4 focus:ring-indigo-100
+                                   outline-none font-bold text-gray-700
+                                   transition-all
+                                   disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+
+                            <option value="">
+                                Seleccionar...
+                            </option>
+
+                            <template x-for="item in provincias" :key="item.id_provincia">
+
+                                <option
+                                    :value="String(item.id_provincia)"
+                                    x-text="item.nombre_provincia"
+                                ></option>
+
+                            </template>
+
+                        </select>
+
+                        <p
+                            x-show="cargandoProvincias"
+                            class="text-xs text-indigo-500 font-semibold mt-2 ml-1"
+                        >
+                            Cargando provincias...
+                        </p>
                     </div>
 
-                    <div class="space-y-4">
-                        <template x-for="(variante, index) in variantes" :key="variante.uid">
-                            <div class="relative grid grid-cols-1 md:grid-cols-4 gap-3 p-5 rounded-3xl transition-all border-2"
-                                :class="isDuplicated(index) ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-transparent'">
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                            Distrito
+                        </label>
 
-                                <input type="hidden" :name="`variantes[${index}][id_variante]`" x-model="variante.id_variante">
-                                <input type="hidden" :name="`variantes[${index}][sku]`" x-model="variante.sku">
+                        <select
+                            name="id_distrito"
+                            x-model="distrito"
+                            :disabled="!provincia || cargandoDistritos"
+                            class="w-full px-5 py-4 bg-gray-50 border-2
+                                   border-transparent rounded-2xl
+                                   focus:bg-white focus:border-indigo-500
+                                   focus:ring-4 focus:ring-indigo-100
+                                   outline-none font-bold text-gray-700
+                                   transition-all
+                                   disabled:opacity-50 disabled:cursor-not-allowed
+                                   @error('id_distrito') border-rose-400 @enderror"
+                        >
 
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Talla</label>
-                                    <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla" required
-                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
-                                        :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
-                                </div>
+                            <option value="">
+                                Seleccionar...
+                            </option>
 
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Color</label>
-                                    <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color"
-                                        class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all"
-                                        :class="isDuplicated(index) ? 'border-rose-300 text-rose-600' : 'border-transparent focus:border-indigo-500 bg-white'">
-                                </div>
+                            <template x-for="item in distritos" :key="item.id_distrito">
 
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Stock</label>
-                                    <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock" required min="0"
-                                        class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm">
-                                </div>
+                                <option
+                                    :value="String(item.id_distrito)"
+                                    x-text="item.nombre_distrito"
+                                ></option>
 
-                                <div class="flex items-center justify-center pt-5">
-                                    <button type="button" @click="removeVariante(index)"
-                                        class="p-3 text-rose-400 hover:text-rose-600 hover:bg-rose-100 rounded-xl transition-all">
-                                        <x-heroicon-o-trash class="w-5 h-5" />
-                                    </button>
-                                </div>
+                            </template>
 
-                                <template x-if="isDuplicated(index)">
-                                    <div class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
-                                        <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
-                                        <span>Talla y Color repetidos</span>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
+                        </select>
+
+                        <p
+                            x-show="cargandoDistritos"
+                            class="text-xs text-indigo-500 font-semibold mt-2 ml-1"
+                        >
+                            Cargando distritos...
+                        </p>
+
+                        @error('id_distrito')
+                            <p class="mt-2 ml-1 text-sm font-semibold text-rose-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
                     </div>
+
                 </div>
+
             </div>
 
-            {{-- COLUMNA DERECHA --}}
-            <div class="space-y-8">
-                {{-- Imagen Principal --}}
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
-                    <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Imagen Principal</label>
-                    <div class="relative group aspect-square rounded-3xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-all">
-                        <template x-if="imgPrincipalPreview">
-                            <img :src="imgPrincipalPreview" class="w-full h-full object-cover">
-                        </template>
-                        <template x-if="!imgPrincipalPreview">
-                            @if($producto->imagen)
-                                <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-cover group-hover:opacity-50 transition-all">
-                            @endif
-                        </template>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20">
-                            <x-heroicon-o-camera class="w-10 h-10 text-white" />
-                        </div>
-                        <input type="file" name="imagen" @change="previewPrincipal" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                        Costo de envío (S/)
+                    </label>
+
+                    <input
+                        type="number"
+                        name="costo_envio"
+                        step="0.01"
+                        min="0"
+                        value="{{ old('costo_envio', number_format($agencia->costo_envio, 2, '.', '')) }}"
+                        class="w-full px-6 py-5 bg-gray-50 border-2
+                               border-transparent rounded-2xl
+                               focus:bg-white focus:border-indigo-500
+                               focus:ring-4 focus:ring-indigo-100
+                               outline-none text-base sm:text-lg font-bold
+                               transition-all
+                               @error('costo_envio') border-rose-400 @enderror"
+                        placeholder="0.00"
+                    >
+
+                    @error('costo_envio')
+                        <p class="mt-2 ml-1 text-sm font-semibold text-rose-500">
+                            {{ $message }}
+                        </p>
+                    @enderror
                 </div>
 
-                {{-- Galería con Fotos Existentes y Nuevas Previsualizaciones --}}
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-                    <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Galería</label>
-                    
-                    <div class="grid grid-cols-3 gap-3">
-                        {{-- Imágenes que ya existen en el producto --}}
-                        @forelse($producto->galeria ?? [] as $img)
-                            <div class="relative aspect-square rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
-                                <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
-                                <label class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center p-1">
-                                    <input type="checkbox" name="galeria_eliminar[]" value="{{ $img }}" class="hidden peer">
-                                    <x-heroicon-o-trash class="w-5 h-5 mb-1" />
-                                    <span class="text-[8px] font-black uppercase peer-checked:hidden">Eliminar</span>
-                                    <span class="hidden peer-checked:block text-[8px] font-black uppercase">¡Marcado!</span>
-                                </label>
-                            </div>
-                        @empty
-                        @endforelse
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                        Estado
+                    </label>
 
-                        {{-- Nuevas fotos agregadas dinámicamente --}}
-                        <template x-for="(item, index) in galeriaFiles" :key="item.id">
-                            <div class="relative aspect-square rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-sm">
-                                <img :src="item.url" class="w-full h-full object-cover">
-                                <button type="button" @click="removeGaleriaFile(index)"
-                                    class="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-80 hover:opacity-100 transition-all shadow-md">
-                                    <x-heroicon-o-x-mark class="w-4 h-4" />
-                                </button>
-                            </div>
-                        </template>
-                    </div>
+                    <select
+                        name="estado"
+                        class="w-full px-6 py-5 bg-gray-50 border-2
+                               border-transparent rounded-2xl
+                               focus:bg-white focus:border-indigo-500
+                               focus:ring-4 focus:ring-indigo-100
+                               outline-none text-base sm:text-lg font-bold
+                               transition-all"
+                    >
 
-                    {{-- Añadir más fotos --}}
-                    <div class="relative w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-indigo-50 transition-all text-center">
-                        <x-heroicon-o-plus class="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                        <span class="text-[10px] font-black text-gray-400 uppercase">Añadir nuevas fotos</span>
-                        <input type="file" x-ref="galeriaInput" multiple @change="addGaleriaFiles" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
-                    </div>
+                        <option
+                            value="1"
+                            {{ old('estado', $agencia->estado) == 1 ? 'selected' : '' }}
+                        >
+                            Activa
+                        </option>
+
+                        <option
+                            value="0"
+                            {{ old('estado', $agencia->estado) == 0 ? 'selected' : '' }}
+                        >
+                            Inactiva
+                        </option>
+
+                    </select>
                 </div>
 
-                <div class="flex flex-col gap-4">
-                    <button type="submit" :disabled="hasErrors()"
-                        :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
-                        class="w-full py-5 text-white font-black rounded-3xl shadow-xl transition-all active:scale-95">
-                        <span x-text="hasErrors() ? 'Corrige los errores' : 'Guardar Cambios'"></span>
-                    </button>
-                    <a href="{{ route('admin.productos.index') }}" class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition-all">
-                        Descartar Cambios
-                    </a>
-                </div>
             </div>
-        </form>
 
-        <script>
-            function editProductoForm(initialVariantes = [], productoId = '') {
-                return {
-                    variantes: [],
-                    imgPrincipalPreview: null,
-                    galeriaFiles: [],
+            @if($errors->any())
 
-                    init() {
-                        if (Array.isArray(initialVariantes) && initialVariantes.length > 0) {
-                            this.variantes = initialVariantes.map(v => ({
-                                uid: crypto.randomUUID(),
-                                id_variante: v.id_variante ?? null,
-                                talla: v.talla ?? '',
-                                color: v.color ?? '',
-                                stock: v.stock ?? 0,
-                                sku: v.sku && v.sku.trim() !== '' ? v.sku : this.generarSkuCorto(productoId)
-                            }));
-                        } else {
-                            this.addVariante();
-                        }
-                    },
-                    generarSkuCorto(id = '') {
-                        const idProd = id ? id : 'NEW';
-                        const randomHash = Math.random().toString(36).substring(2, 6).toUpperCase();
-                        return `PROD-${idProd}-${randomHash}`;
-                    },
-                    previewPrincipal(event) {
-                        const file = event.target.files[0];
-                        if (file) this.imgPrincipalPreview = URL.createObjectURL(file);
-                    },
-                    addGaleriaFiles(event) {
-                        const files = Array.from(event.target.files);
-                        files.forEach(file => {
-                            this.galeriaFiles.push({
-                                id: crypto.randomUUID(),
-                                file: file,
-                                url: URL.createObjectURL(file)
-                            });
-                        });
-                        this.syncGaleriaInput();
-                    },
-                    removeGaleriaFile(index) {
-                        this.galeriaFiles.splice(index, 1);
-                        this.syncGaleriaInput();
-                    },
-                    syncGaleriaInput() {
-                        const dt = new DataTransfer();
-                        this.galeriaFiles.forEach(item => dt.items.add(item.file));
-                        this.$refs.galeriaInput.files = dt.files;
-                    },
-                    addVariante() {
-                        this.variantes.push({
-                            uid: crypto.randomUUID(),
-                            id_variante: null,
-                            talla: '',
-                            color: '',
-                            stock: 0,
-                            sku: this.generarSkuCorto(productoId)
-                        });
-                    },
-                    removeVariante(index) {
-                        if (this.variantes.length > 1) this.variantes.splice(index, 1);
-                    },
-                    isDuplicated(index) {
-                        const current = this.variantes[index];
-                        if (!current.talla.trim()) return false;
-                        return this.variantes.some((v, i) => i !== index &&
-                            v.talla.toLowerCase().trim() === current.talla.toLowerCase().trim() &&
-                            v.color.toLowerCase().trim() === current.color.toLowerCase().trim());
-                    },
-                    hasErrors() {
-                        return this.variantes.some((_, i) => this.isDuplicated(i));
-                    }
-                }
+                <div class="p-5 rounded-2xl bg-rose-50 border border-rose-100">
+
+                    <div class="flex gap-3">
+
+                        <x-heroicon-o-exclamation-circle
+                            class="w-5 h-5 text-rose-500 flex-shrink-0"
+                        />
+
+                        <div>
+
+                            <p class="text-sm font-black text-rose-700">
+                                Revisa los datos ingresados.
+                            </p>
+
+                            <ul class="mt-2 space-y-1">
+                                @foreach($errors->all() as $error)
+                                    <li class="text-sm text-rose-600 font-medium">
+                                        {{ $error }}
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            @endif
+
+        </div>
+
+        <div class="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+
+            <a
+                href="{{ route('admin.agencias.index') }}"
+                class="sm:w-40 inline-flex items-center justify-center
+                       px-7 py-4 bg-gray-100 hover:bg-gray-200
+                       text-gray-600 rounded-2xl font-bold
+                       transition-all"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="flex-1 inline-flex items-center justify-center gap-3
+                       bg-indigo-600 hover:bg-indigo-700
+                       text-white px-7 py-4 rounded-2xl font-black
+                       shadow-lg shadow-indigo-100
+                       transition-all hover:-translate-y-0.5
+                       active:scale-95"
+            >
+                <x-heroicon-o-check class="w-5 h-5" />
+                Guardar cambios
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+function agenciaEditor(config) {
+    return {
+        departamento: String(config.departamento || ''),
+        provincia: String(config.provincia || ''),
+        distrito: String(config.distrito || ''),
+
+        provincias: config.provinciasIniciales || [],
+        distritos: config.distritosIniciales || [],
+
+        provinciasUrl: config.provinciasUrl,
+        distritosUrl: config.distritosUrl,
+
+        cargandoProvincias: false,
+        cargandoDistritos: false,
+
+        async cargarProvincias() {
+
+            this.provincia = '';
+            this.distrito = '';
+            this.provincias = [];
+            this.distritos = [];
+
+            if (!this.departamento) {
+                return;
             }
-        </script>
-    </div>
+
+            this.cargandoProvincias = true;
+
+            try {
+
+                const url = this.provinciasUrl.replace(
+                    '__ID__',
+                    this.departamento
+                );
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar provincias');
+                }
+
+                this.provincias = await response.json();
+
+            } catch (error) {
+
+                console.error(error);
+
+            } finally {
+
+                this.cargandoProvincias = false;
+
+            }
+        },
+
+        async cargarDistritos() {
+
+            this.distrito = '';
+            this.distritos = [];
+
+            if (!this.provincia) {
+                return;
+            }
+
+            this.cargandoDistritos = true;
+
+            try {
+
+                const url = this.distritosUrl.replace(
+                    '__ID__',
+                    this.provincia
+                );
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar distritos');
+                }
+
+                this.distritos = await response.json();
+
+            } catch (error) {
+
+                console.error(error);
+
+            } finally {
+
+                this.cargandoDistritos = false;
+
+            }
+        }
+    }
+}
+</script>
+
 @endsection

@@ -11,12 +11,32 @@ use Illuminate\Http\Request;
 
 class AgenciaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $agencias = Agencia::with(['distrito.provincia.departamento'])
-            ->orderBy('estado', 'desc')
+        $query = Agencia::with([
+            'distrito.provincia.departamento'
+        ]);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre_agencia', 'like', "%{$search}%")
+                    ->orWhere('direccion', 'like', "%{$search}%")
+                    ->orWhereHas('distrito', function ($q) use ($search) {
+                        $q->where('nombre_distrito', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->has('estado') && $request->estado !== '') {
+            $query->where('estado', $request->estado);
+        }
+
+        $agencias = $query
+            ->orderByDesc('estado')
             ->orderBy('nombre_agencia')
-            ->paginate(15);
+            ->paginate(12);
 
         return view('admin.agencias.index', compact('agencias'));
     }
@@ -29,21 +49,18 @@ class AgenciaController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nombre_agencia' => 'required|string|max:100',
             'direccion'      => 'required|string',
             'costo_envio'    => 'required|numeric|min:0',
             'id_distrito'    => 'required|exists:distrito,id_distrito',
-            'estado'         => 'boolean',
+            'estado'         => 'nullable|boolean',
         ]);
 
-        Agencia::create($request->only([
-            'nombre_agencia',
-            'direccion',
-            'costo_envio',
-            'id_distrito',
-            'estado'
-        ]));
+        // Asignar explícitamente el valor booleano del checkbox
+        $validated['estado'] = $request->boolean('estado');
+
+        Agencia::create($validated);
 
         return redirect()->route('admin.agencias.index')
             ->with('success', 'Agencia creada correctamente.');
@@ -53,12 +70,17 @@ class AgenciaController extends Controller
     {
         $departamentos = Departamento::orderBy('nombre_departamento')->get();
 
-        // Pre-cargar provincia y departamento actuales para el select encadenado
-        $provinciaActual   = $agencia->distrito->provincia;
-        $departamentoActual = $provinciaActual->departamento;
+        // Carga segura usando opcional / nullsafe
+        $provinciaActual    = $agencia->distrito?->provincia;
+        $departamentoActual = $provinciaActual?->departamento;
 
-        $provincias = Provincia::where('id_departamento', $departamentoActual->id_departamento)->get();
-        $distritos  = Distrito::where('id_provincia', $provinciaActual->id_provincia)->get();
+        $provincias = $departamentoActual
+            ? Provincia::where('id_departamento', $departamentoActual->id_departamento)->orderBy('nombre_provincia')->get()
+            : collect();
+
+        $distritos  = $provinciaActual
+            ? Distrito::where('id_provincia', $provinciaActual->id_provincia)->orderBy('nombre_distrito')->get()
+            : collect();
 
         return view('admin.agencias.edit', compact(
             'agencia',
@@ -72,21 +94,17 @@ class AgenciaController extends Controller
 
     public function update(Request $request, Agencia $agencia)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nombre_agencia' => 'required|string|max:100',
             'direccion'      => 'required|string',
             'costo_envio'    => 'required|numeric|min:0',
             'id_distrito'    => 'required|exists:distrito,id_distrito',
-            'estado'         => 'boolean',
+            'estado'         => 'nullable|boolean',
         ]);
 
-        $agencia->update($request->only([
-            'nombre_agencia',
-            'direccion',
-            'costo_envio',
-            'id_distrito',
-            'estado'
-        ]));
+        $validated['estado'] = $request->boolean('estado');
+
+        $agencia->update($validated);
 
         return redirect()->route('admin.agencias.index')
             ->with('success', 'Agencia actualizada correctamente.');
@@ -101,16 +119,18 @@ class AgenciaController extends Controller
 
     public function destroy(Agencia $agencia)
     {
-        // Solo desactiva no borra para preservar historial de pedidos
-        $agencia->update(['estado' => 0]);
+        $agencia->update(['estado' => false]);
         return back()->with('success', 'Agencia desactivada del sistema.');
     }
+
+    // --- MÉTODOS PARA API AJAX EN VISTAS ---
 
     public function provincias($id_departamento)
     {
         $provincias = Provincia::where('id_departamento', $id_departamento)
             ->orderBy('nombre_provincia')
             ->get(['id_provincia', 'nombre_provincia']);
+
         return response()->json($provincias);
     }
 
@@ -118,20 +138,7 @@ class AgenciaController extends Controller
     {
         $distritos = Distrito::where('id_provincia', $id_provincia)
             ->orderBy('nombre_distrito')
-            ->with(['agencia' => function ($query) {
-                $query->where('estado', 1)
-                    ->orderBy('id_agencia')
-                    ->limit(1);
-            }])
-            ->get()
-            ->map(function ($distrito) {
-                return [
-                    'id_distrito'     => $distrito->id_distrito,
-                    'nombre_distrito' => $distrito->nombre_distrito,
-                    'costo_envio'     => $distrito->agencia->first()?->costo_envio ?? 0,
-                    'nombre_agencia'  => $distrito->agencia->first()?->nombre_agencia ?? null,
-                ];
-            });
+            ->get(['id_distrito', 'nombre_distrito']);
 
         return response()->json($distritos);
     }
