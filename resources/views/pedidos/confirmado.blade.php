@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido confirmado – C Lucky</title>
+    <title>Pedido confirmado – B-EDEN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -48,7 +48,7 @@
             </h1>
 
             <p class="text-gray-500 text-sm leading-relaxed mb-8">
-                Tu pedido fue registrado correctamente. Nos pondremos en contacto contigo para coordinar el pago y el envío.
+                Tu pedido fue registrado correctamente. Se envio la informacin¿on compra a tu correo y puedes hacer el seguimiento por tú perfil.
             </p>
 
             {{-- Info --}}
