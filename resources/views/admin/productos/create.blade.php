@@ -378,8 +378,10 @@
                             });
                         });
                         this.syncGaleriaInput();
+                        event.target.value = '';
                     },
                     removeGaleriaFile(index) {
+                        URL.revokeObjectURL(this.galeriaFiles[index].url);
                         this.galeriaFiles.splice(index, 1);
                         this.syncGaleriaInput();
                     },
