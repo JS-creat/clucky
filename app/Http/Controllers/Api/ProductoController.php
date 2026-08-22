@@ -52,6 +52,13 @@ class ProductoController extends Controller
                 $query->where('nombre_producto', 'LIKE', '%' . $request->busqueda . '%');
             }
 
+            // 🟢 FIX: este filtro ya se aplicaba en index(), pero faltaba
+            // en recomendados() y populares() más abajo — por eso el
+            // botón "Promociones" en la página principal no filtraba.
+            if ($request->boolean('en_oferta')) {
+                $query->whereNotNull('precio_oferta')->where('precio_oferta', '>', 0);
+            }
+
             // Ordenamiento - Adaptado a tus columnas reales
             $orden = $request->get('orden', 'created_at');
             $direccion = $request->get('direccion', 'desc');
@@ -141,6 +148,13 @@ class ProductoController extends Controller
                 $query->where('id_categoria', $request->categoria_id);
             }
 
+            // 🟢 FIX: faltaba aplicar este filtro (Flutter ya lo mandaba
+            // bien desde _cambiarFiltro(promociones: true), pero acá
+            // nunca se leía ni se usaba en la consulta).
+            if ($request->boolean('en_oferta')) {
+                $query->whereNotNull('precio_oferta')->where('precio_oferta', '>', 0);
+            }
+
             $limit = $request->get('limit', 10);
             $productos = $query->inRandomOrder()->limit($limit)->get();
 
@@ -172,6 +186,12 @@ class ProductoController extends Controller
 
             if ($request->has('categoria_id')) {
                 $query->where('id_categoria', $request->categoria_id);
+            }
+
+            // 🟢 FIX: mismo caso que en recomendados() — faltaba aplicar
+            // el filtro en_oferta que ya llegaba en la petición.
+            if ($request->boolean('en_oferta')) {
+                $query->whereNotNull('precio_oferta')->where('precio_oferta', '>', 0);
             }
 
             $limit = $request->get('limit', 10);
@@ -237,6 +257,10 @@ class ProductoController extends Controller
 
             if ($request->has('genero_id')) {
                 $query->where('id_genero', $request->genero_id);
+            }
+
+            if ($request->boolean('en_oferta')) {
+                $query->whereNotNull('precio_oferta')->where('precio_oferta', '>', 0);
             }
 
             $productos = $query->paginate($request->get('limit', 10));
