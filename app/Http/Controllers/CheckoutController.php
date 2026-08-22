@@ -58,7 +58,7 @@ class CheckoutController extends Controller
         ));
     }
 
-    // ── Confirmar: Crea o REUTILIZA el pedido ───────────────────────────────
+    // ── Confirmar: Crea o REUTILIZA el pedido y genera preferencia ──────────
 
     public function confirmar(Request $request)
     {
@@ -94,30 +94,10 @@ class CheckoutController extends Controller
             $total   += $precio * $detalle->cantidad;
         }
 
-        $costoEnvio = (float) ($request->costo_envio ?? 0);
+        $costoEnvio = (float) $request->costo_envio;
         $total     += $costoEnvio;
 
-        // ── FIX CRÍTICO: Fuente de verdad = carrito ─────────────────────────
-        $idUsuarioReal = $carrito->id_usuario;
-
-        // DEBUG: Si Auth::id() no coincide con el carrito, algo está muy roto
-        if (Auth::id() !== $idUsuarioReal) {
-            Log::critical('SECURITY MISMATCH en checkout', [
-                'auth_id'         => Auth::id(),
-                'carrito_user_id' => $idUsuarioReal,
-                'ip'              => $request->ip(),
-                'url'             => $request->url(),
-            ]);
-            // Aún así usamos el del carrito porque es el que tiene los productos
-        }
-
-        Log::info('CHECKOUT CONFIRMAR', [
-            'auth_id'         => Auth::id(),
-            'carrito_user_id' => $idUsuarioReal,
-            'match'           => Auth::id() === $idUsuarioReal,
-        ]);
-        // ────────────────────────────────────────────────────────────────────
-
+        // Crear o reutilizar pedido en BD
         $pedido  = null;
         $agencia = null;
 
@@ -125,10 +105,9 @@ class CheckoutController extends Controller
             $agencia = Agencia::find($request->id_agencia);
         }
 
-        DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia, $idUsuarioReal) {
+        DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia) {
 
-            // Buscamos pedido pendiente del USUARIO DEL CARRITO, no de Auth::id()
-            $pedidoExistente = Pedido::where('id_usuario', $idUsuarioReal)
+            $pedidoExistente = Pedido::where('id_usuario', Auth::id())
                 ->where('estado_pedido', 'Pendiente')
                 ->first();
 
@@ -137,7 +116,7 @@ class CheckoutController extends Controller
                 'id_tipo_entrega' => $request->id_tipo_entrega,
                 'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
                 'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
-                'costo_envio'     => $costoEnvio,
+                'costo_envio'     => $request->costo_envio ?? 0,
                 'nombre_agencia'  => $agencia?->nombre_agencia,
                 'direccion'       => $agencia?->direccion,
             ];
@@ -150,7 +129,7 @@ class CheckoutController extends Controller
                 $pedido = Pedido::create(array_merge($datosPedido, [
                     'numero_pedido' => $this->generarNumeroPedido(),
                     'estado_pedido' => 'Pendiente',
-                    'id_usuario'    => $idUsuarioReal, // ✅ FIX: siempre el del carrito
+                    'id_usuario'    => Auth::id(),
                 ]));
             }
 
@@ -209,7 +188,6 @@ class CheckoutController extends Controller
                 ],
                 "auto_return"        => "approved",
                 "external_reference" => (string) $pedido->id_pedido,
-                "notification_url"   => route('webhooks.mercadopago'), // ✅ Webhook
             ]);
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
             Log::error('Error creando preferencia MercadoPago', [
@@ -223,131 +201,59 @@ class CheckoutController extends Controller
         return redirect($preference->init_point);
     }
 
-    // ── Pago Exitoso por redirección (fallback) ─────────────────────────────
+    // ── Pago Exitoso: Procesa boleta SUNAT y correo ──────────────────────────
 
     public function pagoExito(Request $request, FacturacionService $facturacion)
     {
         $idPedido = $request->query('external_reference');
+        $pedido   = Pedido::with('detalles.variante.producto', 'usuario')->findOrFail($idPedido);
 
-        if (!$idPedido) {
-            return redirect()->route('home')->with('error', 'Referencia de pedido no válida.');
-        }
-
-        $pedido = Pedido::with('detalles.variante.producto', 'usuario')->findOrFail($idPedido);
-
-        // Si ya fue pagado por webhook, solo mostramos la vista
-        if ($pedido->estado_pedido === 'Pagado') {
-            return view('carrito.exito', compact('pedido'));
-        }
-
-        // Si llegó aquí sin estar pagado, procesamos (fallback por si el webhook falla)
-        $this->procesarPedidoPagado($pedido, $facturacion);
-
-        return view('carrito.exito', compact('pedido'));
-    }
-
-    // ── Webhook de MercadoPago (MÉTODO PRINCIPAL EN PROD) ───────────────────
-
-    public function webhook(Request $request)
-    {
-        Log::info('WEBHOOK MERCADOPAGO RECIBIDO', $request->all());
-
-        $topic = $request->input('topic');
-        $id    = $request->input('id');
-
-        if ($topic !== 'payment' || !$id) {
-            return response()->json(['status' => 'ignored'], 200);
-        }
-
-        try {
-            MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
-            $client = new \MercadoPago\Client\Payment\PaymentClient();
-            $payment = $client->get($id);
-
-            if ($payment->status !== 'approved') {
-                return response()->json(['status' => 'not_approved'], 200);
-            }
-
-            $idPedido = $payment->external_reference;
-            $pedido   = Pedido::with('detalles.variante.producto', 'usuario')->find($idPedido);
-
-            if (!$pedido) {
-                Log::error('Webhook: pedido no encontrado', ['id_pedido' => $idPedido]);
-                return response()->json(['status' => 'not_found'], 404);
-            }
-
-            if ($pedido->estado_pedido === 'Pagado') {
-                return response()->json(['status' => 'already_paid'], 200);
-            }
-
-            // Procesar sin depender de Auth (webhook es server-to-server)
-            $facturacion = app(FacturacionService::class);
-            $this->procesarPedidoPagado($pedido, $facturacion);
-
-            return response()->json(['status' => 'processed'], 200);
-
-        } catch (\Throwable $e) {
-            Log::error('Webhook MercadoPago error', ['error' => $e->getMessage()]);
-            return response()->json(['status' => 'error'], 500);
-        }
-    }
-
-    // ── Procesar pedido pagado (usado por redirección y webhook) ────────────
-
-    private function procesarPedidoPagado(Pedido $pedido, FacturacionService $facturacion): void
-    {
-        if ($pedido->estado_pedido === 'Pagado') {
-            return;
-        }
-
-        DB::transaction(function () use ($pedido) {
+        if ($pedido->estado_pedido !== 'Pagado') {
+            // 1. Cambiar estado y limpiar carrito
             $pedido->update(['estado_pedido' => 'Pagado']);
             Carrito::where('id_usuario', $pedido->id_usuario)->delete();
-        });
 
-        $usuario = $pedido->usuario;
+            // 2. Preparar cliente para SUNAT
+            $usuario = $pedido->usuario ?? Auth::user();
+            $clienteData = [
+                'tipo_doc' => '1',
+                'num_doc'  => $usuario->dni ?? '00000000',
+                'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
+            ];
 
-        if (!$usuario) {
-            Log::error("Pedido #{$pedido->id_pedido} no tiene usuario asociado");
-            return;
-        }
+            // 3. Emitir comprobante electrónico
+            $resFactura = $facturacion->emitirBoleta($pedido, $clienteData);
 
-        $clienteData = [
-            'tipo_doc' => '1',
-            'num_doc'  => $usuario->dni ?? $usuario->numero_documento ?? '00000000',
-            'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
-        ];
+            if ($resFactura['success'] && ($resFactura['data']['sunatResponse']['success'] ?? false)) {
+                $data = $resFactura['data'];
 
-        $resFactura = $facturacion->emitirBoleta($pedido, $clienteData);
+                if (!empty($data['sunatResponse']['cdrZip'])) {
+                    Storage::put("comprobantes/CDR-B001-{$pedido->id_pedido}.zip", base64_decode($data['sunatResponse']['cdrZip']));
+                }
 
-        if ($resFactura['success'] && ($resFactura['data']['sunatResponse']['success'] ?? false)) {
-            $data = $resFactura['data'];
+                $pedido->update([
+                    'serie_boleta'       => 'B001',
+                    'correlativo_boleta' => $pedido->id_pedido,
+                ]);
 
-            if (!empty($data['sunatResponse']['cdrZip'])) {
-                Storage::put("comprobantes/CDR-B001-{$pedido->id_pedido}.zip", base64_decode($data['sunatResponse']['cdrZip']));
-            }
+                // 4. Obtener PDF y enviar correo de forma segura
+                $correoDestino = $usuario->correo ?? $usuario->email ?? null;
 
-            $pedido->update([
-                'serie_boleta'       => 'B001',
-                'correlativo_boleta' => $pedido->id_pedido,
-            ]);
+                if ($correoDestino) {
+                    $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
 
-            $correoDestino = $usuario->correo ?? $usuario->email ?? null;
-
-            if ($correoDestino) {
-                $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
-
-                if ($pdfContent) {
-                    try {
-                        Mail::to($correoDestino)->send(new BoletaEmail($pedido, $pdfContent));
-                    } catch (\Throwable $e) {
-                        Log::error("Error enviando correo de boleta pedido #{$pedido->id_pedido}: " . $e->getMessage());
+                    if ($pdfContent) {
+                        try {
+                            Mail::to($correoDestino)->send(new BoletaEmail($pedido, $pdfContent));
+                        } catch (\Throwable $e) {
+                            Log::error("Error enviando correo de boleta pedido #{$pedido->id_pedido}: " . $e->getMessage());
+                        }
                     }
                 }
             }
-        } else {
-            Log::error("Error emitiendo boleta pedido #{$pedido->id_pedido}", $resFactura);
         }
+
+        return view('carrito.exito', compact('pedido'));
     }
 
     // ── Descargar / Ver Boleta en PDF ────────────────────────────────────────
