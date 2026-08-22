@@ -18,16 +18,22 @@ class Agencia extends Model
         'estado',
     ];
 
+    protected $casts = [
+        'estado'      => 'boolean',
+        'costo_envio' => 'float',
+    ];
+
     // Relaciones
     public function distrito()
     {
         return $this->belongsTo(Distrito::class, 'id_distrito', 'id_distrito');
     }
 
-    // nombre completo de ubicación
     public function getUbicacionCompletaAttribute(): string
     {
         $d = $this->distrito;
-        return "{$d->nombre_distrito} › {$d->provincia->nombre_provincia} › {$d->provincia->departamento->nombre_departamento}";
+        if (!$d) return 'Sin Ubicación';
+
+        return "{$d->nombre_distrito} › {$d->provincia?->nombre_provincia} › {$d->provincia?->departamento?->nombre_departamento}";
     }
 }

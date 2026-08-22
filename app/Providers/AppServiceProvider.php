@@ -24,8 +24,6 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        Log::info('APP SERVICE PROVIDER CARGADO');
-
         Event::listen(Login::class, function ($event) {
             Log::info('LOGIN DETECTADO');
         });
