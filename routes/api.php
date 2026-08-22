@@ -17,34 +17,21 @@ use App\Http\Controllers\Api\PagoMovilApiController;
 use App\Http\Controllers\Api\PasswordResetApiController;
 use Illuminate\Http\Request;
 
-// --- Autenticación y Perfil ---
+Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
+
 Route::post('/register', [MobileAuthController::class, 'register']);
 Route::post('/login', [MobileAuthController::class, 'login']);
 
-// 🟢 Recuperación de contraseña (pública, con límite de tasa)
-Route::post('/password/forgot', [PasswordResetApiController::class, 'enviarEnlace'])
-    ->middleware('throttle:1,1')
-    ->name('api.password.forgot');
+Route::middleware('auth:sanctum')->put('/perfil', [MobileAuthController::class, 'updatePerfil']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/perfil', [MobileAuthController::class, 'perfil']);
-    Route::put('/perfil', [MobileAuthController::class, 'updatePerfil']);
-    Route::put('/perfil/datos-contacto', [MobileAuthController::class, 'updateDatosContacto']);
-    Route::post('/chat/message', [ChatController::class, 'sendMessage']);
-    
-    // Mis Pedidos
-    Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
-    Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
-});
+Route::middleware('auth:sanctum')->put('/perfil/datos-contacto', [MobileAuthController::class, 'updateDatosContacto']);
 
-// --- Favoritos ---
 Route::prefix('favoritos')->group(function () {
     Route::get('/', [FavoritoController::class, 'obtener']);
     Route::post('/agregar', [FavoritoController::class, 'agregar']);
     Route::delete('/eliminar', [FavoritoController::class, 'eliminar']);
 });
 
-// --- Carrito ---
 Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::get('/', [CarritoController::class, 'obtener']);
     Route::post('/crear', [CarritoController::class, 'crear']);
@@ -55,55 +42,25 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::get('/{idCarrito}/total', [CarritoController::class, 'total']);
 });
 
-// --- Checkout ---
 Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
     Route::post('/confirmar', [CheckoutApiController::class, 'confirmar']);
     Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']);
 });
 
-// --- Cupones ---
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('cupones/disponibles', [CuponApiController::class, 'disponibles'])
-        ->name('api.cupones.disponibles');
-
-    Route::post('cupones/validar', [CuponApiController::class, 'validar'])
-        ->name('api.cupones.validar');
-
-    Route::post('cupones/aplicar', [CuponApiController::class, 'aplicar'])
-        ->name('api.cupones.aplicar');
-});
-
-// --- Mercado Pago (Redirección Móvil) ---
+// 🟢 NUEVO: retorno de Mercado Pago para el WebView de la app móvil.
+// Va FUERA del middleware 'auth:sanctum' a propósito: el WebView llega
+// sin token ni sesión, ya que es Mercado Pago quien redirige al
+// navegador embebido después del pago. La seguridad real no depende de
+// esta ruta — PagoService::confirmarPago() siempre verifica el pago
+// directo contra la API de Mercado Pago antes de confirmar nada.
 Route::prefix('pago/movil')->name('api.pago.movil.')->group(function () {
     Route::get('/exito', [PagoMovilApiController::class, 'exito'])->name('exito');
     Route::get('/fallo', [PagoMovilApiController::class, 'fallo'])->name('fallo');
     Route::get('/pendiente', [PagoMovilApiController::class, 'pendiente'])->name('pendiente');
 });
 
-// --- Catálogo y Productos ---
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
 
-Route::prefix('productos')->group(function () {
-    Route::get('/', [ProductoController::class, 'index']);
-    Route::get('/recomendados', [ProductoController::class, 'recomendados']);
-    Route::get('/populares', [ProductoController::class, 'populares']);
-    Route::get('/ofertas', [ProductoController::class, 'ofertas']);
-    Route::get('/buscar', [ProductoController::class, 'buscar']);
-    Route::get('/talla/{talla}', [ProductoController::class, 'porTalla']);
-    Route::get('/color/{color}', [ProductoController::class, 'porColor']);
-    Route::get('/rango-precio', [ProductoController::class, 'porRangoPrecio']);
-
-    Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
-    Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
-});
-
-Route::get('/categorias', [CategoriaController::class, 'index']);
-Route::get('/categorias/{id}/productos', [CategoriaController::class, 'productos']);
-
-Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
-Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
-
-// --- Recursos Multimedia / Banners / Ubicaciones ---
 Route::get('/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*\.(jpg|jpeg|png|gif|webp)$');
 
@@ -116,6 +73,33 @@ Route::get('/banner/{filename}', function ($filename) {
 
     return response()->file($path);
 })->where('filename', '.*');
+
+Route::prefix('productos')->group(function () {
+    Route::get('/', [ProductoController::class, 'index']);
+    Route::get('/recomendados', [ProductoController::class, 'recomendados']);
+    Route::get('/populares', [ProductoController::class, 'populares']);
+    Route::get('/ofertas', [ProductoController::class, 'ofertas']);
+    Route::get('/buscar', [ProductoController::class, 'buscar']);
+
+    Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
+    Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
+});
+
+Route::prefix('productos')->group(function () {
+    Route::get('/talla/{talla}', [ProductoController::class, 'porTalla']);
+    Route::get('/color/{color}', [ProductoController::class, 'porColor']);
+    Route::get('/rango-precio', [ProductoController::class, 'porRangoPrecio']);
+});
+
+Route::get('/categorias', [CategoriaController::class, 'index']);
+Route::get('/categorias/{id}/productos', [CategoriaController::class, 'productos']);
+
+Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
+Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chat/message', [ChatController::class, 'sendMessage']);
+});
 
 Route::prefix('banners')->group(function () {
     Route::get('/', [BannerController::class, 'index']);
@@ -130,4 +114,28 @@ Route::prefix('ubicaciones')->group(function () {
 
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'time' => now()]);
-});git
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
+    Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('cupones/disponibles', [CuponApiController::class, 'disponibles'])
+        ->name('api.cupones.disponibles');
+
+    Route::post('cupones/validar', [CuponApiController::class, 'validar'])
+        ->name('api.cupones.validar');
+
+    Route::post('cupones/aplicar', [CuponApiController::class, 'aplicar'])
+        ->name('api.cupones.aplicar');
+});
+
+// 🟢 AGREGAR en routes/api.php — pública (no auth:sanctum), porque el
+// usuario todavía no inició sesión cuando pide recuperar su contraseña.
+Route::post('/password/forgot', [PasswordResetApiController::class, 'enviarEnlace'])
+    ->middleware('throttle:1,1') // mismo límite que ya usa la web
+    ->name('api.password.forgot');
+    
