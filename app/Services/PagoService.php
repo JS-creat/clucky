@@ -13,13 +13,11 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\BoletaEmail;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Payment\PaymentClient;
-use App\Services\BoletaPdfService;
 
 class PagoService
 {
     public function __construct(
-        protected FacturacionService $facturacionService,
-        protected BoletaPdfService $boletaPdfService
+        protected FacturacionService $facturacionService
     ) {}
 
     /**
@@ -132,7 +130,7 @@ class PagoService
                 Log::info("Boleta emitida para el Pedido #{$pedido->id_pedido}.");
 
                 // Traemos el binario del PDF directamente desde APIs Perú
-                $pdfBinary = $this->boletaPdfService->generar($pedido, $cliente);
+                $pdfBinary = $this->facturacionService->obtenerPdf($pedido, $cliente);
 
                 if ($pdfBinary && $usuario?->correo) {
                     Mail::to($usuario->correo)
@@ -140,10 +138,9 @@ class PagoService
 
                     Log::info("Correo de boleta enviado para el Pedido #{$pedido->id_pedido} a {$usuario->correo}.");
                 } else {
-                    Log::error(
-                        "No se pudo enviar el correo de boleta para el Pedido #{$pedido->id_pedido}: " .
-                            (!$pdfBinary ? 'PDF vacío. ' : '') .
-                            (!$usuario?->correo ? 'Sin correo de usuario.' : '')
+                    Log::error("No se pudo enviar el correo de boleta para el Pedido #{$pedido->id_pedido}: " .
+                        (!$pdfBinary ? 'PDF vacío. ' : '') .
+                        (!$usuario?->correo ? 'Sin correo de usuario.' : '')
                     );
                 }
             } else {
