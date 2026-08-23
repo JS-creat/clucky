@@ -31,12 +31,11 @@ class GoogleController extends Controller
                     ]);
                 }
             } else {
-                // Usuario nuevo: igual que registro normal
-                $nameParts = explode(' ', $googleUser->name, 2);
+                $nameParts = preg_split('/\s+/', trim($googleUser->name), 2);
 
                 $user = User::create([
                     'nombres' => $nameParts[0],
-                    'apellidos' => $nameParts[1] ?? null,
+                    'apellidos' => $nameParts[1] ?? '',
                     'correo' => $googleUser->email,
                     'google_id' => $googleUser->id,
                     'avatar' => $googleUser->avatar,
@@ -49,7 +48,6 @@ class GoogleController extends Controller
             Auth::login($user);
 
             return redirect()->intended('/');
-
         } catch (\Exception $e) {
             \Log::error('Google login error: ' . $e->getMessage());
 
