@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
 
@@ -9,9 +8,9 @@
     </title>
 
     <style>
-
         @page {
-            margin: 35px 40px;
+            size: A4 portrait;
+            margin: 28px 32px;
         }
 
         * {
@@ -21,13 +20,15 @@
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
             color: #222;
-            font-size: 11px;
+            font-size: 10px;
             margin: 0;
+            background: #fff;
         }
+
 
         .header {
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 18px;
         }
 
         .header-table {
@@ -35,90 +36,116 @@
             border-collapse: collapse;
         }
 
+        .logo-container {
+            text-align: center;
+            padding-bottom: 8px;
+        }
+
         .logo {
-            font-size: 28px;
+            max-width: 150px;
+            max-height: 70px;
+        }
+
+        .marca {
+            font-size: 25px;
             font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
+            letter-spacing: 3px;
+            margin-top: 5px;
         }
 
         .slogan {
-            color: #666;
-            font-size: 10px;
+            color: #777;
+            font-size: 9px;
+            margin-top: 3px;
+            letter-spacing: 1px;
         }
 
         .empresa {
-            font-size: 10px;
+            text-align: center;
+            font-size: 9px;
             line-height: 1.5;
-            margin-top: 12px;
+            margin-top: 9px;
         }
 
         .comprobante {
-            border: 1px solid #999;
-            border-radius: 4px;
+            width: 100%;
+            border: 1px solid #777;
+            border-radius: 5px;
             text-align: center;
-            padding: 12px;
+            padding: 12px 10px;
+            margin-top: 14px;
         }
 
         .comprobante-titulo {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             letter-spacing: 1px;
         }
 
         .comprobante-electronica {
-            font-size: 9px;
+            font-size: 8px;
             letter-spacing: 3px;
+            color: #666;
             margin-top: 3px;
         }
 
+        .ruc {
+            font-size: 9px;
+            margin-top: 7px;
+        }
+
         .numero {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 8px;
+            letter-spacing: 1px;
         }
 
         .separador {
             border-top: 1px solid #ddd;
-            margin: 18px 0;
+            margin: 16px 0;
         }
 
         .seccion-titulo {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            margin-bottom: 7px;
         }
 
         .cliente {
             width: 100%;
             border-collapse: collapse;
-            background: #f7f7f7;
-            border-radius: 4px;
+            border: 1px solid #ddd;
         }
 
         .cliente td {
             padding: 7px 9px;
             vertical-align: top;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cliente tr:last-child td {
+            border-bottom: none;
         }
 
         .etiqueta {
             color: #777;
-            font-size: 9px;
+            font-size: 8px;
             text-transform: uppercase;
+            margin-bottom: 2px;
         }
 
         .valor {
-            font-size: 10px;
+            font-size: 9.5px;
             font-weight: bold;
-            margin-top: 2px;
         }
 
         .productos {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .productos thead {
@@ -126,168 +153,159 @@
         }
 
         .productos th {
-            padding: 9px 7px;
+            padding: 8px 6px;
             text-align: left;
-            font-size: 9px;
+            font-size: 8px;
             text-transform: uppercase;
-            border-bottom: 1px solid #ccc;
+            border-bottom: 1px solid #bbb;
         }
 
         .productos td {
-            padding: 9px 7px;
+            padding: 8px 6px;
             border-bottom: 1px solid #eeeeee;
             vertical-align: top;
         }
 
         .descripcion {
             font-weight: bold;
+            font-size: 9px;
         }
 
         .variante {
             color: #777;
-            font-size: 9px;
+            font-size: 8px;
             margin-top: 3px;
-        }
-
-        .derecha {
-            text-align: right !important;
         }
 
         .centro {
             text-align: center !important;
         }
 
+        .derecha {
+            text-align: right !important;
+        }
+
         .envio {
             width: 100%;
-            margin-top: 10px;
             border-collapse: collapse;
         }
 
         .envio td {
-            padding: 8px 7px;
+            padding: 8px 6px;
             border-bottom: 1px solid #eeeeee;
+            vertical-align: top;
         }
 
         .resumen-wrapper {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 18px;
         }
 
         .resumen {
-            width: 45%;
+            width: 48%;
             margin-left: auto;
             border-collapse: collapse;
         }
 
         .resumen td {
             padding: 5px 0;
-        }
-
-        .resumen .total {
-            border-top: 2px solid #222;
-            font-size: 15px;
-            font-weight: bold;
-            padding-top: 10px;
-        }
-
-        .igv-info {
-            width: 100%;
-            margin-top: 20px;
             font-size: 9px;
-            color: #666;
+        }
+
+        .resumen .total td {
+            border-top: 2px solid #222;
+            padding-top: 9px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .pago {
+            margin-top: 18px;
+            padding: 9px 10px;
+            border: 1px solid #ddd;
+            font-size: 8.5px;
         }
 
         .monto-letras {
-            margin-top: 18px;
-            padding: 10px;
+            margin-top: 15px;
+            padding: 9px;
             background: #f7f7f7;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8.5px;
         }
 
         .footer {
-            margin-top: 35px;
+            margin-top: 25px;
             border-top: 1px solid #ddd;
-            padding-top: 15px;
+            padding-top: 12px;
             text-align: center;
             color: #777;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .gracias {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #222;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
-
     </style>
 </head>
 
 <body>
 
-    {{-- ENCABEZADO --}}
+
     <div class="header">
 
-        <table class="header-table">
+        <div class="logo-container">
 
-            <tr>
+            @if(file_exists(public_path('public/logo.png')))
+                <img
+                    src="{{ public_path('public/logo.png') }}"
+                    class="logo"
+                >
+            @else
+                <div class="marca">
+                    B-EDEN
+                </div>
+            @endif
 
-                <td width="58%">
+            <div class="slogan">
+                Estilo que inspira confianza.
+            </div>
 
-                    <div class="logo">
-                        B-EDEN
-                    </div>
+            <div class="empresa">
+                RUC: 10472160678<br>
+                JR. BOLOGNESI N° 908, CONCEPCIÓN
+            </div>
 
-                    <div class="slogan">
-                        Moda · Estilo · Calidad
-                    </div>
+        </div>
 
-                    <div class="empresa">
+        {{-- COMPROBANTE --}}
 
-                        <strong>DIAZ ZEA EDUARDO ARTURO</strong><br>
+        <div class="comprobante">
 
-                        RUC: 10472160678<br>
+            <div class="comprobante-titulo">
+                BOLETA DE VENTA
+            </div>
 
-                        JR. BOLOGNESI N° 908,
-                        CONCEPCION
+            <div class="comprobante-electronica">
+                ELECTRÓNICA
+            </div>
 
-                    </div>
+            <div class="ruc">
+                R.U.C. 10472160678
+            </div>
 
-                </td>
+            <div class="numero">
+                {{ $serie }} - {{ $correlativo }}
+            </div>
 
-                <td width="42%">
-
-                    <div class="comprobante">
-
-                        <div class="comprobante-titulo">
-                            BOLETA DE VENTA
-                        </div>
-
-                        <div class="comprobante-electronica">
-                            ELECTRÓNICA
-                        </div>
-
-                        <div style="margin-top: 8px;">
-                            R.U.C. 10472160678
-                        </div>
-
-                        <div class="numero">
-                            {{ $serie }}-{{ $correlativo }}
-                        </div>
-
-                    </div>
-
-                </td>
-
-            </tr>
-
-        </table>
+        </div>
 
     </div>
 
 
-    {{-- CLIENTE --}}
     <div class="separador"></div>
 
     <div class="seccion-titulo">
@@ -355,7 +373,6 @@
     </table>
 
 
-    {{-- PRODUCTOS --}}
     <div class="separador"></div>
 
     <div class="seccion-titulo">
@@ -409,9 +426,11 @@
                         </div>
 
                         @if($producto['variante'])
+
                             <div class="variante">
                                 {{ $producto['variante'] }}
                             </div>
+
                         @endif
 
                     </td>
@@ -437,7 +456,6 @@
     </table>
 
 
-    {{-- ENVÍO --}}
     @if($costoEnvio > 0)
 
         <table class="envio">
@@ -455,9 +473,11 @@
                     </div>
 
                     @if($pedido->tipoEntrega)
+
                         <div class="variante">
                             {{ $pedido->tipoEntrega->nombre ?? '' }}
                         </div>
+
                     @endif
 
                 </td>
@@ -481,7 +501,6 @@
     @endif
 
 
-    {{-- RESUMEN --}}
     <div class="resumen-wrapper">
 
         <table class="resumen">
@@ -538,13 +557,13 @@
 
             </tr>
 
-            <tr>
+            <tr class="total">
 
-                <td class="total">
+                <td>
                     TOTAL
                 </td>
 
-                <td class="derecha total">
+                <td class="derecha">
                     S/ {{ number_format($total, 2) }}
                 </td>
 
@@ -554,14 +573,12 @@
 
     </div>
 
-
-    {{-- INFORMACIÓN DE PAGO --}}
-    <div class="igv-info">
+    <div class="pago">
 
         <strong>Forma de pago:</strong>
         Contado
 
-        &nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;
 
         <strong>Moneda:</strong>
         Soles (PEN)
@@ -569,7 +586,6 @@
     </div>
 
 
-    {{-- PIE --}}
     <div class="footer">
 
         <div class="gracias">
@@ -577,7 +593,6 @@
         </div>
 
         Comprobante electrónico emitido conforme a la normativa vigente.
-
         <br>
 
         B-EDEN · Moda, estilo y calidad
@@ -585,5 +600,4 @@
     </div>
 
 </body>
-
 </html>
