@@ -31,13 +31,13 @@ class ProductoController extends Controller
             }
 
             if ($request->has('talla') && !empty($request->talla)) {
-                $query->whereHas('variantes', function($q) use ($request) {
+                $query->whereHas('variantes', function ($q) use ($request) {
                     $q->where('talla', $request->talla)->where('stock', '>', 0);
                 });
             }
 
             if ($request->has('color') && !empty($request->color)) {
-                $query->whereHas('variantes', function($q) use ($request) {
+                $query->whereHas('variantes', function ($q) use ($request) {
                     $q->where('color', $request->color)->where('stock', '>', 0);
                 });
             }
@@ -188,8 +188,6 @@ class ProductoController extends Controller
                 $query->where('id_categoria', $request->categoria_id);
             }
 
-            // 🟢 FIX: mismo caso que en recomendados() — faltaba aplicar
-            // el filtro en_oferta que ya llegaba en la petición.
             if ($request->boolean('en_oferta')) {
                 $query->whereNotNull('precio_oferta')->where('precio_oferta', '>', 0);
             }
@@ -309,6 +307,54 @@ class ProductoController extends Controller
         } catch (\Exception $e) {
             Log::error('Error en porRangoPrecio: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error al filtrar por rango de precio'], 500);
+        }
+    }
+
+    public function notificarOferta(Request $request, $id)
+    {
+        try {
+            $producto = Producto::find($id);
+
+            if (!$producto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], 404);
+            }
+
+            // Aquí actualizas el precio de oferta si te llega en la petición
+            $producto->precio_oferta = $request->input('precio_oferta');
+            $producto->save();
+
+            // Enviar notificación push con Pusher Beams de forma segura
+            $beamsClient = new \Pusher\PushNotifications\PushNotifications([
+                "instanceId" => env('PUSHER_BEAMS_INSTANCE_ID'),
+                "secretKey" => env('PUSHER_BEAMS_SECRET_KEY'),
+            ]);
+
+            $beamsClient->publishToInterests(
+                ["ofertas"], // Canal al que se suscribe tu app de Flutter
+                [
+                    "fcm" => [
+                        "notification" => [
+                            "title" => "¡Nuevo producto en oferta!",
+                            "body" => "Aprovecha el descuento en: " . $producto->nombre_producto,
+                        ],
+                    ],
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Oferta actualizada y notificación enviada con éxito',
+                'data' => new ProductoResource($producto)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al enviar notificación de oferta: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la notificación'
+            ], 500);
         }
     }
 }

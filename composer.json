@@ -17,6 +17,7 @@
         "maatwebsite/excel": "^3.1",
         "mercadopago/dx-php": "^3.8",
         "pusher/pusher-php-server": "*",
+        "pusher/pusher-push-notifications": "^2.0",
         "resend/resend-laravel": "^1.4"
     },
     "require-dev": {
