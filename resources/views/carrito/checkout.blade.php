@@ -432,6 +432,7 @@
                     <span class="step-badge">3</span>
                     Términos y condiciones
                 </h2>
+
                 <div class="flex items-start gap-3">
                     <button type="button" @click="aceptaTerminos = !aceptaTerminos"
                         class="mt-0.5 w-5 h-5 rounded shrink-0 border-2 flex items-center justify-center transition-colors"
