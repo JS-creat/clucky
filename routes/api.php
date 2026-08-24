@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\CuponApiController;
 use App\Http\Controllers\Api\PagoMovilApiController;
 use App\Http\Controllers\Api\PasswordResetApiController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\GoogleAuthController;
 
 Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
 
@@ -47,11 +48,6 @@ Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
     Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']);
 });
 
-// 🟢 NUEVO: retorno de Mercado Pago para el WebView de la app móvil.
-// Va FUERA del middleware 'auth:sanctum' a propósito: el WebView llega
-// sin token ni sesión, ya que es Mercado Pago quien redirige al
-// navegador embebido después del pago. La seguridad real no depende de
-// esta ruta — PagoService::confirmarPago() siempre verifica el pago
 // directo contra la API de Mercado Pago antes de confirmar nada.
 Route::prefix('pago/movil')->name('api.pago.movil.')->group(function () {
     Route::get('/exito', [PagoMovilApiController::class, 'exito'])->name('exito');
@@ -133,9 +129,9 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.cupones.aplicar');
 });
 
-// 🟢 AGREGAR en routes/api.php — pública (no auth:sanctum), porque el
-// usuario todavía no inició sesión cuando pide recuperar su contraseña.
+
 Route::post('/password/forgot', [PasswordResetApiController::class, 'enviarEnlace'])
-    ->middleware('throttle:1,1') // mismo límite que ya usa la web
+    ->middleware('throttle:1,1')
     ->name('api.password.forgot');
     
+Route::post('/login/google', [GoogleAuthController::class, 'login']);

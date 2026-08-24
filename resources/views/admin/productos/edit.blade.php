@@ -154,12 +154,12 @@
                                         class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm">
                                 </div>
 
-                                <div class="flex items-center justify-center pt-5">
+                                {{--<div class="flex items-center justify-center pt-5">
                                     <button type="button" @click="removeVariante(index)"
                                         class="p-3 text-rose-400 hover:text-rose-600 hover:bg-rose-100 rounded-xl transition-all">
                                         <x-heroicon-o-trash class="w-5 h-5" />
                                     </button>
-                                </div>
+                                </div> --}}
 
                                 <template x-if="isDuplicated(index)">
                                     <div class="col-span-full flex items-center gap-1 text-[10px] font-black text-rose-600 uppercase mt-1 ml-1">
