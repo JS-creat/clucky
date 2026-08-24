@@ -60,15 +60,27 @@ class CheckoutController extends Controller
 
     public function confirmar(Request $request)
     {
+        // 1. Validar DNI y nombres directamente desde el checkout
         $request->validate([
-            'id_tipo_entrega' => 'required|integer|in:1,2',
-            'id_distrito'     => 'nullable|integer|exists:distrito,id_distrito',
-            'id_agencia'      => [
+            'numero_documento' => 'required|digits:8',
+            'nombres'          => 'required|string|max:100',
+            'apellidos'        => 'required|string|max:100',
+            'id_tipo_entrega'  => 'required|integer|in:1,2',
+            'id_distrito'      => 'nullable|integer|exists:distrito,id_distrito',
+            'id_agencia'       => [
                 'nullable',
                 'required_if:id_tipo_entrega,2',
                 'integer',
                 'exists:agencia,id_agencia',
             ],
+        ]);
+
+        // 2. Guardar/actualizar datos del usuario inmediatamente
+        $usuario = Auth::user();
+        $usuario->update([
+            'numero_documento' => $request->numero_documento,
+            'nombres'          => $request->nombres,
+            'apellidos'        => $request->apellidos,
         ]);
 
         $carrito = Carrito::with('detalles.variante.producto')
@@ -94,7 +106,7 @@ class CheckoutController extends Controller
             $total   += $precio * $detalle->cantidad;
         }
 
-        // ── Envío: SIEMPRE calculado en servidor, nunca desde el request ──
+        // Envío calculado en servidor
         $costoEnvio = 0;
         $agencia    = null;
 
@@ -113,7 +125,7 @@ class CheckoutController extends Controller
 
         $total += $costoEnvio;
 
-        // Crear o reutilizar pedido en BD
+        // Crear o reutilizar pedido
         $pedido = null;
 
         DB::transaction(function () use ($carrito, $request, $total, $costoEnvio, &$pedido, $agencia) {
@@ -189,8 +201,8 @@ class CheckoutController extends Controller
             $preference = $client->create([
                 "items"              => $items,
                 "payer"              => [
-                    "name"  => Auth::user()->nombres,
-                    "email" => Auth::user()->correo ?? Auth::user()->email,
+                    "name"  => $usuario->nombres,
+                    "email" => $usuario->correo ?? $usuario->email,
                 ],
                 "back_urls"          => [
                     "success" => route('pago.exito'),
@@ -212,7 +224,7 @@ class CheckoutController extends Controller
         return redirect($preference->init_point);
     }
 
-    // ── Pago Exitoso: Procesa boleta SUNAT y correo ──────────────────────────
+    // ── Pago Exitoso: Procesa boleta SUNAT, descuento de stock y correo ──────
 
     public function pagoExito(Request $request, FacturacionService $facturacion)
     {
@@ -220,32 +232,31 @@ class CheckoutController extends Controller
         $pedido   = Pedido::with('detalles.variante.producto', 'usuario')->findOrFail($idPedido);
 
         if ($pedido->estado_pedido !== 'Pagado') {
-            // 1. Cambiar estado y limpiar carrito
-            $pedido->update(['estado_pedido' => 'Pagado']);
-            Carrito::where('id_usuario', $pedido->id_usuario)->delete();
+            DB::transaction(function () use ($pedido) {
+                // 1. Cambiar estado y limpiar carrito
+                $pedido->update(['estado_pedido' => 'Pagado']);
+                Carrito::where('id_usuario', $pedido->id_usuario)->delete();
 
-            // 2. Preparar cliente para SUNAT usando el modelo User
-            $usuario = $pedido->usuario ?? Auth::user();
+                // 2. Descontar el Stock de las variantes vendidas
+                foreach ($pedido->detalles as $detalle) {
+                    if ($detalle->variante) {
+                        $detalle->variante->decrement('stock', $detalle->cantidad);
+                    }
+                }
+            });
 
-            $numDoc = $usuario->numero_documento;
-            $tipoDoc = (string) ($usuario->id_tipo_documento ?? '1');
-            $nombreCliente = $usuario->nombre_completo;
+            // 3. Obtener cliente actualizado directo de la relación
+            $usuario = $pedido->usuario;
 
-            if (empty(trim($nombreCliente))) {
-                $nombreCliente = $usuario->correo ?? 'CLIENTE GENERAL';
-            }
-
-            if (empty($numDoc)) {
-                $numDoc = '00000000';
-            }
+            $nombreCompleto = trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? ''));
 
             $clienteData = [
-                'tipo_doc' => $tipoDoc,
-                'num_doc'  => $numDoc,
-                'nombre'   => $nombreCliente,
+                'tipo_doc' => '1', // DNI
+                'num_doc'  => $usuario->numero_documento,
+                'nombre'   => !empty($nombreCompleto) ? $nombreCompleto : ($usuario->correo ?? 'CLIENTE GENERAL'),
             ];
 
-            // 3. Emitir comprobante electrónico
+            // 4. Emitir comprobante electrónico
             $resFactura = $facturacion->emitirBoleta($pedido, $clienteData);
 
             if ($resFactura['success'] && ($resFactura['data']['sunatResponse']['success'] ?? false)) {
@@ -260,7 +271,7 @@ class CheckoutController extends Controller
                     'correlativo_boleta' => $pedido->id_pedido,
                 ]);
 
-                // 4. Obtener PDF y enviar correo de forma segura
+                // 5. Obtener PDF y enviar correo
                 $correoDestino = $usuario->correo ?? $usuario->email ?? null;
 
                 if ($correoDestino) {
@@ -282,27 +293,17 @@ class CheckoutController extends Controller
 
     // ── Descargar / Ver Boleta en PDF ────────────────────────────────────────
 
-    public function verBoleta($idPedido, FacturacionService $facturacion)
+    public function verBoleta($id, FacturacionService $facturacion)
     {
-        $pedido  = Pedido::with(['detalles.variante.producto', 'usuario'])->findOrFail($idPedido);
-        $usuario = $pedido->usuario ?? Auth::user();
+        $pedido  = Pedido::with(['detalles.variante.producto', 'usuario'])->findOrFail($id);
+        $usuario = $pedido->usuario;
 
-        $numDoc = $usuario->numero_documento;
-        $tipoDoc = (string) ($usuario->id_tipo_documento ?? '1');
-        $nombreCliente = $usuario->nombre_completo;
-
-        if (empty(trim($nombreCliente))) {
-            $nombreCliente = $usuario->correo ?? 'CLIENTE GENERAL';
-        }
-
-        if (empty($numDoc)) {
-            $numDoc = '00000000';
-        }
+        $nombreCompleto = trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? ''));
 
         $clienteData = [
-            'tipo_doc' => $tipoDoc,
-            'num_doc'  => $numDoc,
-            'nombre'   => $nombreCliente,
+            'tipo_doc' => '1',
+            'num_doc'  => $usuario->numero_documento,
+            'nombre'   => !empty($nombreCompleto) ? $nombreCompleto : ($usuario->correo ?? 'CLIENTE GENERAL'),
         ];
 
         $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
