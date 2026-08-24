@@ -44,7 +44,6 @@ class FacturacionService
                 'success' => $response->successful(),
                 'data' => $response->json(),
             ];
-
         } catch (\Exception $e) {
             Log::error(
                 'Error enviando boleta a APIs Perú: ' . $e->getMessage()
@@ -81,7 +80,6 @@ class FacturacionService
             }
 
             Log::error('Error API PDF: ' . $response->body());
-
         } catch (\Exception $e) {
             Log::error(
                 'Error descargando PDF: ' . $e->getMessage()
@@ -111,7 +109,6 @@ class FacturacionService
         if ($pedidoInput instanceof Pedido) {
 
             $pedido = $pedidoInput;
-
         } else {
 
             $idPedido = is_array($pedidoInput)
@@ -198,7 +195,7 @@ class FacturacionService
                 'unidad' => 'NIU',
 
                 'descripcion' =>
-                    $detalle->variante?->producto?->nombre_producto
+                $detalle->variante?->producto?->nombre_producto
                     ??
                     $detalle->variante?->producto?->nombre
                     ??
@@ -370,17 +367,17 @@ class FacturacionService
                 ),
 
                 'numDoc' => (string) (
-                    $cliente['num_doc'] ?? '00000000'
+                    $cliente['num_doc'] ?? $cliente['dni'] ?? '00000000'
                 ),
 
                 'rznSocial' => (string) (
-                    $cliente['nombre'] ?? 'CLIENTE GENERAL'
+                    $cliente['nombre_completo'] ?? $cliente['nombre'] ?? 'CLIENTE GENERAL'
                 ),
 
                 'address' => [
 
                     'direccion' =>
-                        $pedido->direccion_envio
+                    $pedido->direccion_envio
                         ??
                         $pedido->direccion
                         ??
@@ -411,7 +408,7 @@ class FacturacionService
                     'urbanizacion' => '-',
 
                     'direccion' =>
-                        'JR. BOLOGNESI N° 908, CONCEPCION'
+                    'JR. BOLOGNESI N° 908, CONCEPCION'
                 ]
             ],
 
