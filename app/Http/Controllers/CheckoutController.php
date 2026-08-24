@@ -224,12 +224,25 @@ class CheckoutController extends Controller
             $pedido->update(['estado_pedido' => 'Pagado']);
             Carrito::where('id_usuario', $pedido->id_usuario)->delete();
 
-            // 2. Preparar cliente para SUNAT
+            // 2. Preparar cliente para SUNAT usando el modelo User
             $usuario = $pedido->usuario ?? Auth::user();
+
+            $numDoc = $usuario->numero_documento;
+            $tipoDoc = (string) ($usuario->id_tipo_documento ?? '1');
+            $nombreCliente = $usuario->nombre_completo;
+
+            if (empty(trim($nombreCliente))) {
+                $nombreCliente = $usuario->correo ?? 'CLIENTE GENERAL';
+            }
+
+            if (empty($numDoc)) {
+                $numDoc = '00000000';
+            }
+
             $clienteData = [
-                'tipo_doc' => '1',
-                'num_doc' => $usuario->numero_documento ?? '00000000',
-                'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
+                'tipo_doc' => $tipoDoc,
+                'num_doc'  => $numDoc,
+                'nombre'   => $nombreCliente,
             ];
 
             // 3. Emitir comprobante electrónico
@@ -274,10 +287,22 @@ class CheckoutController extends Controller
         $pedido  = Pedido::with(['detalles.variante.producto', 'usuario'])->findOrFail($idPedido);
         $usuario = $pedido->usuario ?? Auth::user();
 
+        $numDoc = $usuario->numero_documento;
+        $tipoDoc = (string) ($usuario->id_tipo_documento ?? '1');
+        $nombreCliente = $usuario->nombre_completo;
+
+        if (empty(trim($nombreCliente))) {
+            $nombreCliente = $usuario->correo ?? 'CLIENTE GENERAL';
+        }
+
+        if (empty($numDoc)) {
+            $numDoc = '00000000';
+        }
+
         $clienteData = [
-            'tipo_doc' => '1',
-            'num_doc'  => $usuario->dni ?? '00000000',
-            'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
+            'tipo_doc' => $tipoDoc,
+            'num_doc'  => $numDoc,
+            'nombre'   => $nombreCliente,
         ];
 
         $pdfContent = $facturacion->obtenerPdf($pedido, $clienteData, '03');
