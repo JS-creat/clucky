@@ -58,18 +58,18 @@ class CheckoutController extends Controller
         ));
     }
 
-    // ── Confirmar: Crea o REUTILIZA el pedido y genera preferencia ──────────
-
     public function confirmar(Request $request)
     {
         $request->validate([
             'id_tipo_entrega' => 'required|integer|in:1,2',
             'id_distrito'     => 'nullable|integer|exists:distrito,id_distrito',
+            'id_agencia'      => [
+                'nullable',
+                'required_if:id_tipo_entrega,2',
+                'integer',
+                'exists:agencia,id_agencia',
+            ],
         ]);
-
-        if ((int) $request->id_tipo_entrega === 2 && empty($request->id_distrito)) {
-            return back()->withInput()->with('error', 'Debes seleccionar un distrito para el envío.');
-        }
 
         $carrito = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', Auth::id())
@@ -86,7 +86,7 @@ class CheckoutController extends Controller
             }
         }
 
-        // Calcular total
+        // Calcular total de productos
         $total = 0;
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
@@ -94,18 +94,29 @@ class CheckoutController extends Controller
             $total   += $precio * $detalle->cantidad;
         }
 
-        $costoEnvio = (float) $request->costo_envio;
-        $total     += $costoEnvio;
+        // ── Envío: SIEMPRE calculado en servidor, nunca desde el request ──
+        $costoEnvio = 0;
+        $agencia    = null;
 
-        // Crear o reutilizar pedido en BD
-        $pedido  = null;
-        $agencia = null;
+        if ((int) $request->id_tipo_entrega === 2) {
+            $agencia = Agencia::where('id_agencia', $request->id_agencia)
+                ->where('id_distrito', $request->id_distrito)
+                ->where('estado', 1)
+                ->first();
 
-        if ($request->id_tipo_entrega == 2 && $request->id_agencia) {
-            $agencia = Agencia::find($request->id_agencia);
+            if (!$agencia) {
+                return back()->withInput()->with('error', 'La agencia seleccionada no es válida para ese distrito.');
+            }
+
+            $costoEnvio = (float) $agencia->costo_envio;
         }
 
-        DB::transaction(function () use ($carrito, $request, $total, &$pedido, $agencia) {
+        $total += $costoEnvio;
+
+        // Crear o reutilizar pedido en BD
+        $pedido = null;
+
+        DB::transaction(function () use ($carrito, $request, $total, $costoEnvio, &$pedido, $agencia) {
 
             $pedidoExistente = Pedido::where('id_usuario', Auth::id())
                 ->where('estado_pedido', 'Pendiente')
@@ -116,7 +127,7 @@ class CheckoutController extends Controller
                 'id_tipo_entrega' => $request->id_tipo_entrega,
                 'id_distrito'     => $request->id_tipo_entrega == 2 ? $request->id_distrito : null,
                 'id_agencia'      => $request->id_tipo_entrega == 2 ? $request->id_agencia : null,
-                'costo_envio'     => $request->costo_envio ?? 0,
+                'costo_envio'     => $costoEnvio,
                 'nombre_agencia'  => $agencia?->nombre_agencia,
                 'direccion'       => $agencia?->direccion,
             ];
@@ -217,7 +228,7 @@ class CheckoutController extends Controller
             $usuario = $pedido->usuario ?? Auth::user();
             $clienteData = [
                 'tipo_doc' => '1',
-                'num_doc'  => $usuario->dni ?? '00000000',
+                'num_doc' => $usuario->numero_documento ?? '00000000',
                 'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
             ];
 

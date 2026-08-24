@@ -52,8 +52,13 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+    
     'apisperu' => [
         'token' => env('APISPERU_TOKEN'),
         'url'   => env('APISPERU_URL', 'https://facturacion.apisperu.com/api/v1'),
+    ],
+
+    'apisperu' => [
+        'dni_token' => env('APISPERU_DNI_TOKEN'),
     ],
 ];
