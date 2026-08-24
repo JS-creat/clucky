@@ -272,12 +272,10 @@ class CheckoutController extends Controller
 
     public function verBoleta($idPedido, FacturacionService $facturacion)
     {
-        $pedido  = Pedido::with(['detalles.variante.producto', 'usuario'])->findOrFail($idPedido);
         $usuario = $pedido->usuario ?? Auth::user();
-
         $clienteData = [
             'tipo_doc' => '1',
-            'num_doc'  => $usuario->dni ?? '00000000',
+            'num_doc'  => $usuario->numero_documento ?? '00000000',
             'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
         ];
 
