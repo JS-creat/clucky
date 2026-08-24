@@ -433,6 +433,12 @@
                     Términos y condiciones
                 </h2>
 
+                <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed max-h-24 overflow-y-auto mb-4">
+                    Al completar esta compra, aceptas nuestros <strong class="text-gray-700">Términos y Condiciones</strong>
+                    de venta, incluyendo la política de devoluciones (30 días desde recepción), política de privacidad
+                    y condiciones de envío. Los precios incluyen IGV. Las compras están sujetas a disponibilidad de stock.
+                </div>
+
                 <div class="flex items-start gap-3">
                     <button type="button" @click="aceptaTerminos = !aceptaTerminos"
                         class="mt-0.5 w-5 h-5 rounded shrink-0 border-2 flex items-center justify-center transition-colors"
@@ -444,13 +450,13 @@
                     <div>
                         <p class="text-sm text-gray-700">
                             He leído y acepto los
-                            <a href="{{ route('terminos') }}" class="font-semibold underline underline-offset-2 hover:text-gray-900">
+                            <button type="button" @click="modalTerminos = true" class="font-semibold underline underline-offset-2 hover:text-gray-900">
                                 Términos y Condiciones
-                            </a>
+                            </button>
                             y la
-                            <a href="{{ route('politica-privacidad') }}" class="font-semibold underline underline-offset-2 hover:text-gray-900">
+                            <button type="button" @click="modalTerminos = true" class="font-semibold underline underline-offset-2 hover:text-gray-900">
                                 Política de Privacidad
-                            </a>
+                            </button>
                         </p>
                         <p x-show="!aceptaTerminos && intentoPagar" class="text-xs text-red-600 font-medium mt-1">
                             ⚠ Debes aceptar los términos para continuar

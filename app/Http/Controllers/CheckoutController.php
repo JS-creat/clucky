@@ -58,6 +58,7 @@ class CheckoutController extends Controller
         ));
     }
 
+
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -67,7 +68,7 @@ class CheckoutController extends Controller
                 'nullable',
                 'required_if:id_tipo_entrega,2',
                 'integer',
-                'exists:agencia,id_agencia',
+                'exists:agencias,id_agencia',
             ],
         ]);
 
@@ -228,7 +229,7 @@ class CheckoutController extends Controller
             $usuario = $pedido->usuario ?? Auth::user();
             $clienteData = [
                 'tipo_doc' => '1',
-                'num_doc' => $usuario->numero_documento ?? '00000000',
+                'num_doc'  => $usuario->dni ?? '00000000',
                 'nombre'   => trim(($usuario->nombres ?? '') . ' ' . ($usuario->apellidos ?? '')),
             ];
 
