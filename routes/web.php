@@ -73,13 +73,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])->name('usuario.actualizar');
 
-    // Mercado Pago y Confirmación de Pedido
-    Route::get('/pago/exito',        [CheckoutController::class, 'pagoExito'])->name('pago.exito');
-    Route::get('/pago/fallo',        [PagoController::class, 'fallo'])->name('pago.fallo');
-    Route::get('/pago/pendiente',    [PagoController::class, 'pendiente'])->name('pago.pendiente');
-    
-    // Ruta para ver / descargar Boleta en PDF
-    Route::get('/boleta/{id}',       [CheckoutController::class, 'verBoleta'])->name('boleta.ver');
+    //Mercado pago
+    Route::post('/pago/crear',    [PagoController::class, 'crearPreferencia'])->name('pago.crear');
+    Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
+    Route::get('/pago/fallo',     [PagoController::class, 'fallo'])->name('pago.fallo');
+    Route::get('/pago/pendiente', [PagoController::class, 'pendiente'])->name('pago.pendiente');
 });
 
 //webhook
