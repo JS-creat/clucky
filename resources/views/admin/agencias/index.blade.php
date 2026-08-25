@@ -196,7 +196,7 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    {{--<div class="flex items-center gap-2">
 
                         <a
                             href="{{ route('admin.agencias.edit', $agencia) }}"
@@ -231,7 +231,7 @@
 
                         </form>
 
-                    </div>
+                    </div> --}}
 
                 </div>
 
