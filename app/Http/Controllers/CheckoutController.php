@@ -119,8 +119,9 @@ class CheckoutController extends Controller
 
         DB::transaction(function () use ($carrito, $request, $total, $costoEnvio, &$pedido, $agencia) {
 
-            $pedidoExistente = Pedido::where('id_usuario', Auth::id())
+            $pedidoExistente = Pedido::where('id_usuario', Auth::id()) // o id_usuario del móvil
                 ->where('estado_pedido', 'Pendiente')
+                ->where('created_at', '>=', now()->subHours(2))
                 ->first();
 
             $datosPedido = [
@@ -134,7 +135,9 @@ class CheckoutController extends Controller
             ];
 
             if ($pedidoExistente) {
-                $pedidoExistente->update($datosPedido);
+                $pedidoExistente->update(array_merge($datosPedido, [
+                    'created_at' => now(),
+                ]));
                 DetallePedido::where('id_pedido', $pedidoExistente->id_pedido)->delete();
                 $pedido = $pedidoExistente;
             } else {

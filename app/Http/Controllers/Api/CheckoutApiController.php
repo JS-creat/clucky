@@ -16,17 +16,6 @@ use MercadoPago\Client\Preference\PreferenceClient;
 
 class CheckoutApiController extends Controller
 {
-    /**
-     * Confirmar pedido: crea (o reutiliza) el pedido como "Pendiente" y
-     * genera la preferencia de pago de Mercado Pago.
-     *
-     * 🟢 FIX: antes este método descontaba el stock y vaciaba el carrito
-     * de una, ANTES de que existiera ningún pago real — al revés de cómo
-     * lo hace la web. Ahora sigue el mismo patrón seguro: el pedido queda
-     * "Pendiente" sin tocar stock ni carrito. El descuento real de stock,
-     * el registro del cupón, y el vaciado del carrito ocurren recién en
-     * PagoService::confirmarPago(), cuando Mercado Pago confirma el pago.
-     */
     public function confirmar(Request $request)
     {
         $request->validate([
@@ -139,8 +128,14 @@ class CheckoutApiController extends Controller
             $pedido = null;
 
             DB::transaction(function () use (
-                $usuario, $carrito, $request, $total, $cupon,
-                $nombreAgencia, $direccionAgencia, &$pedido
+                $usuario,
+                $carrito,
+                $request,
+                $total,
+                $cupon,
+                $nombreAgencia,
+                $direccionAgencia,
+                &$pedido
             ) {
                 $usuario->update([
                     'id_tipo_documento' => $request->id_tipo_documento,
@@ -148,12 +143,9 @@ class CheckoutApiController extends Controller
                     'telefono'          => $request->telefono,
                 ]);
 
-                // 🟢 Igual que la web: si el usuario ya tenía un pedido
-                // "Pendiente" sin pagar (por ejemplo, cerró la app antes de
-                // completar el pago la vez anterior), lo reutilizamos en
-                // vez de crear uno nuevo cada vez.
                 $pedidoExistente = Pedido::where('id_usuario', $usuario->id_usuario)
                     ->where('estado_pedido', 'Pendiente')
+                    ->where('created_at', '>=', now()->subHours(2))
                     ->first();
 
                 $datosPedido = [
@@ -168,7 +160,9 @@ class CheckoutApiController extends Controller
                 ];
 
                 if ($pedidoExistente) {
-                    $pedidoExistente->update($datosPedido);
+                    $pedidoExistente->update(array_merge($datosPedido, [
+                        'created_at' => now(),
+                    ]));
                     DetallePedido::where('id_pedido', $pedidoExistente->id_pedido)->delete();
                     $pedido = $pedidoExistente;
                 } else {
@@ -342,6 +336,6 @@ class CheckoutApiController extends Controller
         $cantidad    = Pedido::whereDate('created_at', today())->count() + 1;
         $correlativo = str_pad($cantidad, 3, '0', STR_PAD_LEFT);
 
-        return "CLK-{$fecha}-{$correlativo}";
+        return "BND-{$fecha}-{$correlativo}";
     }
 }

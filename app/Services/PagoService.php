@@ -20,11 +20,6 @@ class PagoService
         protected FacturacionService $facturacionService
     ) {}
 
-    /**
-     * Verifica un pago contra Mercado Pago y confirma el pedido si corresponde.
-     * La llaman: PagoController (web, cuando el cliente regresa), el
-     * webhook, y PagoMovilApiController (retorno del WebView en la app).
-     */
     public function confirmarPago(string $paymentId): ?Pedido
     {
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
@@ -113,7 +108,6 @@ class PagoService
             throw $e;
         }
 
-        // 🟢 3. EMISIÓN DE BOLETA ELECTRÓNICA + ENVÍO DE CORREO (Fuera de la transacción DB)
         try {
             $usuario = \App\Models\User::where('id_usuario', $pedido->id_usuario)->first();
 

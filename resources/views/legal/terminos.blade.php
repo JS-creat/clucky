@@ -28,7 +28,7 @@
 
         <section>
             <h2 class="font-semibold text-lg mb-2">5. Cambios y devoluciones</h2>
-            <p>El cliente cuenta con [X] días desde la recepción del producto para solicitar un cambio o devolución, siempre que el producto se encuentre en las condiciones originales.</p>
+            <p>El cliente cuenta con 15 días desde la recepción del producto para solicitar un cambio o devolución, siempre que el producto se encuentre en las condiciones originales.</p>
         </section>
 
         <section>

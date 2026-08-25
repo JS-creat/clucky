@@ -6,20 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\PagoService;
 use Illuminate\Http\Request;
 
-/**
- * Endpoints PÚBLICOS de retorno de Mercado Pago para la app móvil.
- *
- * El WebView de la app no comparte la sesión web (cookies), por eso
- * necesita rutas propias, sin el middleware `auth`. La seguridad no
- * depende de esta ruta ser "secreta" — el pago se verifica siempre
- * contra la API real de Mercado Pago dentro de PagoService, nunca
- * confiando en datos que vengan del navegador/cliente.
- *
- * Devuelven una página HTML mínima (no JSON) porque las abre
- * directamente el WebView tras la redirección de Mercado Pago; el
- * WebView de Flutter detecta la URL de destino y actúa en consecuencia
- * (no necesita parsear el contenido de la página).
- */
 class PagoMovilApiController extends Controller
 {
     public function __construct(protected PagoService $pagoService) {}
@@ -63,13 +49,6 @@ class PagoMovilApiController extends Controller
         return $this->paginaResultado('pendiente');
     }
 
-    /**
-     * Página HTML mínima. El WebView de Flutter no lee este contenido:
-     * detecta a qué URL se navegó (mobile/pago/exito, .../fallo,
-     * .../pendiente) y reacciona en consecuencia. Este HTML es solo
-     * un colchón visual por si hay algún delay antes de que la app
-     * cierre el WebView.
-     */
     private function paginaResultado(string $estado, ?string $mensaje = null)
     {
         $titulos = [

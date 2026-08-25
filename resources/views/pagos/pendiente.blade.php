@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido confirmado – B-EDEN</title>
+    <title>Pago pendiente – B-EDEN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -36,19 +36,19 @@
     <div class="flex-1 flex items-center justify-center px-4 py-16">
         <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-10 max-w-md w-full text-center">
 
-            {{-- Icono éxito --}}
-            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            {{-- Icono pendiente --}}
+            <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
 
             <h1 class="text-3xl font-display font-semibold text-gray-900 mb-2">
-                ¡Pedido recibido!
+                Pago en revisión
             </h1>
 
             <p class="text-gray-500 text-sm leading-relaxed mb-8">
-                Tu pedido fue regsitrado correctamente pueder ver los detalles del pago y el envío en tu perfil.
+                Tu pago está siendo procesado por la entidad. Te avisaremos por correo apenas se confirme; no es necesario que vuelvas a intentar el pago.
             </p>
 
             {{-- Info --}}
@@ -71,13 +71,13 @@
 
             {{-- Acciones --}}
             <div class="space-y-3">
-                <a href="{{ url('/') }}"
-                   class="block w-full bg-gray-900 text-white rounded-2xl py-3.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
-                    Seguir comprando
-                </a>
                 <a href="{{ url('/perfil') }}"
+                   class="block w-full bg-gray-900 text-white rounded-2xl py-3.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
+                    Ver estado de mi pedido
+                </a>
+                <a href="{{ url('/') }}"
                    class="block w-full border border-gray-200 rounded-2xl py-3.5 text-sm font-semibold hover:bg-gray-50 transition-colors">
-                    Ver mis pedidos
+                    Volver al inicio
                 </a>
             </div>
 

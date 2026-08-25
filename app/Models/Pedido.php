@@ -33,6 +33,7 @@ class Pedido extends Model
         'nombre_agencia',
         'direccion',
         'motivo_anulacion',
+        'payment_id',
     ];
 
     // ── Relaciones ──────────────────────────────────
