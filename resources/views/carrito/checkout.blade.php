@@ -399,14 +399,11 @@
                                 @error('numero_documento')
                                     <p class="text-error mt-1">{{ $message }}</p>
                                 @enderror
-                                <p class="text-xs text-gray-400 mt-1">
-                                    Verificamos tu nombre automáticamente con RENIEC al guardar — no necesitas escribirlo.
-                                </p>
                             </div>
 
                             <button type="button" @click="editarNombreManual = !editarNombreManual"
                                 class="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900">
-                                <span x-text="editarNombreManual ? 'Ocultar nombre manual' : '¿RENIEC no encontró tu nombre? Editarlo manualmente'"></span>
+                                <span x-text="editarNombreManual ? 'Ocultar nombre manual' : 'Editarlo manualmente'"></span>
                             </button>
 
                             <div x-show="editarNombreManual" class="grid grid-cols-2 gap-3">
