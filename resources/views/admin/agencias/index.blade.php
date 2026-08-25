@@ -196,9 +196,9 @@
                         </p>
                     </div>
 
-                    {{--<div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2">
 
-                        <a
+                        {{-- <a
                             href="{{ route('admin.agencias.edit', $agencia) }}"
                             title="Editar agencia"
                             class="w-10 h-10 rounded-xl bg-gray-50 text-gray-500
@@ -207,7 +207,7 @@
 
                             <x-heroicon-o-pencil-square class="w-5 h-5" />
 
-                        </a>
+                        </a> --}}
 
                         <form
                             action="{{ route('admin.agencias.toggle', $agencia) }}"
@@ -231,7 +231,7 @@
 
                         </form>
 
-                    </div> --}}
+                    </div>
 
                 </div>
 
