@@ -363,7 +363,7 @@
                     </button>
                 </div>
 
-                {{-- Uso de Cupones --}}
+                {{-- Uso de Cupones
                 <div
                     class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-between group">
                     <div>
@@ -381,7 +381,7 @@
                         class="w-full text-center bg-gray-900 hover:bg-black text-white font-bold py-4 px-6 rounded-2xl transition-all duration-200 text-sm flex items-center justify-center gap-2 shadow-sm">
                         <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Generar Reporte
                     </a>
-                </div>
+                </div> --}}
 
             </div>
         </div>
