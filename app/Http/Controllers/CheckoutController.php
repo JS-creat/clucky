@@ -68,7 +68,7 @@ class CheckoutController extends Controller
                 'nullable',
                 'required_if:id_tipo_entrega,2',
                 'integer',
-                'exists:agencias,id_agencia',
+                'exists:agencia,id_agencia',
             ],
         ]);
 

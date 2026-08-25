@@ -37,8 +37,9 @@
                 @apply w-full border border-gray-300 rounded-xl px-4 py-3 text-sm bg-white transition-colors
                        focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900;
             }
+            /* Paleta blanco/negro: los campos con error se marcan con borde grueso negro, no color */
             .field-error {
-                @apply border-red-400 focus:border-red-500 focus:ring-red-500;
+                @apply border-2 border-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-gray-50;
             }
             .option-row {
                 @apply flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all;
@@ -67,8 +68,9 @@
             .banner {
                 @apply rounded-xl px-4 py-3 flex items-start gap-3 text-sm;
             }
+            /* Antes: rojo. Ahora: negro sobre gris claro, con borde grueso para distinguirlo del resto */
             .banner-error {
-                @apply banner bg-red-50 border border-red-200 text-red-700;
+                @apply banner bg-gray-100 border-2 border-gray-900 text-gray-900 font-medium;
             }
             .banner-notice {
                 @apply banner bg-gray-100 border border-gray-200 text-gray-700;
@@ -76,11 +78,15 @@
             .pill {
                 @apply text-xs font-semibold px-2 py-0.5 rounded-full;
             }
+            /* Texto de error inline: negro y en negrita en vez de rojo */
+            .text-error {
+                @apply text-xs text-gray-900 font-semibold;
+            }
         }
     </style>
 </head>
 
-<body class="bg-stone-50 font-sans text-gray-900 antialiased">
+<body class="bg-gray-50 font-sans text-gray-900 antialiased">
 
     {{-- NAVBAR --}}
     <nav class="bg-gray-900 sticky top-0 z-50">
@@ -177,14 +183,19 @@
                     <h2 class="font-semibold flex items-center gap-2">
                         <span class="step-badge">1</span>
                         Tipo de entrega
+                        <span x-show="entregaConfirmada" class="text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </span>
                     </h2>
-                    <button x-show="!editandoEntrega" @click="editandoEntrega = true" class="link-edit">
+                    <button x-show="!editandoEntrega" @click="editandoEntrega = true; entregaConfirmada = false" class="link-edit">
                         Modificar
                     </button>
                 </div>
 
-                {{-- Vista resumen --}}
-                <div x-show="!editandoEntrega">
+                {{-- Vista resumen: solo aparece después de confirmar explícitamente el paso 1 --}}
+                <div x-show="!editandoEntrega && entregaConfirmada">
                     <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div class="w-9 h-9 bg-gray-900 rounded-lg flex items-center justify-center shrink-0">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,6 +221,8 @@
 
                 {{-- Vista edición --}}
                 <div x-show="editandoEntrega" class="space-y-3">
+
+                    <p class="text-xs text-gray-400">Elige una opción para continuar. No hay ninguna seleccionada por defecto.</p>
 
                     @foreach($tiposEntrega as $tipo)
                         <label class="option-row"
@@ -241,6 +254,10 @@
                         </label>
                     @endforeach
 
+                    <p x-show="intentoConfirmarEntrega && !tipoEntrega" class="text-error">
+                        ⚠ Debes elegir un tipo de entrega antes de continuar.
+                    </p>
+
                     {{-- Selección de envío --}}
                     <div x-show="tipoEntrega == 2" class="space-y-3 pt-3 border-t border-gray-100">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecciona tu ubicación</p>
@@ -261,15 +278,16 @@
 
                         <select x-show="distritos.length"
                             @change="distrito = $event.target.value; cargarAgencias()"
-                            class="field {{ $errors->has('id_distrito') ? 'field-error' : '' }}">
+                            class="field"
+                            :class="(intentoConfirmarEntrega && tipoEntrega == 2 && !distrito) ? 'field-error' : ''">
                             <option value="">Distrito</option>
                             <template x-for="dist in distritos" :key="dist.id_distrito">
                                 <option :value="dist.id_distrito" x-text="dist.nombre_distrito"></option>
                             </template>
                         </select>
-                        @error('id_distrito')
-                            <p class="text-xs text-red-600 -mt-2">{{ $message }}</p>
-                        @enderror
+                        <p x-show="intentoConfirmarEntrega && tipoEntrega == 2 && !distrito" class="text-error -mt-2">
+                            Selecciona un distrito para el envío.
+                        </p>
 
                         <div x-show="cargandoAgencias" class="flex items-center gap-2 text-sm text-gray-400 px-1">
                             <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -305,9 +323,9 @@
                             </template>
                         </div>
 
-                        @error('id_agencia')
-                            <p class="text-xs text-red-600">{{ $message }}</p>
-                        @enderror
+                        <p x-show="intentoConfirmarEntrega && tipoEntrega == 2 && distrito && agencias.length > 0 && !agenciaSeleccionada" class="text-error">
+                            Selecciona una agencia de envío.
+                        </p>
 
                         <div x-show="!cargandoAgencias && distrito && agencias.length === 0" class="banner-error">
                             No hay agencias de envío disponibles para este distrito. Selecciona otro distrito o contáctanos.
@@ -323,7 +341,7 @@
                     </div>
 
                     <button @click="guardarEntrega" class="btn-secondary">✓ Confirmar entrega</button>
-                    <p x-show="errorEntrega" x-text="errorEntrega" class="text-xs text-red-600 font-medium"></p>
+                    <p x-show="errorEntrega" x-text="errorEntrega" class="text-error"></p>
 
                 </div>
             </div>
@@ -336,7 +354,7 @@
                         <span class="step-badge">2</span>
                         Datos personales
                         @if($faltaDocumento)
-                            <span class="pill bg-red-50 text-red-600">Falta DNI</span>
+                            <span class="pill bg-gray-900 text-white">Falta DNI</span>
                         @endif
                     </h2>
                     <button x-show="!editandoDatos" @click="editandoDatos = true" class="link-edit">Modificar</button>
@@ -350,7 +368,7 @@
                     </div>
                     <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
                         <p class="text-xs text-gray-400 mb-0.5">Documento</p>
-                        <p class="text-sm font-semibold {{ $faltaDocumento ? 'text-red-600' : '' }}">
+                        <p class="text-sm font-semibold {{ $faltaDocumento ? 'text-gray-900 font-bold underline underline-offset-2' : '' }}">
                             {{ auth()->user()->numero_documento ?? 'No registrado' }}
                         </p>
                     </div>
@@ -372,14 +390,14 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="text-xs font-medium text-gray-500 block mb-1.5">
-                                    N° Documento (DNI) <span class="text-red-500">*</span>
+                                    N° Documento (DNI) <span class="text-gray-900 font-bold">*</span>
                                 </label>
                                 <input type="text" name="numero_documento" required inputmode="numeric" maxlength="8"
                                     value="{{ old('numero_documento', auth()->user()->numero_documento) }}"
                                     class="field {{ $errors->has('numero_documento') ? 'field-error' : '' }}"
                                     placeholder="8 dígitos">
                                 @error('numero_documento')
-                                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                    <p class="text-error mt-1">{{ $message }}</p>
                                 @enderror
                                 <p class="text-xs text-gray-400 mt-1">
                                     Verificamos tu nombre automáticamente con RENIEC al guardar — no necesitas escribirlo.
@@ -428,13 +446,6 @@
                     <span class="step-badge">3</span>
                     Términos y condiciones
                 </h2>
-
-                <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed max-h-24 overflow-y-auto mb-4">
-                    Al completar esta compra, aceptas nuestros <strong class="text-gray-700">Términos y Condiciones</strong>
-                    de venta, incluyendo la política de devoluciones (30 días desde recepción), política de privacidad
-                    y condiciones de envío. Los precios incluyen IGV. Las compras están sujetas a disponibilidad de stock.
-                </div>
-
                 <div class="flex items-start gap-3">
                     <button type="button" @click="aceptaTerminos = !aceptaTerminos"
                         class="mt-0.5 w-5 h-5 rounded shrink-0 border-2 flex items-center justify-center transition-colors"
@@ -445,16 +456,9 @@
                     </button>
                     <div>
                         <p class="text-sm text-gray-700">
-                            He leído y acepto los
-                            <button type="button" @click="modalTerminos = true" class="font-semibold underline underline-offset-2 hover:text-gray-900">
-                                Términos y Condiciones
-                            </button>
-                            y la
-                            <button type="button" @click="modalTerminos = true" class="font-semibold underline underline-offset-2 hover:text-gray-900">
-                                Política de Privacidad
-                            </button>
+                            He leído y acepto los <a href="{{ route('terminos') }}" class="font-semibold underline hover:text-gray-900">Términos y Condiciones</a> y la <a href="{{ route('politica-privacidad') }}" class="font-semibold underline hover:text-gray-900">Política de Privacidad</a>.
                         </p>
-                        <p x-show="!aceptaTerminos && intentoPagar" class="text-xs text-red-600 font-medium mt-1">
+                        <p x-show="!aceptaTerminos && intentoPagar" class="text-error mt-1">
                             ⚠ Debes aceptar los términos para continuar
                         </p>
                     </div>
@@ -463,7 +467,7 @@
 
             {{-- Botón pagar mobile --}}
             <div class="lg:hidden">
-                <button @click="intentarPagar" :disabled="!aceptaTerminos" class="btn-primary">
+                <button @click="intentarPagar" :disabled="!aceptaTerminos || !entregaConfirmada" class="btn-primary">
                     <span x-show="!procesando">Continuar al pago · S/ <span x-text="totalConEnvio()"></span></span>
                     <span x-show="procesando" class="flex items-center justify-center gap-2">
                         <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -473,7 +477,7 @@
                         Procesando…
                     </span>
                 </button>
-                <p x-show="errorPago" x-text="errorPago" class="text-xs text-red-600 font-medium mt-2 text-center"></p>
+                <p x-show="errorPago" x-text="errorPago" class="text-error mt-2 text-center"></p>
             </div>
 
         </div>
@@ -540,12 +544,14 @@
                     </div>
                     <div class="flex justify-between text-sm text-gray-500">
                         <span>Envío</span>
-                        <span x-show="costoEnvio > 0" class="font-medium text-gray-900">
+                        <span x-show="entregaConfirmada && costoEnvio > 0" class="font-medium text-gray-900">
                             + S/ <span x-text="parseFloat(costoEnvio).toFixed(2)"></span>
                         </span>
-                        <span x-show="costoEnvio == 0" class="text-gray-500 font-medium">
-                            <span x-show="tipoEntrega != 2 || !agenciaSeleccionada">—</span>
-                            <span x-show="tipoEntrega != 2">Gratis</span>
+                        <span x-show="!entregaConfirmada" class="text-gray-400 italic">
+                            Pendiente de elegir
+                        </span>
+                        <span x-show="entregaConfirmada && costoEnvio == 0" class="text-gray-500 font-medium">
+                            Gratis
                         </span>
                     </div>
                 </div>
@@ -560,7 +566,7 @@
             </div>
 
             <div class="hidden lg:block">
-                <button @click="intentarPagar" :disabled="!aceptaTerminos" class="btn-primary flex items-center justify-center gap-2">
+                <button @click="intentarPagar" :disabled="!aceptaTerminos || !entregaConfirmada" class="btn-primary flex items-center justify-center gap-2">
                     <span x-show="!procesando" class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -575,7 +581,10 @@
                         Procesando…
                     </span>
                 </button>
-                <p x-show="errorPago" x-text="errorPago" class="text-xs text-red-600 font-medium mt-2 text-center"></p>
+                <p x-show="errorPago" x-text="errorPago" class="text-error mt-2 text-center"></p>
+                <p x-show="!entregaConfirmada" class="text-xs text-gray-400 mt-2 text-center">
+                    Confirma el tipo de entrega (paso 1) para habilitar el pago
+                </p>
 
                 <div class="mt-3 text-center space-y-1.5">
                     <p class="text-xs text-gray-400">Serás redirigido a</p>
@@ -657,7 +666,7 @@
         </div>
     </div>
 
-    {{-- ALPINE — misma API pública que antes, sin cambios de nombres/rutas --}}
+    {{-- ALPINE — misma API pública que antes (mismas rutas/fetch/nombres de campos), solo cambia el estado inicial y las validaciones --}}
     <script>
         function checkoutData() {
             return {
@@ -665,12 +674,16 @@
                 modalTerminos:   false,
                 procesando:      false,
                 intentoPagar:    false,
+                intentoConfirmarEntrega: false,
                 aceptaTerminos:  false,
+                entregaConfirmada: false, // true solo después de pasar por guardarEntrega()
                 errorEntrega:    '',
                 errorPago:       '',
 
-                tipoEntrega:       {{ $tiposEntrega->first()->id_tipo_entrega ?? 1 }},
-                tipoEntregaNombre: '{{ $tiposEntrega->first()->nombre_tipo_entrega ?? "Recojo en tienda" }}',
+                // Antes venía preseleccionado con el primer tipo de entrega. Ahora arranca vacío:
+                // el usuario tiene que elegir uno explícitamente.
+                tipoEntrega:       null,
+                tipoEntregaNombre: '',
 
                 departamento:        '',
                 provincia:           '',
@@ -693,6 +706,7 @@
                 seleccionarTipoEntrega(id, nombre) {
                     this.tipoEntrega       = id;
                     this.tipoEntregaNombre = nombre;
+                    this.entregaConfirmada = false; // cualquier cambio obliga a reconfirmar
                     if (id != 2) this.resetEnvio();
                 },
 
@@ -712,8 +726,16 @@
                     this.costoEnvio          = 0;
                 },
 
+                // Paso 1: no se puede confirmar sin elegir explícitamente tipo de entrega
+                // (y distrito/agencia cuando corresponde a envío).
                 guardarEntrega() {
                     this.errorEntrega = '';
+                    this.intentoConfirmarEntrega = true;
+
+                    if (!this.tipoEntrega) {
+                        this.errorEntrega = 'Selecciona un tipo de entrega.';
+                        return;
+                    }
                     if (this.tipoEntrega == 2 && !this.distrito) {
                         this.errorEntrega = 'Selecciona un distrito para el envío.';
                         return;
@@ -722,6 +744,8 @@
                         this.errorEntrega = 'Selecciona una agencia de envío.';
                         return;
                     }
+
+                    this.entregaConfirmada = true;
                     this.editandoEntrega = false;
                 },
 
@@ -760,18 +784,33 @@
                         .finally(() => { this.cargandoAgencias = false; });
                 },
 
+                // Paso final: revalida TODO en orden (entrega -> distrito/agencia -> términos)
+                // antes de enviar el formulario oculto. El botón ya está disabled sin
+                // aceptaTerminos/entregaConfirmada, pero se revalida aquí por seguridad.
                 intentarPagar() {
                     this.intentoPagar = true;
                     this.errorPago    = '';
 
-                    if (!this.aceptaTerminos) return;
+                    if (!this.entregaConfirmada) {
+                        this.errorPago = 'Debes confirmar el tipo de entrega (paso 1) antes de continuar.';
+                        this.editandoEntrega = true;
+                        this.intentoConfirmarEntrega = true;
+                        return;
+                    }
 
                     if (this.tipoEntrega == 2 && !this.distrito) {
                         this.errorPago = 'Selecciona un distrito de envío.';
+                        this.editandoEntrega = true;
                         return;
                     }
                     if (this.tipoEntrega == 2 && !this.agenciaSeleccionada) {
                         this.errorPago = 'Selecciona una agencia de envío.';
+                        this.editandoEntrega = true;
+                        return;
+                    }
+
+                    if (!this.aceptaTerminos) {
+                        this.errorPago = 'Debes aceptar los Términos y Condiciones (paso 3) para continuar.';
                         return;
                     }
 
