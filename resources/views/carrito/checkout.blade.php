@@ -364,10 +364,6 @@
                     </div>
                 </div>
 
-                {{-- Vista edición: SOLO el DNI es obligatorio y visible de entrada.
-                     Nombres/Apellidos se autocompletan desde RENIEC al guardar el DNI,
-                     por eso viven colapsados detrás de "Editar manualmente" —
-                     así no confunden pidiendo algo que el sistema ya va a completar solo. --}}
                 <div x-show="editandoDatos" x-data="{ editarNombreManual: false }">
                     <form method="POST" action="{{ route('usuario.actualizar') }}">
                         @csrf
