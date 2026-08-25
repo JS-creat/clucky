@@ -91,11 +91,11 @@
                                     <x-heroicon-o-pencil-square class="w-5 h-5" />
                                 </a>
 
-                                <button type="button"
+                                {{--<button type="button"
                                     @click="if({{ $stockTotal }} > 0) { errorStockModal = true } else { deleteModal = true; activeId = {{ $producto->id_producto }} }"
                                     class="p-2.5 bg-gray-50 text-gray-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all shadow-sm">
                                     <x-heroicon-o-trash class="w-5 h-5" />
-                                </button>
+                                </button> --}}
                             </div>
                         </td>
                     </tr>

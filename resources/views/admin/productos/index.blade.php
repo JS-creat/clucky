@@ -52,7 +52,7 @@
             @include('admin.productos.resultados')
         </div>
 
-        {{-- Modal Eliminación --}}
+        {{-- Modal Eliminación --
         <template x-if="deleteModal">
             <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
                 <div @click="deleteModal = false" class="absolute inset-0 bg-black/50 backdrop-blur-md"></div>
@@ -78,7 +78,7 @@
                     </div>
                 </div>
             </div>
-        </template>
+        </template> --}}
 
         {{-- Modal Alerta de Stock --}}
         <template x-if="errorStockModal">
