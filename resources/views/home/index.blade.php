@@ -31,7 +31,7 @@
 
 @section('content')
 
-    {{--AVISO DE ENTORNO DE DESARROLLO
+    {{--AVISO DE ENTORNO DE DESARROLLO--}}
     <div class="bg-yellow-100 border-b border-yellow-200 py-3 px-4 sm:px-8 shadow-inner">
         <div class="max-w-7xl mx-auto flex items-start gap-3">
             <div class="flex-shrink-0 mt-0.5">
@@ -52,7 +52,7 @@
                 </p>
             </div>
         </div>
-    </div> --}}
+    </div> 
 
     {{-- ===== CARRUSEL ===== --}}
     @if(isset($banners) && $banners->count() > 0)
